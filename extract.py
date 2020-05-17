@@ -1,10 +1,9 @@
 import torch
 import os
 from os.path import join
-from tqdm import tqdm
 import argparse
 import datasets
-import vgg_mod
+
 
 samples = 512
 batch_size = 16
@@ -21,7 +20,8 @@ models_dir = join(dataset_dir, 'models')
 if dataset_name == 'mnist':
     dataset = datasets.MNIST(dataset_dir=dataset_dir, device=device)
 else:
-    dataset = datasets.CIFAR10(dataset_dir=dataset_dir, device=device)
+    pass
+    #dataset = datasets.CIFAR10(dataset_dir=dataset_dir, device=device)
 
 test_loader = dataset.get_test_loader(batch_size)
 

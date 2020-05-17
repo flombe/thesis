@@ -1,8 +1,8 @@
 #!/bin/bash
+## Pre-train on MNIST2class dataset
 
 # run train.py with following arguments parsed
-
-dataset='mnist'
+dataset='mnist2class'
 epochs=200
 bs=64
 lr=0.0001

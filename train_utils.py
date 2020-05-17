@@ -7,18 +7,16 @@ import os
 import json
 
 
-
-
 def train_args_parser():
     parser = argparse.ArgumentParser(description='MNIST Experiment')
     parser.add_argument('--epochs', default=200, type=int, metavar='N',
                         help='number of total epochs to run')
     parser.add_argument('--bs', '--batch-size', default=64, type=int,
                         metavar='N', help='mini-batch size (default: 64)')
-    parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
+    parser.add_argument('--lr', '--learning-rate', default=0.01, type=float,  ## lr hyperparm tune?
                         metavar='LR', help='initial learning rate')
-    parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
-                        help='momentum')
+    parser.add_argument('--run_name' , default="pre-train", type=str, metavar='N',
+                        help='name of trainings run for saving')
     return parser
 
 
@@ -26,11 +24,11 @@ def parse_train_args(args):
     bs = args.bs
     epochs = args.epochs
     lr = args.lr
-    momentum = args.momentum
-    return bs, epochs, lr, momentum
+    run_name = args.run_name
+    return bs, epochs, lr, run_name
 
 
-def evaluate(model, loader, device='cuda', criterion=F.nll_loss):
+def evaluate(model, loader, device, criterion=F.cross_entropy):  ## F.cross_entropy instead of F.nll_loss
     loss = 0.0
     correct = 0
     total = 0
@@ -53,7 +51,7 @@ def evaluate(model, loader, device='cuda', criterion=F.nll_loss):
     return loss, acc
 
 
-def train(model, train_loader, test_loader, optimizer, device='cuda', epochs=20, criterion=F.nll_loss, output_dir=None,
+def train(model, train_loader, test_loader, optimizer, device, epochs=20, run_name='pre_train', criterion=F.cross_entropy, output_dir=None,  ## F.cross_entropy instead of F.nll_loss
           verbose=True):
     model_dir = None
     if output_dir is not None:
@@ -86,17 +84,23 @@ def train(model, train_loader, test_loader, optimizer, device='cuda', epochs=20,
             loss.backward()
             optimizer.step()
 
+            # save model
+            if epoch == 0:
+                torch.save(model, join(model_dir, 'model_' + str(run_name) + '0batch' +str(i) + '.pt'))
+
         # save model
+        epoch_count = epoch+1  ## epoch count starts at 0
         if model_dir is not None:
-            torch.save(model, join(model_dir, 'model_' + str(epoch) + '.pt'))
+            if epoch_count in [1, 2, 3, 4, 5, 7, 10, 20, 30, 40, 50, 100, 150, 200]:
+                torch.save(model, join(model_dir, 'model_' + str(run_name) + str(epoch_count) + '.pt'))
 
         # evaluate model on training and test data
         model.eval()
-        loss, acc = evaluate(model, train_loader)
+        loss, acc = evaluate(model, train_loader, device)
         train_loss.append(loss.item())
         train_acc.append(acc)
 
-        loss, acc = evaluate(model, test_loader)
+        loss, acc = evaluate(model, test_loader, device)
         test_loss.append(loss.item())
         test_acc.append(acc)
 
