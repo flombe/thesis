@@ -86,7 +86,8 @@ def train(model, train_loader, test_loader, optimizer, device, epochs=20, run_na
 
             # save model
             if epoch == 0:
-                torch.save(model, join(model_dir, 'model_' + str(run_name) + '0batch' +str(i) + '.pt'))
+                if i in range(10) or i%100==0:
+                    torch.save(model, join(model_dir, 'model_' + str(run_name) + '0batch' +str(i) + '.pt'))
 
         # save model
         epoch_count = epoch+1  ## epoch count starts at 0

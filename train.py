@@ -40,7 +40,7 @@ else:
     pass
     #model = vgg_mod.vgg16(pretrained=False, num_classes=10)
     #model.to(device)
-    #dataset = datasets.CIFAR10(dataset_dir=dataset_dir, device=device)
+    #dataset = datasets.CIFAR10(dataset_dir=root_dir, device=device)
     #criterion = F.cross_entropy
 
 # loaders

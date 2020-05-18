@@ -19,11 +19,17 @@ print('Dataset directory -- ' + dataset_dir)
 # model.to(device)
 
 dataset = datasets.MNIST2class(dataset_dir=dataset_dir, device=device)
-train_data, train_labels = torch.load(join(dataset_dir, 'processed/training.pt'))
+train_data, train_labels = torch.load(join(dataset_dir, 'MNIST/processed/training.pt'))
 print(np.shape(train_data))
 print(train_labels)
 
+train_loader = dataset.get_train_loader(batch_size=100)
+print(train_loader)
+print(len(train_loader))
 
+for i, (images, labels) in enumerate(train_loader):
+    print(type(images))
+    print(labels)
 
 
 
@@ -32,9 +38,9 @@ print(train_labels)
 ## create augmented MNIST2class dataset
 # --> MNIST2class.py
 
-### train less than 1 epoch !! ###
-
-# Train MNIST models different amount of epochs
+## pre-train on MNIST2class and safe checkpoints
+# Train MNIST models different amount of batches/epochs
+# epoch 0 batch 1-10 and mod50
 # epoch 1, 3, 5, 7, 10, 20, 30, 40, 50, 100, 150, 200
 # safe model
 # --> pretrain_mnist2class.sh
