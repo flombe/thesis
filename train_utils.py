@@ -111,12 +111,13 @@ def train(model, train_loader, test_loader, optimizer, device, epochs=20, run_na
 
     train_stats = {
         'model_cls': model.__class__.__name__,
+        'run_name': run_name,
         'train_acc': train_acc,
         'train_loss': train_loss,
         'test_acc': test_acc,
         'test_loss': test_loss
     }
-    stats_file_path = join(output_dir, 'train_stats.json')
+    stats_file_path = join(output_dir, run_name+'_train_stats.json')  ## otherwise override json files for same model name but different runs
     with open(stats_file_path, 'w+') as f:
         json.dump(train_stats, f)
 

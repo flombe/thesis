@@ -10,7 +10,7 @@ run_name='ft_mnist2_mnist_0batch0_'
 model='model_pre_train_2class_0batch0.pt'
 python finetune.py --epochs $epochs --bs $bs --lr $lr --run_name $run_name --model $model
 
-run_name='ft_mnist2_mnist_0batch10_'
+run_name='ft_mnist2_mnist_0batch9_'  ### vergessen (9 statt 10 weil start bei 0!!)
 model='model_pre_train_2class_0batch10.pt'
 python finetune.py --epochs $epochs --bs $bs --lr $lr --run_name $run_name --model $model
 
