@@ -30,12 +30,12 @@ if dataset_name == 'mnist':
     model = mnist_archs.Net()
     model.to(device)
     dataset = datasets.MNIST(dataset_dir=dataset_dir, device=device)
-    criterion = F.cross_entropy  ## F.cross_entropy instead of F.nll_loss
+    criterion = F.cross_entropy ##
 elif dataset_name == 'mnist2class':
-    model = mnist_archs.Net()
+    model = mnist_archs.Net2class()  ## same architecture but only 2 output layers
     model.to(device)
     dataset = datasets.MNIST2class(dataset_dir=dataset_dir, device=device)
-    criterion = F.cross_entropy  ## F.cross_entropy instead of F.nll_loss
+    criterion = F.cross_entropy ##
 else:
     pass
     #model = vgg_mod.vgg16(pretrained=False, num_classes=10)

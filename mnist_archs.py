@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -63,3 +62,14 @@ class Net(nn.Module):
             print(out5.size())
             print(out6.size())
         return out1, out2, out3, out4, out5, out6
+
+
+class Net2class(Net):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3)
+        self.dropout1 = nn.Dropout2d(0.25)
+        self.fc1 = nn.Linear(1600, 128)
+        self.dropout2 = nn.Dropout2d(0.5)
+        self.fc2 = nn.Linear(128, 2)  ## only change: 2 output layers
