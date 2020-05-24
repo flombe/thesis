@@ -1,32 +1,15 @@
 #!/bin/bash
-## Fine-tune on MNIST2class model on MNIST data
+## Fine-tune on MNIST data
+
+export CUDA_VISIBLE_DEVICES=0;
 
 # run finetune.py with following arguments parsed
-epochs=200
+dataset='mnist'
+epochs=100
 bs=64
 lr=0.0001
+run_name='ft_mnist2_mnist_'
+ft='mnist2class' # models to fine-tune
+# assume a 10 seed pre_training
 
-run_name='ft_mnist2_mnist_0batch0_'
-model='model_pre_train_2class_0batch0.pt'
-python finetune.py --epochs $epochs --bs $bs --lr $lr --run_name $run_name --model $model
-
-run_name='ft_mnist2_mnist_0batch9_'  ### vergessen (9 statt 10 weil start bei 0!!)
-model='model_pre_train_2class_0batch10.pt'
-python finetune.py --epochs $epochs --bs $bs --lr $lr --run_name $run_name --model $model
-
-run_name='ft_mnist2_mnist_0batch500_'
-model='model_pre_train_2class_0batch500.pt'
-python finetune.py --epochs $epochs --bs $bs --lr $lr --run_name $run_name --model $model
-
-run_name='ft_mnist2_mnist_1_'
-model='model_pre_train_2class_1.pt'
-python finetune.py --epochs $epochs --bs $bs --lr $lr --run_name $run_name --model $model
-
-run_name='ft_mnist2_mnist_10_'
-model='model_pre_train_2class_10.pt'
-python finetune.py --epochs $epochs --bs $bs --lr $lr --run_name $run_name --model $model
-
-run_name='ft_mnist2_mnist_100_'
-model='model_pre_train_2class_100.pt'
-python finetune.py --epochs $epochs --bs $bs --lr $lr --run_name $run_name --model $model
-
+python finetune.py --dataset $dataset --epochs $epochs --bs $bs --lr $lr --run_name $run_name --ft $ft

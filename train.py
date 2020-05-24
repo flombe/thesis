@@ -11,11 +11,10 @@ import datasets
 
 # parse args from sh script
 parser = train_utils.train_args_parser()
-parser.add_argument('--dataset', default='mnist', choices=['mnist', 'mnist2class', 'cifar10'])
 args = parser.parse_args()
-batch_size, epochs, lr, run_name, seed = train_utils.parse_train_args(args)
-dataset_name = args.dataset
-print('Run {run_name} on dataset {dataset}'.format(run_name=run_name, dataset=dataset_name))
+dataset_name, batch_size, epochs, lr, run_name, seeds = train_utils.parse_train_args(args)
+print('Run {run_name} on dataset {dataset} for {seeds} different seeds.'.format(
+    run_name=run_name, dataset=dataset_name, seeds=seeds))
 
 # set device
 if torch.cuda.is_available():
@@ -32,10 +31,10 @@ os.makedirs(dataset_dir, exist_ok=True)
 #print('Results directory ' + dataset_dir)
 
 
-# run every training 10 times to aggregate results for stat testing
-for seed_run in range(10):
+# run every training nr.of seeds times to aggregate results for stat testing
+for seed_run in range(1, seeds+1):
     ## set seed
-    train_utils.set_seed(seed+seed_run)  ## parse starting seed, then add 1 for following runs
+    train_utils.set_seed(seed_run)  ## 1 to 10
 
     if dataset_name == 'mnist':
         model = mnist_archs.Net()
@@ -68,7 +67,7 @@ for seed_run in range(10):
                                                                    test_loader=test_loader, optimizer=optimizer,
                                                                    device=device, criterion=criterion, epochs=epochs,
                                                                    output_dir=dataset_dir, run_name = run_name,
-                                                                   seed = seed+seed_run)
+                                                                   seed = seed_run)
     print('Done trainings run ', seed_run)
 
 print('Done with all training runs.')

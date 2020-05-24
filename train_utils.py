@@ -12,6 +12,8 @@ import random
 # parse args from sh script
 def train_args_parser():
     parser = argparse.ArgumentParser(description='Training Parameters')
+    parser.add_argument('--dataset', default='mnist', choices=['mnist', 'mnist2class', 'cifar10'],
+                        type=str , metavar='D', help='trainings dataset name')
     parser.add_argument('--epochs', default=200, type=int, metavar='E',
                         help='number of total epochs to run')
     parser.add_argument('--bs', '--batch-size', default=64, type=int,
@@ -20,18 +22,19 @@ def train_args_parser():
                         metavar='LR', help='initial learning rate')
     parser.add_argument('--run_name' , default="pre-train", type=str, metavar='R',
                         help='trainings run name for saving')
-    parser.add_argument('--seed', default="0", type=int, metavar='S',
-                        help='random seed for this run')
+    parser.add_argument('--seeds', default="0", type=int, metavar='S',
+                        help='amount of runs with different seeds')
     return parser
 
 
 def parse_train_args(args):
+    dataset = args.dataset
     bs = args.bs
     epochs = args.epochs
     lr = args.lr
     run_name = args.run_name
-    seed = args.seed
-    return bs, epochs, lr, run_name, seed
+    seeds = args.seeds
+    return dataset, bs, epochs, lr, run_name, seeds
 
 
 ## set seeds
