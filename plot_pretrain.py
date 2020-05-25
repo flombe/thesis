@@ -47,7 +47,7 @@ for seed in range(1,11):
 
 
 # Plot accuracy vs. number of training epochs
-fig1, ax1 = plt.subplots()
+fig1, ax1 = plt.subplots(figsize=(7, 6), dpi=150)
 plt.title("Pre-train Accuracy vs. Nr of Training Epochs")
 plt.xlabel("Training Epochs (batch1 to epoch100)")
 plt.ylabel("Pre-train Accuracy")

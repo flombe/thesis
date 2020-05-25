@@ -10,8 +10,6 @@ dataset_name = 'mnist'
 
 root_dir = os.getcwd()
 dataset_dir = join(root_dir, 'data', dataset_name)
-print('Dataset directory -- ' + dataset_dir)
-
 
 # for log scale use xsteps = [0.001, 0.01, 0.1, 1, 10, 100] eql. to 1, 10, 100 batches, 1,10,100 epochs
 # for little finer plot add 3s (roughly halfway on log-scale)
@@ -23,13 +21,11 @@ bs = x/937.5
 ep = np.array([1,3,10,30,100], dtype=int)
 total = np.append(bs, ep)
 
-# aggregate Acc's from 10 seed runs
+# aggregate Acc's from 10 seed runs of 11 different models in dict
 run_name = 'ft_mnist2_mnist_'
-
-accs = np.zeros((10, 11))
 mydict = dict()
-
 for check in checkpts:
+    accs = np.zeros((10, 11))
     for seed in range(1,11):
         model_dir = join(dataset_dir, 'models_'+str(seed))
         batch_stats = join(model_dir, run_name + check + '_batch_train_stats.json')
@@ -44,20 +40,20 @@ for check in checkpts:
             test_acc += obj['test_acc']
 
         accs[seed-1] = test_acc
-        mydict[check] = accs
-print(mydict)
+    mydict.update({check: accs})
+#print(mydict)
 
 
 # Plot post-ft accuracy vs. number of training epochs
-fig1, ax1 = plt.subplots()
-plt.title("Post-Finetune Accuracy (median) vs. Nr of Training Epochs")
+fig1, ax1 = plt.subplots(figsize=(7, 6), dpi=150)
+plt.title("Post-Finetune Accuracy (median of 10 seeds)")
 plt.xlabel("Training Epochs (batch1 to epoch100)")
-plt.ylabel("Post-ft Accuracy")
+plt.ylabel("Post-Ft Accuracy")
 
 for check in mydict.keys():
     accs = mydict[check]
-    for i in range(accs.shape[0]):
-        ax1.plot(total, accs[i],'x') #, label=(str(check) +' ft_ '+str(i)))
+    # for i in range(accs.shape[0]):
+    #     ax1.plot(total, accs[i], 'x') #, label=(str(check) +' ft_ '+str(i)))
 
     median = []
     std = []
@@ -66,10 +62,10 @@ for check in mydict.keys():
         std.append(np.std(accs[:,i]))
     p95 = 2*np.array(std)  ## [mean-2std, mean+2std] approx 95% percentile
 
-    ax1.errorbar(total, median, yerr=p95,
-                 ecolor='gray', elinewidth=1, capsize=4, label=(str(check))) # +' median'
+    ax1.plot(total, median, label=(str(check))) # +' median'
 
-#plt.ylim((40,100))
+plt.ylim((0,100))
+ax1.minorticks_on()
 plt.xscale("log")
 plt.xticks(xticks, rotation=80)
 f = lambda x,pos: str(x).rstrip('0').rstrip('.')
@@ -82,10 +78,78 @@ plt.show()
 
 
 
-## Detail graph
+# Plot post-ft accuracy vs. number of training epochs
+fig3, ax3 = plt.subplots(figsize=(7, 6), dpi=150)
+plt.title("Detail view: Post-Finetune Accuracy (median)")
+plt.xlabel("Training Epochs")
+plt.ylabel("Post-Ft Accuracy")
 
-# fig2, ax2 = plt.subplots()
-# plt.title("Post Fine-tune Accuracy vs. Nr. Train Epochs >1")
-# plt.xlabel("Training Epochs")
-# plt.ylabel("post-ft Accuracy")
+for check in mydict.keys():
+    accs = mydict[check]
+    median = []
+    std = []
+    for i in range(accs.shape[1]):
+        median.append(np.median(accs[:,i]))
+        std.append(np.std(accs[:,i]))
+    p95 = 2*np.array(std)
 
+    if check in ['0batch1', '100']:
+        #for i in range(accs.shape[0]):
+        #    ax1.plot(total[6:], accs[i][6:], 'x')
+
+        ax3.errorbar(total[6:], median[6:], yerr=p95[6:],
+                     # ecolor='gray',
+                     elinewidth=1, capsize=4,
+                     label=(str(check)))
+
+    else: ax3.plot(total[6:], median[6:], label=(str(check)))
+
+plt.ylim((96,99.5))
+ax3.minorticks_on()
+plt.xscale("log")
+plt.xticks(xticks[6:], rotation=80)
+ax3.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+ax3.xaxis.set_tick_params(which='minor', bottom=False)
+plt.legend(loc=4)
+plt.tight_layout()
+plt.show()
+
+
+
+
+
+
+
+# Plot post-ft accuracy details for 0batch0 and 100 vs. number of training epochs
+fig2, ax2 = plt.subplots(figsize=(7, 6), dpi=150)
+plt.title("Shortest/longest Pre-trained: Post-Ft Accuracy")
+plt.xlabel("Training Epochs (batch1 to epoch100)")
+plt.ylabel("Post-Ft Accuracy")
+
+for check in ['0batch1', '100']:
+    accs = mydict[check]
+    for i in range(accs.shape[0]):
+        ax2.plot(total, accs[i], 'x') #, label=(str(check) +' ft_ '+str(i)))
+
+    median = []
+    std = []
+    for i in range(accs.shape[1]):
+        median.append(np.median(accs[:,i]))
+        std.append(np.std(accs[:,i]))
+    p95 = 2*np.array(std)  ## [mean-2std, mean+2std] approx 95% percentile
+
+    ax2.errorbar(total, median, yerr=p95,
+                 #ecolor='gray',
+                 elinewidth=1, capsize=4,
+                 label=(str(check))) # +' median'
+
+plt.ylim((0,100))
+ax2.minorticks_on()
+plt.xscale("log")
+plt.xticks(xticks, rotation=80)
+f = lambda x,pos: str(x).rstrip('0').rstrip('.')
+ax2.get_xaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(f))
+ax2.xaxis.set_tick_params(which='minor', bottom=False)
+plt.legend(loc=4)
+plt.tight_layout()
+plt.show()
