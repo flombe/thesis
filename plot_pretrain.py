@@ -55,15 +55,15 @@ plt.ylabel("Pre-train Accuracy")
 for i in range(accs.shape[0]):
     ax1.plot(total, accs[i],'x', label=('seed '+str(i))) ##label=checkpts[i]
 
-median = []
+mean = []
 std = []
 for i in range(accs.shape[1]):
-    median.append(np.median(accs[:,i]))
+    mean.append(np.mean(accs[:,i]))
     std.append(np.std(accs[:,i]))
 p95 = 2*np.array(std)  ## [mean-2std, mean+2std] approx 95% percentile
 
-ax1.errorbar(total, median, yerr=p95, color='k', linewidth=1,
-             ecolor='gray', elinewidth=1, capsize=4, label='median')
+ax1.errorbar(total, mean, yerr=p95, color='k', linewidth=1,
+             ecolor='gray', elinewidth=1, capsize=4, label='mean')
 
 plt.ylim((40,100))
 plt.xscale("log")
