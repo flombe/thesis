@@ -6,7 +6,7 @@ import torch
 def sum_squared(layer, labels):
     if torch.is_tensor(layer):
         layer = torch.Tensor.numpy(layer)
-        print('tensor passed - converted to numpy')
+        #print('tensor passed - converted to numpy')
 
     clusters = []
     cluster_means = []

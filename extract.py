@@ -2,6 +2,7 @@ import torch
 import os
 from os.path import join
 import argparse
+import json
 import datasets
 import train_utils
 
@@ -37,7 +38,7 @@ print(imgs.shape, labels[0:10])
 def extract(models_dir, samples=samples, batch_size=batch_size, test_loader=test_loader):
 
     all_models = {}
-    for file in os.listdir(models_dir):
+    for file in os.listdir(models_dir):  # !order not in training-logic but dir-alphabetical
         if file.endswith(".pt"):
             print(file)
             # Load model

@@ -2,6 +2,13 @@
 <project version="4">
   <component name="PublishConfigData" autoUpload="Always" serverName="bemmerl@furud.ni.tu-berlin.de:22 agent">
     <serverData>
+      <paths name="bemmerl@adhara.ni.tu-berlin.de:22">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/thesis" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="bemmerl@furud.ni.tu-berlin.de:22 agent">
         <serverdata>
           <mappings>
