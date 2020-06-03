@@ -32,10 +32,10 @@ class TorchDataset(Dataset):
             **self.loader_args)
         return train_loader
 
-    def get_test_loader(self, batch_size=32):
+    def get_test_loader(self, batch_size=32, shuffle=True):
         test_loader = torch.utils.data.DataLoader(
             self.get_dataset_cls()(self.dataset_dir, train=False,
-                                   transform=self.get_test_transform()), batch_size=batch_size, shuffle=True,
+                                   transform=self.get_test_transform()), batch_size=batch_size, shuffle=shuffle,
             **self.loader_args)
         return test_loader
 
@@ -72,10 +72,10 @@ class MNIST2class(MNIST):
             **self.loader_args)
         return train_loader
 
-    def get_test_loader(self, batch_size=32):
+    def get_test_loader(self, batch_size=32, shuffle=True):
         test_loader = torch.utils.data.DataLoader(
             datasets.MNIST(self.dataset_dir, train=False,
-                                   transform=self.get_test_transform()), batch_size=batch_size, shuffle=True,
+                                   transform=self.get_test_transform()), batch_size=batch_size, shuffle=shuffle,
             **self.loader_args)
         return test_loader
 

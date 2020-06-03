@@ -31,7 +31,7 @@ else:
     pass
     #dataset = datasets.CIFAR10(dataset_dir=dataset_dir, device=device)
 
-test_loader = dataset.get_test_loader(batch_size)
+test_loader = dataset.get_test_loader(batch_size, shuffle=False)  #using same samples
 imgs,labels= next(iter(test_loader))
 print(imgs.shape, labels[0:10])
 
