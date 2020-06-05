@@ -73,7 +73,7 @@ if __name__ == '__main__':
         for j in range(len(order)):
             for i in range(len(order)):
                 for line in zip(models.keys(), all_ss, all_ids):
-                    if line[0].endswith(join(order[j] + '_' + order[i] + '.pt')):
+                    if line[0].endswith(join('_' + order[j] + '_' + order[i] + '.pt')):
                         new_list.append(line)
                         break
 

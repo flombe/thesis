@@ -107,7 +107,7 @@ for check in mydict.keys():
 plt.ylim((96,99.5))
 ax3.minorticks_on()
 plt.xscale("log")
-plt.xticks(xticks[6:], rotation=80)
+plt.xticks(xticks[6:])
 ax3.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
 ax3.xaxis.set_tick_params(which='minor', bottom=False)
 plt.legend(loc=4)
@@ -159,10 +159,12 @@ plt.show()
 ## New plot - show pre-train time on xaxis
 
 # Plot post-ft accuracy vs. number of pre-training epochs
+from matplotlib import gridspec
 fig1, ax1 = plt.subplots(figsize=(7, 6), dpi=150)
 plt.title("Post-Finetune Accuracy (means) vs. Pre-train duration")
 plt.xlabel("Pre-Training Epochs (batch1 to epoch100)")
 plt.ylabel("Post-Ft Accuracy")
+plt.ylabel("Detail Post-Ft Accuracy")
 
 lines = np.zeros((11,11))
 j = 0
@@ -191,3 +193,5 @@ ax1.xaxis.set_tick_params(which='minor', bottom=False)
 plt.legend(loc=4, title='fine-tuned for')
 plt.tight_layout()
 plt.show()
+
+
