@@ -53,7 +53,7 @@ def extract(models_dir, samples=samples, batch_size=batch_size, test_loader=test
                 all_layers = [batch[0]] + list(model.extract_all(batch[0].to(device), verbose=False))
                 all_layers_flattened.append([out.view(batch_size, -1).cpu().data for out in all_layers])
                 labels.append(batch[1].data)
-                if i == int(samples / batch_size):
+                if i == int(samples / batch_size)-1:
                     break
                 i += 1
 

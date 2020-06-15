@@ -27,8 +27,10 @@ def model_select(data, model_name, checkpts=cp):
                     plot_list.append(data[model][i])
     else:
         plot_list = []
+        print(data)
         for name in model_name:
-            plot_list += data[join('model_ft_mnist2_mnist_' + name)]
+            plot_list += data[join('model' + name)]
+            #plot_list += data[join('model_ft_mnist2_mnist_' + name)]
     return plot_list
 
 
@@ -66,18 +68,18 @@ def ss_id_single_plot(path, model_name):
 
     fig, axs = plt.subplots(2, sharex=True, figsize=(7, 9), dpi=150)
     axs[0].set_title(join('ID and SumSqr over ft model layers [pretrained_' + str(model_name) +']'), weight='semibold')
-    axs[0].set_ylim((4, 24))
+    #axs[0].set_ylim((4, 24))
 
     for name, ss, ids in plot_list:
         axs[0].plot(range(len(ids)), ids, '.-')
     axs[0].set_ylabel("Intrinsic Dimension", weight='semibold')
 
     for name, ss, ids in plot_list:
-        axs[1].plot(range(len(ss)), ss,'.-', label=name)
+        axs[1].plot(range(len(ss)), ss, '.-', label=name)
 
     plt.xlabel("Layers", weight='semibold')
     plt.xticks(range(7), labels=xticks)
-    plt.ylim((0.045, 0.1))
+    #plt.ylim((0.045, 0.1))
     plt.ylabel("SSW/TSS", weight='semibold')
     if model_folder == 'all': plt.legend(loc="lower left", prop={'size': 7.5}, frameon=True, fancybox=True, facecolor='white', title='10 seed means')
     else: plt.legend(loc="lower left", prop={'size': 7.5}, frameon=True, fancybox=True, facecolor='white')
@@ -130,12 +132,13 @@ def ss_id_multi_plot(path, model_name, checkpts=cp):
     plt.rcParams['axes.prop_cycle'] = plt.cycler(color=plt.cm.tab20c.colors) #set color scheme
 
     fig, axs = plt.subplots(2, sharex=True, figsize=(7, 9), dpi=150)
-    axs[0].set_title(join('ID & SumSqr over ft model layers  [pretrained_' + str(model_name)+']'), weight='semibold')
+    #axs[0].set_title(join('ID & SumSqr over ft model layers  [pretrained_' + str(model_name)+']'), weight='semibold')
     #axs[0].set_ylim((4, 24))
 
     i = 0
     for name, ss, ids in plot_list:
-        axs[0].plot(range(len(ids)), ids, '.-')
+        if i%2: axs[0].plot(range(len(ids)), ids, '.--')
+        else: axs[0].plot(range(len(ids)), ids, '.-')
         axs[0].fill_between(range(len(ids)), np.asarray(ids) - 2*np.asarray(stats[i][2]),
                             np.asarray(ids) + 2*np.asarray(stats[i][2]), alpha=0.1)
         i += 1
@@ -175,8 +178,9 @@ if __name__ == '__main__':
         paths = []
         for seed in range(1,11):
             paths.append(join(dataset_dir, 'models_' + str(seed), 'ss_id.json')) #list of paths
+        ss_id_single_plot(paths, model_name=['_pre_mnist2'])
         #ss_id_multi_plot(paths, model_name)
-        ss_id_multi_plot(paths, model_name=['1', '10', '100'], checkpts=['0batch100', '1', '10', '100'])
+        #ss_id_multi_plot(paths, model_name=['0batch1', '0batch10', '0batch100', '0batch300', '1', '3', '10', '100'], checkpts=['0batch300', '100'])
     else:
         path = join(dataset_dir, 'models_' + model_folder, 'ss_id.json')
         ss_id_single_plot(path, model_name=model_name)

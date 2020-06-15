@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 from tqdm import tqdm
-import matplotlib.pyplot as plt
 from scipy.spatial.distance import pdist, squareform
 from os.path import join
 import json
@@ -47,7 +46,7 @@ if __name__ == '__main__':
         print("Devise used = ", device)
 
     for i in range(1,11): # for 10 seed folders
-        path = join('/mnt/antares_raid/home/bemmerl/thesis/data/mnist/models_' + str(i))
+        path = join('/mnt/antares_raid/home/bemmerl/thesis/data/mnist2class/models_' + str(i)) #####
         models = torch.load(join(path, '_extracted.pt')) #map_location='cpu'
         all_ids = []
         all_ss = []
@@ -60,41 +59,51 @@ if __name__ == '__main__':
             for layer in layers:
                 id, error = computeID(layer)
                 ids.append(id)
-                tss, ss_mean = sum_of_squares.sum_squared(layer, labels)
-                ss.append(ss_mean / tss if tss != 0 else 0)
+                tss, ss_mean, ssw = sum_of_squares.sum_squared(layer, labels)
+                ss.append(ssw / tss if tss != 0 else 0)  ## alternative with ssw
 
             all_ids.append(ids)
             all_ss.append(ss)
-        print(zip(models.keys(), all_ss, all_ids))
 
         results = zip(models.keys(), all_ss, all_ids)
+        print(list(results))
         order = ['0batch1', '0batch3', '0batch10', '0batch30', '0batch100', '0batch300', '1', '3', '10', '30', '100']
         new_list = list()
-        for j in range(len(order)):
-            for i in range(len(order)):
-                for line in zip(models.keys(), all_ss, all_ids):
-                    if line[0].endswith(join('_' + order[j] + '_' + order[i] + '.pt')):
-                        new_list.append(line)
-                        break
+        # for j in range(len(order)):
+        #     for i in range(len(order)):
+        #         for line in zip(models.keys(), all_ss, all_ids):
+        #             if line[0].endswith(join('_' + order[j] + '_' + order[i] + '.pt')):
+        #                 new_list.append(line)
+        #                 break
+
+        for i in range(len(order)):
+            for line in zip(models.keys(), all_ss, all_ids):
+                if line[0].endswith(join('_' + order[i] + '.pt')):
+                    new_list.append(line)
+                    break
 
         print('---- 0batch1 ?: ', new_list[0:11])
         print('---- 0batch3 ?: ', new_list[11:22])
         print('---- 0batch10 ?: ', new_list[22:33])
 
         analytics = {
-            'model_ft_mnist2_mnist_0batch1' : new_list[0:11],
-            'model_ft_mnist2_mnist_0batch3': new_list[11:22],
-            'model_ft_mnist2_mnist_0batch10': new_list[22:33],
-            'model_ft_mnist2_mnist_0batch30': new_list[33:44],
-            'model_ft_mnist2_mnist_0batch100': new_list[44:55],
-            'model_ft_mnist2_mnist_0batch300': new_list[55:66],
-            'model_ft_mnist2_mnist_1': new_list[66:77],
-            'model_ft_mnist2_mnist_3': new_list[77:88],
-            'model_ft_mnist2_mnist_10': new_list[88:99],
-            'model_ft_mnist2_mnist_30': new_list[99:110],
-            'model_ft_mnist2_mnist_100': new_list[110:121]
-            }
-        with open(join(path, 'ss_id.json'), 'w+') as f:
+            'model_pre_mnist2': new_list,
+        }
+
+        # analytics = {
+        #     'model_ft_mnist2_mnist_0batch1' : new_list[0:11],
+        #     'model_ft_mnist2_mnist_0batch3': new_list[11:22],
+        #     'model_ft_mnist2_mnist_0batch10': new_list[22:33],
+        #     'model_ft_mnist2_mnist_0batch30': new_list[33:44],
+        #     'model_ft_mnist2_mnist_0batch100': new_list[44:55],
+        #     'model_ft_mnist2_mnist_0batch300': new_list[55:66],
+        #     'model_ft_mnist2_mnist_1': new_list[66:77],
+        #     'model_ft_mnist2_mnist_3': new_list[77:88],
+        #     'model_ft_mnist2_mnist_10': new_list[88:99],
+        #     'model_ft_mnist2_mnist_30': new_list[99:110],
+        #     'model_ft_mnist2_mnist_100': new_list[110:121]
+        #     }
+        with open(join(path, 'ss_id2.json'), 'w+') as f:
             json.dump(analytics, f)
 
 # output dict keys = pretrained model finetuned and value = ('model checkpoint', [ss for 7 layers], [id for 7 layers])

@@ -10,3 +10,8 @@ print([np.mean([*(Input[m][k] for m in range(len(Input)))]) for k in range(3)])
 from os.path import join
 check = ['erst', 'zweit', 'dre']
 print([join('_'+check+'.pt') for check in check])
+
+import os
+import torch
+for file in os.listdir(''):
+    model_dict = torch.load(f'folder/folder/{file}')
