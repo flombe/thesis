@@ -192,12 +192,18 @@ if __name__ == '__main__':
     #     corr_distances_dict[i] = correlationd_matrix(inputs[i])
 
     corr_distances_dict = correlationd_matrix(inputs)
+    visualise_rdm(corr_distances_dict)
     print(corr_distances_dict)
-    print(corr_distances_dict[0].shape)
-    print(corr_distances_dict[0].shape[0])
-    print(np.triu_indices(corr_distances_dict[0].shape[0], k=1))
-    triu = corr_distances_dict[0][np.triu_indices(corr_distances_dict[0].shape[0], k=1)]
+    print(corr_distances_dict.shape)
+    print(corr_distances_dict[0])
+    print(np.triu_indices(corr_distances_dict.shape[0], k=1))
+    triu = corr_distances_dict[np.triu_indices(corr_distances_dict.shape[0], k=1)]
+    triu2 = corr_distances_dict[np.triu_indices(corr_distances_dict.shape[1], k=1)]
     print(triu)
 
-    rdm = calc_rdm(distance.euclidean, corr_distances_dict, list(inputs))
-    visualise_rdm(rdm)
+    plt.figure(figsize=(14, 14))
+    ax = seaborn.heatmap(corr_distances_dict, cmap='rainbow')
+    plt.show()
+
+    #rdm = calc_rdm(distance.euclidean, corr_distances_dict, list(inputs))
+    #visualise_rdm(rdm)
