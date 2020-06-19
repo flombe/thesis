@@ -25,25 +25,26 @@ else:
     print("Devise used = ", device)
 
 # set directory
-root_dir = os.getcwd()
+root_dir = '/mnt/antares_raid/home/bemmerl/thesis'
+#root_dir = os.getcwd()
 dataset_dir = join(root_dir, 'data', dataset_name)
-os.makedirs(dataset_dir, exist_ok=True)
-#print('Results directory ' + dataset_dir)
+model_dir = join(root_dir, 'cleaned', 'models', dataset_name) ###
+os.makedirs(model_dir, exist_ok=True)
 
 
 # run every training nr.of seeds times to aggregate results for stat testing
 for seed_run in range(1, seeds+1):
-    ## set seed
-    train_utils.set_seed(seed_run)  ## 1 to 10
+    # set seed
+    train_utils.set_seed(seed_run)
 
     if dataset_name == 'mnist':
-        model = mnist_archs.Net()
+        model = mnist_archs.mnistConvNet()
         model.to(device)
         dataset = datasets.MNIST(dataset_dir=dataset_dir, device=device)
         criterion = F.cross_entropy ##
 
     elif dataset_name == 'mnist2class':
-        model = mnist_archs.Net2class()  ## same architecture but only 2 output layers
+        model = mnist_archs.mnistConvNet2class()
         model.to(device)
         dataset = datasets.MNIST2class(dataset_dir=dataset_dir, device=device)
         criterion = F.cross_entropy
@@ -66,8 +67,8 @@ for seed_run in range(1, seeds+1):
     train_acc, train_loss, test_acc, test_loss = train_utils.train(model=model, train_loader=train_loader,
                                                                    test_loader=test_loader, optimizer=optimizer,
                                                                    device=device, criterion=criterion, epochs=epochs,
-                                                                   output_dir=dataset_dir, run_name = run_name,
-                                                                   seed = seed_run)
+                                                                   output_dir=model_dir, run_name=run_name,
+                                                                   seed=seed_run, save=False)
     print('Done trainings run ', seed_run)
 
 print('Done with all training runs.')

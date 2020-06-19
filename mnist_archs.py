@@ -3,9 +3,9 @@ import torch.nn.functional as F
 
 ## from ID paper but added two dropout layers
 # F.Chollet architecture (Keras)
-class Net(nn.Module):
+class mnistConvNet(nn.Module):
     def __init__(self):
-        super(Net, self).__init__()
+        super(mnistConvNet, self).__init__()
         self.conv1 = nn.Conv2d(1, 32, kernel_size=3)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3)
         self.dropout1 = nn.Dropout2d(0.25)  ## added Dropout
@@ -64,9 +64,9 @@ class Net(nn.Module):
         return out1, out2, out3, out4, out5, out6
 
 
-class Net2class(Net):
+class mnistConvNet2class(mnistConvNet):
     def __init__(self):
-        super(Net, self).__init__()
+        super(mnistConvNet2class, self).__init__()
         self.conv1 = nn.Conv2d(1, 32, kernel_size=3)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3)
         self.dropout1 = nn.Dropout2d(0.25)
