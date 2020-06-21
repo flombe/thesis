@@ -13,7 +13,7 @@ import datasets
 parser = train_utils.train_args_parser()
 args = parser.parse_args()
 dataset_name, batch_size, epochs, lr, run_name, seeds = train_utils.parse_train_args(args)
-print('Run {run_name} on dataset {dataset} for {seeds} different seeds.'.format(
+print('>> Run {run_name} on dataset {dataset} for {seeds} different seeds. <<'.format(
     run_name=run_name, dataset=dataset_name, seeds=seeds))
 
 # set device
@@ -25,10 +25,9 @@ else:
     print("Devise used = ", device)
 
 # set directory
-root_dir = '/mnt/antares_raid/home/bemmerl/thesis'
-#root_dir = os.getcwd()
+root_dir = os.getcwd()  #'/mnt/antares_raid/home/bemmerl/thesis'
 dataset_dir = join(root_dir, 'data', dataset_name)
-model_dir = join(root_dir, 'cleaned', 'models', dataset_name) ###
+model_dir = join(root_dir, 'models', dataset_name) ###
 os.makedirs(model_dir, exist_ok=True)
 
 
@@ -68,7 +67,7 @@ for seed_run in range(1, seeds+1):
                                                                    test_loader=test_loader, optimizer=optimizer,
                                                                    device=device, criterion=criterion, epochs=epochs,
                                                                    output_dir=model_dir, run_name=run_name,
-                                                                   seed=seed_run, save=False)
+                                                                   seed=seed_run, save=True)
     print('Done trainings run ', seed_run)
 
 print('Done with all training runs.')

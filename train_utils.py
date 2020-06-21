@@ -8,7 +8,7 @@ import torch.nn.functional as F
 import torchvision
 import numpy as np
 import random
-import matplotlib as plt
+import matplotlib.pyplot as plt
 from torch.utils.tensorboard import SummaryWriter
 
 
@@ -55,7 +55,7 @@ def matplotlib_imshow(img, one_channel=False):
     if one_channel:
         img = img.mean(dim=0)
     img = img / 2 + 0.5     # unnormalize
-    npimg = img.numpy()
+    npimg = img.cpu().numpy()
     if one_channel:
         plt.imshow(npimg, cmap="Greys")
     else:
@@ -70,7 +70,7 @@ def images_to_probs(net, images):
     output = net(images)
     # convert output probabilities to predicted class
     _, preds_tensor = torch.max(output, 1)
-    preds = np.squeeze(preds_tensor.numpy())
+    preds = np.squeeze(preds_tensor.cpu().numpy())
     return preds, [F.softmax(el, dim=0)[i].item() for i, el in zip(preds, output)]
 
 
@@ -92,7 +92,7 @@ def plot_classes_preds(net, images, labels, classes):
             classes[preds[idx]],
             probs[idx] * 100.0,
             classes[labels[idx]]),
-                    color=("green" if preds[idx]==labels[idx].item() else "red"))
+            color=("green" if preds[idx]==labels[idx].item() else "red"))
     return fig
 
 ###
@@ -137,7 +137,7 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
             print("Warning: model directory already exists")
 
     # tensorboard init
-    writer = SummaryWriter(join('tensorboard', run_name + '_' + str(seed)))
+    writer = SummaryWriter(join('tensorboard', run_name, str(seed)))
     running_loss = 0.0
 
     # training and information collection
@@ -165,8 +165,8 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
             optimizer.step()
 
             # tracking for tensorboard
-            classes = np.unique(labels)
-            print('classes: ', classes)
+            classes = np.unique(labels.cpu())
+            #print('classes: ', classes)
 
             running_loss += loss.item()
             if i % 100 == 99:  # every 100 batches
@@ -181,7 +181,7 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
 
 
             # save models and stats for batches of first epoch
-            if save == True & epoch == 0:
+            if save==True and epoch == 0:
                 j = i+1
                 if j in first_batches_chkpts:
                     torch.save(model, join(model_dir, 'model_' + str(run_name) + '_0_' + str(j) + '.pt'))
@@ -196,8 +196,8 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
                     test_loss.append(loss.item())
                     test_acc.append(acc)
 
-                if verbose:
-                    print('Test loss : %g --- Test acc : %g %%' % (test_loss[-1], test_acc[-1]))
+                    if verbose:
+                        print('>>> Epoch 0 - Batch %g :   Test loss : %g --- Test acc : %g %%' % (j, test_loss[-1], test_acc[-1]))
 
         # save model
         if save==True:
@@ -218,6 +218,12 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
             if verbose:
                 print('Test loss : %g --- Test acc : %g %%' % (test_loss[-1], test_acc[-1]))
 
+        writer.add_scalars('Loss', {'test loss': test_loss[-1],
+                                    'train loss': train_loss[-1]}, epoch)
+        writer.add_scalars('Acc', {'test acc': test_acc[-1],
+                                   'train acc': train_acc[-1]}, epoch)
+        writer.add_graph(model, inputs)
+    writer.close()
 
     if save==True:
         train_stats = {
