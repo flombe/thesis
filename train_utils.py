@@ -5,12 +5,11 @@ import json
 import argparse
 import torch
 import torch.nn.functional as F
-import torchvision
 import numpy as np
+import pandas as pd
 import random
 import matplotlib.pyplot as plt
 from torch.utils.tensorboard import SummaryWriter
-
 
 
 # parse args from sh script
@@ -199,30 +198,36 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
                     if verbose:
                         print('>>> Epoch 0 - Batch %g :   Test loss : %g --- Test acc : %g %%' % (j, test_loss[-1], test_acc[-1]))
 
+
+        # evaluate model on training and test data
+        model.eval()
+        tr_loss, tr_acc = evaluate(model, train_loader, device)
+        tst_loss, tst_acc = evaluate(model, test_loader, device)
+
+        if verbose:
+            print('Test loss : %g --- Test acc : %g %%' % (test_loss[-1], test_acc[-1]))
+
+        # add tensorboard graphs
+        writer.add_scalars('Loss', {'test loss': tst_loss,
+                                    'train loss': tr_loss}, epoch)
+        writer.add_scalars('Acc', {'test acc': tst_acc,
+                                   'train acc': tr_acc}, epoch)
+        writer.add_graph(model, inputs)
+
+
         # save model
         if save==True:
             epoch_count = epoch+1
             if epoch_count in epoch_chkpts:
                 torch.save(model, join(model_dir, 'model_' + str(run_name) + '_' + str(epoch_count) + '.pt'))
 
-                # evaluate model on training and test data
-                model.eval()
-                loss, acc = evaluate(model, train_loader, device)
-                train_loss.append(loss.item())
-                train_acc.append(acc)
+                # safe train_stats for checkpoints
+                train_loss.append(tr_loss.item())
+                train_acc.append(tr_acc)
 
-                loss, acc = evaluate(model, test_loader, device)
-                test_loss.append(loss.item())
-                test_acc.append(acc)
+                test_loss.append(tst_loss.item())
+                test_acc.append(tst_acc)
 
-            if verbose:
-                print('Test loss : %g --- Test acc : %g %%' % (test_loss[-1], test_acc[-1]))
-
-        writer.add_scalars('Loss', {'test loss': test_loss[-1],
-                                    'train loss': train_loss[-1]}, epoch)
-        writer.add_scalars('Acc', {'test acc': test_acc[-1],
-                                   'train acc': train_acc[-1]}, epoch)
-        writer.add_graph(model, inputs)
     writer.close()
 
     if save==True:
@@ -237,5 +242,8 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
         stats_file_path = join(model_dir, run_name + '_train_stats.json')
         with open(stats_file_path, 'w+') as f:
             json.dump(train_stats, f)
+
+    # create dataframe
+    df = pd.DataFrame(train_stats)
 
     return train_loss, train_acc, test_loss, test_acc

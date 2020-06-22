@@ -68,6 +68,12 @@ for seed_run in range(1, seeds+1):
                                                                    device=device, criterion=criterion, epochs=epochs,
                                                                    output_dir=model_dir, run_name=run_name,
                                                                    seed=seed_run, save=True)
+    # add to df
+    train_stats = {
+        'model_cls': model.__class__.__name__,
+        'run_name': run_name,
+    }
+
     print('Done trainings run ', seed_run)
 
 print('Done with all training runs.')
