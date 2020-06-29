@@ -26,6 +26,12 @@ print([join('_'+check+'.pt') for check in check])
 #     device = torch.device("cpu")
 #     print("Devise used = ", device)
 
+first_batches_chkpts = np.array([1, 3, 10, 30, 100, 300])
+zwei = np.array([1,3,10,30,100])
+out = first_batches_chkpts * 0.001
+print(out)
+print(np.append(out, zwei))
+
 
 import pandas as pd
 import json
@@ -36,4 +42,23 @@ with open(file, 'r') as myfile:
     data = myfile.read()
 obj = json.loads(data)
 df = pd.DataFrame([obj])
-print(df)
+print('df: ', df)
+
+dff = pd.DataFrame([obj]*5)
+
+ddff = pd.DataFrame()
+
+ddff = ddff.append(dff, ignore_index=True)
+
+print('ddff: ', ddff)
+
+
+ddff.insert(2, 'pre_dataset', 'mnist')
+
+param = {'train_samples': 60000,
+		 'batch_size': 64,
+		 'lr': 0.0001}
+ddff.insert(3, 'pre_param', [param]*len(ddff))
+
+print(ddff['pre_param'][0])
+print(ddff['pre_param'][0]["lr"])

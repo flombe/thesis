@@ -121,8 +121,8 @@ def evaluate(model, loader, device, criterion=F.cross_entropy):  ## F.cross_entr
 
 
 # set checkpoints (for later log-plots choose log ticks)
-first_batches_chkpts = [1, 3, 10, 30, 100, 300]
-epoch_chkpts = [1, 3, 10, 30, 100]
+first_batches_chkpts = np.array([1, 3, 10, 30, 100, 300])
+epoch_chkpts = np.array([1, 3, 10, 30, 100])
 
 def train(model, train_loader, test_loader, optimizer, device, epochs, run_name, seed,
           criterion=F.cross_entropy, save=True, output_dir=None, verbose=True):
@@ -144,6 +144,7 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
     train_acc = []
     test_loss = []
     test_acc = []
+    model_names = []
 
     for epoch in tqdm(range(epochs)):
 
@@ -165,7 +166,6 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
 
             # tracking for tensorboard
             classes = np.unique(labels.cpu())
-            #print('classes: ', classes)
 
             running_loss += loss.item()
             if i % 100 == 99:  # every 100 batches
@@ -183,9 +183,10 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
             if save==True and epoch == 0:
                 j = i+1
                 if j in first_batches_chkpts:
-                    torch.save(model, join(model_dir, 'model_' + str(run_name) + '_0_' + str(j) + '.pt'))
+                    model_names.append(join('model_' + str(run_name) + '_0_' + str(j) + '.pt'))
+                    torch.save(model, join(model_dir, model_names[-1]))
 
-                    # save json train stats
+                    # save train stats
                     model.eval()
                     loss, acc = evaluate(model, train_loader, device)
                     train_loss.append(loss.item())
@@ -200,26 +201,22 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
 
 
         # evaluate model on training and test data
-        model.eval()
-        tr_loss, tr_acc = evaluate(model, train_loader, device)
-        tst_loss, tst_acc = evaluate(model, test_loader, device)
-
-        if verbose:
-            print('Test loss : %g --- Test acc : %g %%' % (test_loss[-1], test_acc[-1]))
-
-        # add tensorboard graphs
-        writer.add_scalars('Loss', {'test loss': tst_loss,
-                                    'train loss': tr_loss}, epoch)
-        writer.add_scalars('Acc', {'test acc': tst_acc,
-                                   'train acc': tr_acc}, epoch)
-        writer.add_graph(model, inputs)
-
+        if seed == 1:  ## to speed up training of other rounds, only track first in detail
+            model.eval()
+            tr_loss, tr_acc = evaluate(model, train_loader, device)
+            tst_loss, tst_acc = evaluate(model, test_loader, device)
 
         # save model
         if save==True:
             epoch_count = epoch+1
             if epoch_count in epoch_chkpts:
-                torch.save(model, join(model_dir, 'model_' + str(run_name) + '_' + str(epoch_count) + '.pt'))
+                model_names.append(join('model_' + str(run_name) + '_' + str(epoch_count) + '.pt'))
+                torch.save(model, join(model_dir, model_names[-1]))
+
+                if seed is not 1:  # only calculate at checkpts
+                    model.eval()
+                    tr_loss, tr_acc = evaluate(model, train_loader, device)
+                    tst_loss, tst_acc = evaluate(model, test_loader, device)
 
                 # safe train_stats for checkpoints
                 train_loss.append(tr_loss.item())
@@ -228,16 +225,28 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
                 test_loss.append(tst_loss.item())
                 test_acc.append(tst_acc)
 
+        if verbose:
+            print('Test loss : %g --- Test acc : %g %%' % (tst_loss, tst_acc))
+
+        # add tensorboard graphs
+        writer.add_scalars('Loss', {'test loss': tst_loss,
+                                    'train loss': tr_loss}, epoch)
+        writer.add_scalars('Acc', {'test acc': tst_acc,
+                                   'train acc': tr_acc}, epoch)
+        writer.add_graph(model, inputs)
+
     writer.close()
 
     if save==True:
         train_stats = {
-            'model_cls': model.__class__.__name__,
-            'run_name': run_name,
-            'train_acc': train_acc,
-            'train_loss': train_loss,
-            'test_acc': test_acc,
-            'test_loss': test_loss
+            'model_name': model_names,
+            'seed': seed,
+            'pre_net': model.__class__.__name__,
+            'pre_epochs': np.append(first_batches_chkpts * 0.001, epoch_chkpts).tolist(),  ##
+            'pre_train_acc': train_acc,
+            'pre_train_loss': train_loss,
+            'pre_test_acc': test_acc,
+            'pre_test_loss': test_loss
         }
         stats_file_path = join(model_dir, run_name + '_train_stats.json')
         with open(stats_file_path, 'w+') as f:
@@ -246,4 +255,4 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
     # create dataframe
     df = pd.DataFrame(train_stats)
 
-    return train_loss, train_acc, test_loss, test_acc
+    return train_loss, train_acc, test_loss, test_acc, df

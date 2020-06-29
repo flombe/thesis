@@ -7,23 +7,17 @@ import matplotlib
 
 # plot pretraining on MNIST2class with stat test of 10 seeds
 dataset_name = 'mnist2class'
-
 root_dir = os.getcwd()
-dataset_dir = join(root_dir, 'data', dataset_name)
+dataset_dir = join(root_dir, 'models', dataset_name)
+run_name = 'pre_mnist2'
 
-# for log scale use xsteps = [0.001, 0.01, 0.1, 1, 10, 100] eql. to 1, 10, 100 batches, 1,10,100 epochs
-# for little finer plot add 3s (roughly halfway on log-scale)
-checkpts = ['batch1','batch3','batch10','batch30','batch100','batch300','1','3','10','30','100']
 xticks = [0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 100]
-
 x = np.array([1, 3, 10, 30, 100, 300], dtype=int)
 bs = x/937.5
 ep = np.array([1, 3, 10, 30, 100], dtype=int)
 total = np.append(bs, ep)
 
-
 # load and aggregate Acc's from 10 seed runs
-run_name = 'pre_mnist2'
 accs = np.zeros((10, 11))
 
 for seed in range(1, 11):
@@ -33,9 +27,7 @@ for seed in range(1, 11):
     with open(train_stats, 'r') as myfile:
         data = myfile.read()
     obj = json.loads(data)
-    accs[seed-1] = obj['test_acc']
-#print(accs.shape)
-
+    accs[seed-1] = obj['pre_test_acc']
 
 # Plot accuracy vs. number of training epochs
 fig1, ax1 = plt.subplots(figsize=(7, 6), dpi=150)
@@ -64,3 +56,5 @@ ax1.get_xaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(f))
 ax1.xaxis.set_tick_params(which='minor', bottom=False)
 plt.legend(loc=4)
 plt.show()
+print('Plot Pretraining')
+

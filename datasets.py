@@ -23,7 +23,7 @@ class Dataset:
 class TorchDataset(Dataset):
     def __init__(self, dataset_dir, device):
         self.dataset_dir = dataset_dir
-        self.loader_args = {'num_workers': 2, 'pin_memory': True} if device.type == 'cuda' else {}
+        self.loader_args = {'num_workers': 6, 'pin_memory': True} if device.type == 'cuda' else {}
 
     def get_train_loader(self, batch_size=32):
         train_loader = torch.utils.data.DataLoader(
