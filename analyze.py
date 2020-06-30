@@ -7,7 +7,9 @@ import json
 
 from IDNN.intrinsic_dimension import estimate, block_analysis
 import sum_of_squares
+import rsa
 
+# to compute ID, SS and RSA on extracted activations
 
 def computeID(r, number_resampling=50, fraction=0.9, distance_metric='euclidean'):
     ID = []

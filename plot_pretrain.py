@@ -57,4 +57,3 @@ ax1.xaxis.set_tick_params(which='minor', bottom=False)
 plt.legend(loc=4)
 plt.show()
 print('Plot Pretraining')
-

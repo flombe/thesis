@@ -74,7 +74,7 @@ for seed_run in range(1, seeds+1):
 
 # add to dff and save
 dff.insert(3, 'pre_dataset', dataset_name)
-param = {'train_samples': len(dataset),
+param = {'train_samples': len(train_loader)*batch_size,
          'batch_size': batch_size,
          'lr': lr}
 dff.insert(4, 'pre_param', [param] * len(dff))

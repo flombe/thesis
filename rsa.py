@@ -141,6 +141,7 @@ if __name__ == '__main__':
         device = torch.device("cpu")
         print("Devise used = ", device)
 
+
     #for i in range(1, 11):  # for 10 seed folders
     path = join('/mnt/antares_raid/home/bemmerl/thesis/data/mnist2class/models_1')
     models = torch.load(join(path, '_extracted.pt'))
@@ -156,13 +157,11 @@ if __name__ == '__main__':
     print(len(layers))
     print(len(labels))
 
-
     ## first test rdm of 10 first samples on last layer of one model
-    select_layer = layers[5][0:10, :]  # second to last layer activations - of 10 samples
+    select_layer = layers[5][0:10, :]  # second to last layer activations - of 100 samples
     print(select_layer.shape)
     select_labels = labels[0:10]
     print(select_labels)
-
 
     inputs = select_layer
     labels = select_labels
@@ -173,7 +172,6 @@ if __name__ == '__main__':
     print(type(inputs.cpu().numpy().squeeze()))
     inputs = (inputs.cpu().numpy().squeeze())
     print(inputs)
-
 
     corr_distances_dict = {}
     def correlationd_matrix(list_of_activations):

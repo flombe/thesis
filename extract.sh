@@ -3,7 +3,8 @@
 
 export CUDA_VISIBLE_DEVICES=0;
 
-dataset='mnist'
+trained_on='mnist2class'
+extract_dataset=['mnist2class', 'mnist']
 model_folder='all'
 
-python extract.py --dataset $dataset --model_folder $model_folder
+python extract.py --trained_on $trained_on --dataset $extract_dataset --model_folder $model_folder

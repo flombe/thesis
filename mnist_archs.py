@@ -16,10 +16,10 @@ class mnistConvNet(nn.Module):
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
         x = F.relu(F.max_pool2d(self.conv2(x), 2))
-        x = self.dropout1(x)   ## added Dropout  -- before relu, maxpool prev line?
+        x = self.dropout1(x)
         x = x.view(-1, 1600)
         x = F.relu(self.fc1(x))
-        x = self.dropout2(x)   ## added Dropout
+        x = self.dropout2(x)
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
 
