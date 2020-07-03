@@ -7,7 +7,6 @@ import mnist_archs
 import train_utils
 import datasets
 import pandas as pd
-import plot_pretrain
 #import vgg_mod
 
 
@@ -54,8 +53,8 @@ for seed_run in range(1, seeds+1):
         #dataset = datasets.CIFAR10(dataset_dir=root_dir, device=device)
 
     model.to(device)
-    criterion = F.cross_entropy
-    print(model) ## check
+    criterion = F.nll_loss  # with F.log_softmax on output = CrossEntropyLoss
+    print(model)
 
     # loaders
     train_loader = dataset.get_train_loader(batch_size=batch_size)
@@ -78,6 +77,6 @@ param = {'train_samples': len(train_loader)*batch_size,
          'batch_size': batch_size,
          'lr': lr}
 dff.insert(4, 'pre_param', [param] * len(dff))
-dff.to_pickle(join(model_dir, 'df_' + run_name))
+#dff.to_pickle(join(model_dir, 'df_' + run_name))
 
 print('Done with all training runs.')

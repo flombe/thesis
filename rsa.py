@@ -205,3 +205,16 @@ if __name__ == '__main__':
 
     #rdm = calc_rdm(distance.euclidean, corr_distances_dict, list(inputs))
     #visualise_rdm(rdm)
+
+
+
+    # take extracted activations of 500 source sampels -- create RDM
+    # input 500 TARGET samples (classifier maybe doesn't make sense) extract activations -- create RDM
+    # -> calc correlation between these two RDMs = similarity of activations representation of different data in same NN
+    # ---> therfore predicts post-ft Acc since similar representations will do similarly good?
+
+    ## only do it on one layer?
+    ## Option: compare RDMs of every layer and create score out of those (reasonable since, comparing same with same)
+    ## [aggregating all layers - sinnvoll? correlation not, since layers are supposed to be different, mean also not..]
+
+    

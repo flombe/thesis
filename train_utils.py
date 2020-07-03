@@ -10,6 +10,7 @@ import pandas as pd
 import random
 import matplotlib.pyplot as plt
 from torch.utils.tensorboard import SummaryWriter
+import time
 
 
 # parse args from sh script
@@ -97,7 +98,7 @@ def plot_classes_preds(net, images, labels, classes):
 ###
 
 
-def evaluate(model, loader, device, criterion=F.cross_entropy):  ## F.cross_entropy instead of F.nll_loss
+def evaluate(model, loader, device, criterion=F.nll_loss):
     loss = 0.0
     correct = 0
     total = 0
@@ -111,7 +112,7 @@ def evaluate(model, loader, device, criterion=F.cross_entropy):  ## F.cross_entr
 
             _, predicted = torch.max(outputs.data, 1)
             correct += (predicted == labels).sum().item()
-            loss += criterion(outputs, labels)
+            loss += criterion(outputs, labels) * labels.size(0)  ## error in ID paper? criterion gives loss mean
             total += labels.size(0)
 
         acc = 100 * correct / total
@@ -125,7 +126,7 @@ first_batches_chkpts = np.array([1, 3, 10, 30, 100, 300])
 epoch_chkpts = np.array([1, 3, 10, 30, 100])
 
 def train(model, train_loader, test_loader, optimizer, device, epochs, run_name, seed,
-          criterion=F.cross_entropy, save=True, output_dir=None, verbose=True):
+          criterion=F.nll_loss, save=True, output_dir=None, verbose=True):
     model_dir = None
     if output_dir is not None:
         model_dir = join(output_dir, 'models_' + str(seed))
@@ -137,7 +138,6 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
 
     # tensorboard init
     writer = SummaryWriter(join('tensorboard', run_name, str(seed)))
-    running_loss = 0.0
 
     # training and information collection
     train_loss = []
@@ -147,6 +147,10 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
     model_names = []
 
     for epoch in tqdm(range(epochs)):
+
+        run_train_loss = 0.0
+        # run_train_acc = 0.0
+        run_sample_nr = 0
 
         model.train()
         for i, data in enumerate(train_loader, 0):
@@ -164,20 +168,20 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
             loss.backward()
             optimizer.step()
 
-            # tracking for tensorboard
-            classes = np.unique(labels.cpu())
+            # last batch is only 32 samples!! 60K/64 = 937.5 -> train_loader 0-936 with 64, but 937 only 32
+            run_train_loss += loss.item() * inputs.size(0)  # loss mean of batch * batch size (for last one diff)
+            # run_train_acc += (torch.argmax(outputs, 1) == labels).float().sum()  # too rough estimate
+            run_sample_nr += inputs.size(0)
 
-            running_loss += loss.item()
             if i % 100 == 99:  # every 100 batches
                 # log the running loss
-                writer.add_scalar('training loss', running_loss / 100, epoch * len(train_loader) + i)
+                writer.add_scalar('training loss', run_train_loss / run_sample_nr, epoch * len(train_loader) + i)
 
                 # log a Matplotlib Figure showing the model's predictions on a random mini-batch
+                classes = np.unique(labels.cpu())
                 writer.add_figure('predictions vs. actuals',
                                   plot_classes_preds(model, inputs, labels, classes),
                                   global_step=epoch * len(train_loader) + i)
-                running_loss = 0.0
-
 
             # save models and stats for batches of first epoch
             if save==True and epoch == 0:
@@ -188,6 +192,7 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
 
                     # save train stats
                     model.eval()
+
                     loss, acc = evaluate(model, train_loader, device)
                     train_loss.append(loss.item())
                     train_acc.append(acc)
@@ -198,6 +203,10 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
 
                     if verbose:
                         print('>>> Epoch 0 - Batch %g :   Test loss : %g --- Test acc : %g %%' % (j, test_loss[-1], test_acc[-1]))
+
+        # # running loss/acc on training as estimate
+        # run_train_loss /= run_sample_nr
+        # run_train_acc /= run_sample_nr
 
 
         # evaluate model on training and test data
