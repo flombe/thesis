@@ -21,6 +21,26 @@ print(np.append(out, zwei))
 
 
 
+# plot test
+import matplotlib.pyplot as plt
+import matplotlib
+import numpy as np
+
+print(matplotlib.get_backend())
+print(plt.isinteractive())
+#matplotlib.use('TkAgg')
+
+np.random.seed(19680801)
+data = np.random.randn(2, 100)
+
+fig, axs = plt.subplots(2, 2, figsize=(5, 5))
+axs[0, 0].hist(data[0])
+plt.show(block=True)
+plt.interactive(False)
+
+
+
+
 # dataframe handling
 import pandas as pd
 import json
@@ -55,13 +75,15 @@ run_name = 'pre_mnist2'
 dataset = datasets.MNIST(dataset_dir=dataset_dir, device=device)
 train_loader = dataset.get_train_loader(batch_size=batch_size)
 print('train_loader len * bs: ', len(train_loader)*batch_size)
+print('len train_loader.dataset; ', len(train_loader.dataset))
 
 dff.insert(3, 'pre_dataset', dataset_name)
-param = {'train_samples': len(train_loader)*batch_size,
+param = {'train_samples': len(train_loader.dataset),
          'batch_size': batch_size,
          'lr': lr}
 dff.insert(4, 'pre_param', [param] * len(dff))
-#dff.to_pickle(join(model_dir, 'df_' + run_name))
+# dff.to_pickle(join(model_dir, 'df_' + run_name))
+# print('dataframe saved.')
 
 print(dff['pre_param'][0])
 print(dff['pre_param'][0]["lr"])
@@ -108,3 +130,5 @@ for i in range(7):
 	print('Len of activations for one model: ', list(data[keys[0]]['layers'])[i].shape)
 
 act = pd.DataFrame.from_dict(data)
+
+

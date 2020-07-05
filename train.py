@@ -7,7 +7,7 @@ import mnist_archs
 import train_utils
 import datasets
 import pandas as pd
-#import vgg_mod
+import vgg_arch
 
 
 # parse args from sh script
@@ -47,13 +47,13 @@ for seed_run in range(1, seeds+1):
         model = mnist_archs.mnistConvNet2class()
         dataset = datasets.MNIST2class(dataset_dir=dataset_dir, device=device)
 
-    else:
-        pass
-        #model = vgg_mod.vgg16(pretrained=False, num_classes=10)
-        #dataset = datasets.CIFAR10(dataset_dir=root_dir, device=device)
+    elif dataset_name == 'cifar10':
+        model = vgg_arch.vgg16(pretrained=False, num_classes=10)
+        dataset = datasets.CIFAR10(dataset_dir=root_dir, device=device)
 
     model.to(device)
     criterion = F.nll_loss  # with F.log_softmax on output = CrossEntropyLoss
+    if dataset_name=='cifar10': criterion = F.cross_entropy
     print(model)
 
     # loaders
@@ -77,6 +77,6 @@ param = {'train_samples': len(train_loader)*batch_size,
          'batch_size': batch_size,
          'lr': lr}
 dff.insert(4, 'pre_param', [param] * len(dff))
-#dff.to_pickle(join(model_dir, 'df_' + run_name))
+dff.to_pickle(join(model_dir, 'df_' + run_name))
 
 print('Done with all training runs.')

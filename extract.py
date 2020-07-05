@@ -49,21 +49,24 @@ def extract(models_dir, test_loader, samples=samples, batch_size=batch_size):
             model = torch.load(join(models_dir, file))
             model.to(device)
 
-            all_layers_flattened = []
-            i = 0
-            labels = []
-            for batch in test_loader:
-                # print(batch[0].shape)
-                all_layers = [batch[0]] + list(model.extract_all(batch[0].to(device), verbose=False))
-                all_layers_flattened.append([out.view(batch_size, -1).cpu().data for out in all_layers])
-                labels.append(batch[1].data)
-                if i == int(samples / batch_size)-1:
-                    break
-                i += 1
+            with torch.no_grad():
+                model.eval()
 
-            result = []
-            for layers in zip(*all_layers_flattened):
-                result.append(torch.cat(layers))
+                all_layers_flattened = []
+                i = 0
+                labels = []
+                for batch in test_loader:
+                    # print(batch[0].shape)
+                    all_layers = [batch[0]] + list(model.extract_all(batch[0].to(device), verbose=False))
+                    all_layers_flattened.append([out.view(batch_size, -1).cpu().data for out in all_layers])
+                    labels.append(batch[1].data)
+                    if i == int(samples / batch_size)-1:
+                        break
+                    i += 1
+
+                result = []
+                for layers in zip(*all_layers_flattened):
+                    result.append(torch.cat(layers))
 
             all_models[file] = {
                 'layers': result,
