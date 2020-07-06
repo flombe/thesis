@@ -18,6 +18,8 @@ from os.path import join
 from tqdm import tqdm
 from natsort import natsorted
 import dill
+import time
+import math
 
 
 def correlationd_matrix(activations):
@@ -60,27 +62,43 @@ def dist_between_corr_matrices(dist_fun, corr_matrix_1, corr_matrix_2):
 
 
 def calc_rdm(dist_fun, corr_distances_dict):
+    t_rdm = time.time()
     n = len(corr_distances_dict)
     rdm = np.zeros((n, n))
     for i in range(n):
-        if i % 10 == 0:
-            print(i)
         for j in range(i, n):
             rdm[i, j] = rdm[j, i] = dist_between_corr_matrices(dist_fun,
                                                                corr_distances_dict[i],
                                                                corr_distances_dict[j])
+    print(f'>> Calculate {n}x{n} RDM' + '(in {:.2f} s)'.format(time.time()-t_rdm))
     return rdm
 
 
-def visualise_rdm(rdm):
-    plt.figure(figsize=(14 ,14))
-    ax = seaborn.heatmap(rdm, cmap='rainbow')  # , xticklabels = np.around(acc_df['acc'].astype('float') * 100), yticklabels = np.around(acc_df['acc'].astype('float') * 100), cmap='rainbow')
+def plot_rdm(rdm):
+    plt.figure(figsize=(16, 14), dpi=150)
+    ax = seaborn.heatmap(rdm, cmap='rainbow')#, xticklabels=labels, yticklabels=labels)
     # n = 10  # Keeps every nth label
-    # [l.set_visible(False) for (i,l) in enumerate(ax.xaxis.get_ticklabels()) if i % n != 0]
-    # [l.set_visible(False) for (i,l) in enumerate(ax.yaxis.get_ticklabels()) if i % n != 0]
+    # [l.set_visible(False) for (i, l) in enumerate(ax.xaxis.get_ticklabels()) if i % n != 0]
+    # [l.set_visible(False) for (i, l) in enumerate(ax.yaxis.get_ticklabels()) if i % n != 0]
 
 
+def multi_plot(corr_dict):
+    #eval(type(corr_dict)==dict)
+    n = math.sqrt(len(corr_dict))
+    fig, axs = plt.subplots(math.ceil(n), math.floor(n), sharex='col', sharey='row', dpi=150)
 
+    for ax, val in zip(axs.ravel(), corr_dict.items()):
+        ax = seaborn.heatmap(val[1], cmap='rainbow') # , xticklabels=labels, yticklabels=labels)
+        ax.set_title(val[0])
+
+def multi_plottoni(corr_dict):
+    fig, axs = plt.subplots(2, 6, figsize=(15, 5), edgecolor='k', sharex='col', sharey='row')
+    fig.subplots_adjust(hspace=.5, wspace=.001)
+
+    for ax, d in zip(axs.ravel(), corr_dict.items()):
+        print(ax)
+        ax.pcolor(d[1], cmap='rainbow')
+        ax.set_title(d[0])
 
 
 
@@ -104,40 +122,54 @@ if __name__ == '__main__':
     print('nr of models: ', len(models))
     # print('loaded model list: ', [name for name, model in natsorted(models.items())])
 
+    labels = list(models.values())[0]['labels'].tolist()  # same for all models - use later for plots
+
     path = join(models_dir, 'corr_dict_layer4.pik')
     if not os.path.exists(path):
         # on out of encoder so layer=4
+        a = time.time()
         corr_dict_layer4 = calculate_activations_correlations(models, layer=4)
+        print('time for corr_dict calculation: ', time.time()-a)
         # save it in models folder
-        with open(str(path), 'w') as f:
+        with open(str(path), 'wb') as f:
             dill.dump(corr_dict_layer4, f)
     else:
         print('already calculated, load cor_dict')
         with open(str(path), 'rb') as f:
-            corr_dict_layer4 = pickle.load(f)
+            corr_dict_layer4 = dill.load(f)
 
-    # plotting
-    for model, correlation in corr_dict_layer4.items():
-        print(model)
-        visualise_rdm(correlation)
-        plt.title(join("1-CorrelationMatrix on 500 inputs of ", model), weight='semibold')
-        plt.show()
+    # # plotting
+    # plt_time = time.time()
+    # for model, correlation in corr_dict_layer4.items():
+    #     print(model)
+    #     plot_rdm(correlation)
+    #     plt.title(join("1-CorrelationMatrix on 500 inputs of ", model), weight='semibold')
+    #     plt.show()
+    # print('time to plot all models: ', time.time()-plt_time)
+
+    # print('alternative multi_plot_corr_dict')
+    # multi_plot(corr_dict_layer4)
+    # plt.title("1-CorrelationMatrix on 500 inputs of all Models", weight='semibold')
+    # plt.show()
+
+    print('multi plot example')
+    multi_plottoni(corr_dict_layer4)
+    plt.show()
 
 
-
-        #print(corr_distances_dict)
-        #print(corr_distances_dict.shape)
-        #print(corr_distances_dict[0])
-        #print(np.triu_indices(corr_distances_dict.shape[0], k=1))
-        #triu = corr_distances_dict[np.triu_indices(corr_distances_dict.shape[0], k=1)]
-        #triu2 = corr_distances_dict[np.triu_indices(corr_distances_dict.shape[1], k=1)]
-        #print(triu)
+    # corr_dict_layer4 is dict of model name and activations on layer 4
+    # need only activations list
+    activations_list_layer4 = list(corr_dict_layer4.values())
+    print(len(activations_list_layer4))
+    print(activations_list_layer4[0].shape)
 
 
     # input two corr_matrices into rdm calculation (2 corr_dist_dicts)
     print('calc and plot RDM on all models layer4 correlations')
-    rdm = calc_rdm(distance.euclidean, corr_dict_layer4)
-    visualise_rdm(rdm)
+    rdm = calc_rdm(distance.euclidean, activations_list_layer4)
+    plot_rdm(rdm)
+    plt.title("RMD of 1-CorrMatrices of all Models", weight='semibold')
+    plt.show()
 
 
 
