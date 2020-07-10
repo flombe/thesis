@@ -43,7 +43,7 @@ def extract(models_dir, test_loader, samples=samples, batch_size=batch_size):
 
     all_models = {}
     for file in natsorted(os.listdir(models_dir)):  # right order with natsort
-        if file.endswith(".pt"):
+        if file.endswith(".pt") and file.startswith("model_"):
             print(file)
             # Load model
             model = torch.load(join(models_dir, file))
