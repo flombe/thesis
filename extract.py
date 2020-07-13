@@ -18,8 +18,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # parse args form sh script
 parser = argparse.ArgumentParser()
-parser.add_argument('--trained_on', default='mnist', choices=['mnist2class'])
-parser.add_argument('--dataset', default='mnist', choices=['mnist', 'mnist2class', 'cifar10'])
+parser.add_argument('--trained_on', default='mnist', choices=['mnist', 'mnist2class', 'fashionmnist'])
+parser.add_argument('--dataset', default='mnist', choices=['mnist', 'mnist2class', 'fashionmnist', 'cifar10'])
 parser.add_argument('--model_folder', default='all', help='select specific model folder number or all')
 args = parser.parse_args()
 
@@ -31,9 +31,11 @@ def get_loader(dataset_name):
         dataset = datasets.MNIST(dataset_dir=dataset_dir, device=device)
     elif dataset_name == 'mnist2class':
         dataset = datasets.MNIST2class(dataset_dir=dataset_dir, device=device)
+    elif dataset_name == 'fashionmnist':
+        dataset = datasets.FashionMNIST(dataset_dir=dataset_dir, device=device)
     else:
-        pass
-        # dataset = datasets.CIFAR10(dataset_dir=dataset_dir, device=device)
+        # dataset_dir = join(os.getcwd(), 'data', 'cifar-10-batches-py')  ###
+        dataset = datasets.CIFAR10(dataset_dir=dataset_dir, device=device)
 
     test_loader = dataset.get_test_loader(batch_size, shuffle=False)  # using same samples
     return test_loader

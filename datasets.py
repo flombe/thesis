@@ -80,6 +80,20 @@ class MNIST2class(MNIST):
         return test_loader
 
 
+class FashionMNIST(TorchDataset):
+    def get_test_transform(self):
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.2860,), (0.3530,))
+        ])
+        return transform
+
+    def get_dataset_cls(self):
+        return datasets.FashionMNIST
+
+    def name(self):
+        return 'fashionmnist'
+
 
 class CIFAR10(TorchDataset):
     def get_test_transform(self):

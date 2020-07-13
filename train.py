@@ -47,9 +47,13 @@ for seed_run in range(1, seeds+1):
         model = mnist_archs.mnistConvNet2class()
         dataset = datasets.MNIST2class(dataset_dir=dataset_dir, device=device)
 
+    elif dataset_name == 'fashionmnist':
+        model = mnist_archs.mnistConvNet()
+        dataset = datasets.FashionMNIST(dataset_dir=dataset_dir, device=device)
+
     elif dataset_name == 'cifar10':
         model = vgg_arch.vgg16(pretrained=False, num_classes=10)
-        dataset = datasets.CIFAR10(dataset_dir=root_dir, device=device)
+        dataset = datasets.CIFAR10(dataset_dir=dataset_dir, device=device)
 
     model.to(device)
     criterion = F.nll_loss  # with F.log_softmax on output = CrossEntropyLoss

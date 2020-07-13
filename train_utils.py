@@ -16,7 +16,7 @@ import time
 # parse args from sh script
 def train_args_parser():
     parser = argparse.ArgumentParser(description='Training Parameters')
-    parser.add_argument('--dataset', default='mnist', choices=['mnist', 'mnist2class', 'cifar10'],
+    parser.add_argument('--dataset', default='mnist', choices=['mnist', 'mnist2class', 'fashionmnist', 'cifar10'],
                         type=str , metavar='D', help='trainings dataset name')
     parser.add_argument('--epochs', default=200, type=int, metavar='E',
                         help='number of total epochs to run')
@@ -87,7 +87,7 @@ def plot_classes_preds(net, images, labels, classes):
     fig = plt.figure(figsize=(12, 48))
     for idx in np.arange(4):
         ax = fig.add_subplot(1, 4, idx+1, xticks=[], yticks=[])
-        matplotlib_imshow(images[idx], one_channel=False)
+        matplotlib_imshow(images[idx], one_channel=True)
         ax.set_title("{0}, {1:.1f}%\n(label: {2})".format(
             classes[preds[idx]],
             probs[idx] * 100.0,

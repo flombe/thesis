@@ -40,7 +40,6 @@ plt.interactive(False)
 
 
 
-
 # dataframe handling
 import pandas as pd
 import json
@@ -67,15 +66,19 @@ else:
     print("Devise used = ", device)
 
 import datasets
-dataset_name = 'mnist2class'
+dataset_name = 'mnist' ##
 dataset_dir = join(root_dir, 'data', dataset_name)
 batch_size = 64
 lr = 0.0001
-run_name = 'pre_mnist2'
+run_name = 'test' ##
 dataset = datasets.MNIST(dataset_dir=dataset_dir, device=device)
 train_loader = dataset.get_train_loader(batch_size=batch_size)
+
+
 print('train_loader len * bs: ', len(train_loader)*batch_size)
 print('len train_loader.dataset; ', len(train_loader.dataset))
+
+
 
 dff.insert(3, 'pre_dataset', dataset_name)
 param = {'train_samples': len(train_loader.dataset),
@@ -130,5 +133,6 @@ for i in range(7):
 	print('Len of activations for one model: ', list(data[keys[0]]['layers'])[i].shape)
 
 act = pd.DataFrame.from_dict(data)
+
 
 

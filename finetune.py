@@ -11,12 +11,12 @@ import mnist_archs
 
 # parse args from sh script
 parser = train_utils.train_args_parser()
-parser.add_argument('--ft')  ## add parser arg ft for fine-tune model selection
+parser.add_argument('--pre_dataset')  ## add parser arg ft for fine-tune model selection
 args = parser.parse_args()
 dataset_name, batch_size, epochs, lr, run_name, seeds = train_utils.parse_train_args(args)
-ft_source = args.ft
-print('Run {run_name} on dataset {dataset} from source {ft_source}.'.format(
-    run_name=run_name, dataset=dataset_name, ft_source=ft_source))
+pretrain_dataset = args.pre_dataset
+print('Run {run_name} on dataset {dataset} from source {pre}.'.format(
+    run_name=run_name, dataset=dataset_name, pre=pretrain_dataset))
 
 # set device
 if torch.cuda.is_available():
@@ -28,12 +28,12 @@ else:
 
 # set dir
 root_dir = os.getcwd()
-dataset_dir = join(root_dir, 'data', dataset_name)  ## MNIST
-source_dir = join(root_dir, 'data', ft_source, 'models')  ## MNIST2class
+dataset_dir = join(root_dir, 'data', dataset_name)  # target data for ft
+source_dir = join(root_dir, 'data', pretrain_dataset, 'models')
 
 
-for seed in range(1,11):
-    model_dir = join(source_dir +'_'+ str(seed))
+for seed in range(1, 11):
+    model_dir = join(source_dir + '_' + str(seed))
     print(model_dir)
 
     for file in os.listdir(model_dir):
@@ -74,7 +74,7 @@ for seed in range(1,11):
             train_acc, train_loss, test_acc, test_loss = train_utils.train(model=model_ft, train_loader=train_loader,
                                                                            test_loader=test_loader, optimizer=optimizer,
                                                                            device=device, criterion=criterion, epochs=epochs,
-                                                                           output_dir=dataset_dir, run_name = run_name_sub,
+                                                                           output_dir=dataset_dir, run_name=run_name_sub,
                                                                            seed=seed)
             print('Done ', file)
 
