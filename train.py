@@ -72,7 +72,7 @@ for seed_run in range(1, seeds+1):
                                                                    output_dir=model_dir, run_name=run_name,
                                                                    seed=seed_run, save=True)
     dff = dff.append(df, ignore_index=True)
-    print(dff)
+    #print(dff)
     print('Done trainings run ', seed_run)
 
 # add to dff and save

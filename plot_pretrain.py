@@ -5,11 +5,11 @@ import json
 import matplotlib.pyplot as plt
 import matplotlib
 
-# plot pretraining on MNIST2class with stat test of 10 seeds
-dataset_name = 'mnist2class'
+# plot pretraining on dataset_name with stat test of 10 seeds
+dataset_name = 'mnist'
 root_dir = os.getcwd()
 dataset_dir = join(root_dir, 'models', dataset_name)
-run_name = 'pre_mnist2'
+run_name = 'pre_mnist'
 
 xticks = [0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 100]
 x = np.array([1, 3, 10, 30, 100, 300], dtype=int)
@@ -31,7 +31,7 @@ for seed in range(1, 11):
 
 # Plot accuracy vs. number of training epochs
 fig1, ax1 = plt.subplots(figsize=(7, 6), dpi=150)
-plt.title("Pre-train Accuracy vs. Nr of Training Epochs")
+plt.title(f"Pre-train {dataset_name}: Accuracy vs. Nr of Training Epochs")
 plt.xlabel("Training Epochs (batch1 to epoch100)")
 plt.ylabel("Pre-train Accuracy")
 
@@ -48,7 +48,7 @@ p95 = 2*np.array(std)  # [mean-2std, mean+2std] approx 95% percentile
 ax1.errorbar(total, mean, yerr=p95, color='k', linewidth=1,
              ecolor='gray', elinewidth=1, capsize=4, label='mean')
 
-plt.ylim((40, 100))
+plt.ylim((10, 100))
 plt.xscale("log")
 plt.xticks(xticks, rotation=80)
 f = lambda x, pos: str(x).rstrip('0').rstrip('.')

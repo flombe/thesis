@@ -4,6 +4,7 @@ import numpy as np
 import json
 import matplotlib.pyplot as plt
 import matplotlib
+import pandas as pd
 
 # plot fine-tune on dataset_name on pre-trained models of 10 seeds
 pre_dataset = 'mnist'
@@ -12,7 +13,8 @@ ft_dataset = 'fashionmnist'
 root_dir = os.getcwd()
 models_dir = join(root_dir, 'models', pre_dataset, 'ft_' + ft_dataset)
 
-run_name = join(f'ft_{pre_dataset}_{ft_dataset}_')  # 'ft_mnist2_mnist_'
+# run_name = join(f'ft_{pre_dataset}_{ft_dataset}_')  # 'ft_mnist2_mnist_'
+run_name = join(f'ft_{pre_dataset}_fashion_')
 
 # for log scale use xsteps = [0.001, 0.01, 0.1, 1, 10, 100] eql. to 1, 10, 100 batches, 1,10,100 epochs
 # for little finer plot add 3s (roughly halfway on log-scale)
@@ -24,15 +26,15 @@ bs = x/937.5
 ep = np.array([1,3,10,30,100], dtype=int)
 total = np.append(bs, ep)
 
+
 # aggregate Acc's from 10 seed runs of 11 different models in dict
 mydict = dict()
 for check in checkpts:
     accs = np.zeros((10, 11))
-    for seed in range(1,11):
-        model_dir = join(models_dir, 'models_' + str(seed))
-        train_stats = join(model_dir, run_name + check + '_train_stats.json')
+    for seed in range(3, 4):  # range(1, 11)
+        seed_dir = join(models_dir, 'models_' + str(seed))
+        train_stats = join(seed_dir, run_name + check + '_train_stats.json')
 
-        # concat batch and epoch stats for Acc
         test_acc = []
         with open(train_stats, 'r') as myfile:
             data = myfile.read()
@@ -41,30 +43,27 @@ for check in checkpts:
 
         accs[seed-1] = test_acc
     mydict.update({check: accs})
-#print(mydict)
+print(mydict)
+
+
+### load df instead
+# df = pd.read_pickle(join(models_dir, "df_" + run_name + ".pkl"))
+
+
+
 
 
 # Plot post-ft accuracy vs. number of training epochs
 fig1, ax1 = plt.subplots(figsize=(7, 6), dpi=150)
-plt.title("Post-Finetune Accuracy (mean of 10 seeds)")
+plt.title("Post-Finetune Accuracy")  # (mean of 10 seeds)")
 plt.xlabel("Fine-Tuning Epochs (batch1 to epoch100)")
 plt.ylabel("Post-Ft Accuracy")
 
 for check in mydict.keys():
-    accs = mydict[check]
-    # for i in range(accs.shape[0]):
-    #     ax1.plot(total, accs[i], 'x') #, label=(str(check) +' ft_ '+str(i)))
+    accs = mydict[check][0] # fist line, since only models_1
+    ax1.plot(total, accs, label=(str(check)))
 
-    mean = []
-    std = []
-    for i in range(accs.shape[1]):
-        mean.append(np.mean(accs[:,i]))
-        std.append(np.std(accs[:,i]))
-    p95 = 2*np.array(std)  ## [mean-2std, mean+2std] approx 95% percentile
-
-    ax1.plot(total, mean, label=(str(check))) # +' mean'
-
-plt.ylim((0,100))
+plt.ylim((0, 100))
 ax1.minorticks_on()
 plt.xscale("log")
 plt.xticks(xticks, rotation=80)
@@ -80,31 +79,15 @@ plt.show()
 
 # Plot post-ft accuracy vs. number of training epochs
 fig3, ax3 = plt.subplots(figsize=(7, 6), dpi=150)
-plt.title("Detail view: Post-Finetune Accuracy (mean)")
+plt.title("Detail view: Post-Finetune Accuracy")
 plt.xlabel("Fine-Tuning Epochs")
 plt.ylabel("Post-Ft Accuracy")
 
 for check in mydict.keys():
-    accs = mydict[check]
-    mean = []
-    std = []
-    for i in range(accs.shape[1]):
-        mean.append(np.mean(accs[:,i]))
-        std.append(np.std(accs[:,i]))
-    p95 = 2*np.array(std)
+    accs = mydict[check][0]
+    ax3.plot(total[6:], accs[6:], label=(str(check)))
 
-    if check in ['0_1', '100']:
-        #for i in range(accs.shape[0]):
-        #    ax1.plot(total[6:], accs[i][6:], 'x')
-
-        ax3.errorbar(total[6:], mean[6:], yerr=p95[6:],
-                     # ecolor='gray',
-                     elinewidth=1, capsize=4,
-                     label=(str(check)))
-
-    else: ax3.plot(total[6:], mean[6:], label=(str(check)))
-
-plt.ylim((96,99.5))
+plt.ylim((79, 93))
 ax3.minorticks_on()
 plt.xscale("log")
 plt.xticks(xticks[6:])
@@ -127,21 +110,8 @@ plt.xlabel("Fine-Tuning Epochs (batch1 to epoch100)")
 plt.ylabel("Post-Ft Accuracy")
 
 for check in ['0_1', '100']:
-    accs = mydict[check]
-    for i in range(accs.shape[0]):
-        ax2.plot(total, accs[i], 'x') #, label=(str(check) +' ft_ '+str(i)))
-
-    mean = []
-    std = []
-    for i in range(accs.shape[1]):
-        mean.append(np.mean(accs[:,i]))
-        std.append(np.std(accs[:,i]))
-    p95 = 2*np.array(std)  ## [mean-2std, mean+2std] approx 95% percentile
-
-    ax2.errorbar(total, mean, yerr=p95,
-                 #ecolor='gray',
-                 elinewidth=1, capsize=4,
-                 label=(str(check))) # +' mean'
+    accs = mydict[check][0]
+    ax2.plot(total, accs, label=(str(check)))
 
 plt.ylim((0,100))
 ax2.minorticks_on()
@@ -161,10 +131,9 @@ plt.show()
 # Plot post-ft accuracy vs. number of pre-training epochs
 from matplotlib import gridspec
 fig1, ax1 = plt.subplots(figsize=(7, 6), dpi=150)
-plt.title("Post-Finetune Accuracy (means) vs. Pre-train duration")
+plt.title("Post-Finetune Accuracy vs. Pre-train duration")
 plt.xlabel("Pre-Training Epochs (batch1 to epoch100)")
 plt.ylabel("Post-Ft Accuracy")
-plt.ylabel("Detail Post-Ft Accuracy")
 
 lines = np.zeros((11, 11))
 j = 0
@@ -173,10 +142,7 @@ for check in mydict.keys():
     mean = []
     std = []
     for i in range(accs.shape[1]):
-        mean.append(np.mean(accs[:,i]))
-        std.append(np.std(accs[:,i]))
-    p95 = 2*np.array(std)  ## [mean-2std, mean+2std] approx 95% percentile
-
+        mean.append(np.sum(accs[:,i]))
     lines[j] = mean
     j+=1
 

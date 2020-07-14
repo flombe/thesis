@@ -10,7 +10,6 @@ import pandas as pd
 import random
 import matplotlib.pyplot as plt
 from torch.utils.tensorboard import SummaryWriter
-import time
 
 
 # parse args from sh script
@@ -177,11 +176,11 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
                 # log the running loss
                 writer.add_scalar('training loss', run_train_loss / run_sample_nr, epoch * len(train_loader) + i)
 
-                # log a Matplotlib Figure showing the model's predictions on a random mini-batch
-                classes = np.unique(labels.cpu())
-                writer.add_figure('predictions vs. actuals',
-                                  plot_classes_preds(model, inputs, labels, classes),
-                                  global_step=epoch * len(train_loader) + i)
+                ## log a Matplotlib Figure showing the model's predictions on a random mini-batch
+                # classes = np.unique(labels.cpu())
+                # writer.add_figure('predictions vs. actuals',
+                #                   plot_classes_preds(model, inputs, labels, classes),
+                #                   global_step=epoch * len(train_loader) + i)
 
             # save models and stats for batches of first epoch
             if save==True and epoch == 0:
@@ -247,15 +246,25 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
     writer.close()
 
     if save==True:
+        # train_stats = {
+        #     'model_name': model_names,
+        #     'seed': seed,
+        #     'pre_net': model.__class__.__name__,
+        #     'pre_epochs': np.append(first_batches_chkpts * 0.001, epoch_chkpts).tolist(),  ##
+        #     'pre_train_acc': train_acc,
+        #     'pre_train_loss': train_loss,
+        #     'pre_test_acc': test_acc,
+        #     'pre_test_loss': test_loss
+        # }
         train_stats = {
             'model_name': model_names,
             'seed': seed,
-            'pre_net': model.__class__.__name__,
-            'pre_epochs': np.append(first_batches_chkpts * 0.001, epoch_chkpts).tolist(),  ##
-            'pre_train_acc': train_acc,
-            'pre_train_loss': train_loss,
-            'pre_test_acc': test_acc,
-            'pre_test_loss': test_loss
+            'ft_net': model.__class__.__name__,
+            'ft_epochs': np.append(first_batches_chkpts * 0.001, epoch_chkpts).tolist(),  ##
+            'ft_train_acc': train_acc,
+            'ft_train_loss': train_loss,
+            'ft_test_acc': test_acc,
+            'ft_test_loss': test_loss
         }
         stats_file_path = join(model_dir, run_name + '_train_stats.json')
         with open(stats_file_path, 'w+') as f:
