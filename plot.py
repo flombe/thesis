@@ -4,6 +4,7 @@ import numpy as np
 import json
 import matplotlib.pyplot as plt
 import matplotlib
+import pandas
 
 # plot fine-tune on dataset_name on pre-trained models of 10 seeds
 pre_dataset = 'mnist'
@@ -12,7 +13,8 @@ ft_dataset = 'fashionmnist'
 root_dir = os.getcwd()
 models_dir = join(root_dir, 'models', pre_dataset, 'ft_' + ft_dataset)
 
-run_name = join(f'ft_{pre_dataset}_{ft_dataset}_')  # 'ft_mnist2_mnist_'
+# run_name = join(f'ft_{pre_dataset}_{ft_dataset}_')  # 'ft_mnist2_mnist_'
+run_name = join(f'ft_{pre_dataset}_fashion_')
 
 # for log scale use xsteps = [0.001, 0.01, 0.1, 1, 10, 100] eql. to 1, 10, 100 batches, 1,10,100 epochs
 # for little finer plot add 3s (roughly halfway on log-scale)
@@ -42,6 +44,13 @@ for check in checkpts:
         accs[seed-1] = test_acc
     mydict.update({check: accs})
 #print(mydict)
+
+
+
+### load df instead
+# df = pd.read_pickle(join(models_dir, "df_" + run_name + ".pkl"))
+
+
 
 
 # Plot post-ft accuracy vs. number of training epochs
@@ -104,7 +113,7 @@ for check in mydict.keys():
 
     else: ax3.plot(total[6:], mean[6:], label=(str(check)))
 
-plt.ylim((96,99.5))
+plt.ylim((78, 93))
 ax3.minorticks_on()
 plt.xscale("log")
 plt.xticks(xticks[6:])

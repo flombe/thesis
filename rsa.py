@@ -1,31 +1,28 @@
-import torchvision
 import torch
 import numpy as np
 import scipy.stats
-import sklearn.manifold
 import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
 import seaborn
-import pandas as pd
-import sklearn
 import os
-import pickle
-import time
 from scipy.spatial import distance
+from scipy.stats import spearmanr
 from sklearn.metrics.pairwise import manhattan_distances
-import torch.nn as nn
 from os.path import join
 from tqdm import tqdm
 from natsort import natsorted
 import dill
+import pickle
 import time
 import math
 
 
 def correlationd_matrix(activations):
     n = len(activations)
+    # print(activations.shape)
+    activations = torch.flatten(activations, start_dim=1)  ## fix balanced extract - torch output with one dim too much
+    # print(activations.shape)
     correlationd = np.zeros((n, n))
-    for i in range(n):
+    for i in tqdm(range(n)):
         for j in range(i, n):
             correlationd[i, j] = correlationd[j, i] = 1 - scipy.stats.pearsonr(activations[i],
                                                                                activations[j])[0]  #[0] for pearson coeff
@@ -42,11 +39,16 @@ def calculate_activations_correlations(models, layer, sorted=False):
         inputs = layers[layer]
 
         if sorted==True:
-            inputs = inputs[np.array(labels).argsort(),:]
+            inputs = inputs[np.array(labels).argsort(), :]
 
         corr_distances_dict[name] = correlationd_matrix(inputs)  ## corr_dist_dict = corr_matrix
 
     return corr_distances_dict
+
+
+# alternative RDM corr. dist - used in paper (but euclid. better for NN, since preserves magnitudes
+def spearman_dist(a, b):
+    return 1 - spearmanr(a, b)[0]
 
 
 def dist_between_corr_matrices(dist_fun, corr_matrix_1, corr_matrix_2):
@@ -70,9 +72,44 @@ def calc_rdm(dist_fun, corr_distances_dict):
     return rdm
 
 
+def calc_target_compare_rdm(dist_fun, corr_dist_dict_source, corr_dist_dict_target):
+    t_rdm = time.time()
+    n = len(corr_dist_dict_source)
+    print(len(corr_dist_dict_source) == len(corr_dist_dict_target))
+    compare_rdm_diagonal = np.zeros(n)
+    for i in range(n):
+        compare_rdm_diagonal[i] = dist_between_corr_matrices(dist_fun,
+                                                             corr_dist_dict_source[i],
+                                                             corr_dist_dict_target[i])
+    print(f'>> Calculate {n} RDM diagonal elements' + '(in {:.2f} s)'.format(time.time()-t_rdm))
+
+    return compare_rdm_diagonal
+
+
+
+
+
+
+############
+
+def plot_rdm_compare(compare_rdm_euclid, compare_rdm_spearman, model_names):
+    fig, ax = plt.subplots(figsize=(16, 14), dpi=150)
+    plt.xlabel("Models")
+    plt.ylabel("RDM correlation")
+
+    ax.plot(compare_rdm_euclid, xticklabels=model_names, label='euclid')
+    ax.plot(compare_rdm_spearman, xticklabels=model_names, label='spearman')
+    plt.legend()
+
+
+
+
+
+
 def plot_rdm(rdm, model_names):
     fig = plt.figure(figsize=(16, 14), dpi=150)
-    ax = seaborn.heatmap(rdm, cmap='rainbow', annot=True, fmt='6.3g', xticklabels=model_names, yticklabels=model_names)
+    ax = seaborn.heatmap(rdm, cmap='rainbow', annot=True, fmt='6.3g', xticklabels=model_names, yticklabels=model_names,
+                         vmin=0, vmax=1)
     fig.autofmt_xdate(bottom=0.2, rotation=30, ha='right')
     # n = 10  # Keeps every nth label
     # [l.set_visible(False) for (i, l) in enumerate(ax.xaxis.get_ticklabels()) if i % n != 0]
@@ -115,16 +152,14 @@ def plotter(corr_dict, labels, dataset_trained, dataset_extracted, single_plot, 
         plt.show()
 
     if rdm_plot:
-        # RDM
         print('> Calc and plot RDM: of all models layer4 correlations')
         # corr_dict_layer4 activations into RDM calculation, keys for plotting
         rdm = calc_rdm(distance.euclidean, list(corr_dict.values()))  ## with euclid dist
+        # rdm = calc_rdm(spearman_dist, list(corr_dict.values()))
         plot_rdm(rdm, list(corr_dict.keys()))
         plt.title("Model RDM - pre: " + dataset_trained + " / extracted: " + dataset_extracted, weight='semibold',
                   fontsize=20)
         plt.show()
-
-    # return rdm
 
 
 def load_calc_corr(dataset_trained, dataset_extracted, sorted):
@@ -170,9 +205,30 @@ def main(dataset_trained, dataset_extracted, sorted):
 
     # plots on one dataset
     plotter(corr_dict_layer4, labels, dataset_trained, dataset_extracted,
-            single_plot=False, multi_plot=True, rdm_plot=True)
+            single_plot=False, multi_plot=False, rdm_plot=False)
 
-    # Model RDM of source and target (trained and extracted dataset)
+
+
+
+
+    #### add histogram
+
+    n = math.sqrt(len(corr_dict_layer4))
+    fig, axs = plt.subplots(math.ceil(n), math.floor(n), figsize=(16, 21), sharex='col', sharey='row', dpi=150)
+    fig.subplots_adjust(hspace=.5, wspace=.001)
+
+    for ax, val in tqdm(zip(axs.ravel(), corr_dict_layer4.items())):
+        ax.hist(val[1])
+        ax.set_title(val[0], weight='semibold')
+    fig.delaxes(axs[3, 2])
+
+    ####
+
+
+
+
+
+    # # Model RDM of source and target (trained and extracted dataset)
     # if dataset_trained != dataset_extracted:
     #     path = join(models_dir, dataset_extracted + '_corr_dict_layer4.pik')
     #     print('>> already calculated >> load cor_dict')
@@ -193,32 +249,34 @@ if __name__ == '__main__':
         device = torch.device("cpu")
         print("Devise used = ", device)
 
-    dataset_trained = 'mnist' # = dataset_extracted (both source dataset)
+    dataset_trained = 'mnist'  # = dataset_extracted (both source dataset)
     corr_dict_source = main(dataset_trained, dataset_trained, sorted=True)
 
     dataset_extracted = 'fashionmnist'
     corr_dict_target = main(dataset_trained, dataset_extracted, sorted=True)  # on target dataset
 
-    # dataset_trained =
-    # dataset_extracted =
-    # main(dataset_trained, dataset_extracted, sorted=False)
-
-    # calc model RDM: version 1 on corr_matrices
+    # calc model RDM
     # overlapping dict keys (model names) - add dataset names
     corr_dict_source = {f'{k}@{dataset_trained}': v for k, v in corr_dict_source.items()}
     corr_dict_target = {f'{k}@{dataset_extracted}': v for k, v in corr_dict_target.items()}
-    corr_dict_total = {}
-    corr_dict_total.update(corr_dict_source)
-    corr_dict_total.update(corr_dict_target)
-    print(len(corr_dict_total))
+    # corr_dict_total = {}
+    # corr_dict_total.update(corr_dict_source)
+    # corr_dict_total.update(corr_dict_target)
+    # rdm = calc_rdm(spearman_dist, list(corr_dict_total.values()))
 
-    rdm = calc_rdm(distance.euclidean, list(corr_dict_total.values()))  ## with euclid dist
-    plot_rdm(rdm, list(corr_dict_total.keys()))
-    plt.title(f"Model RDM - pre: {dataset_trained} / extracted:{dataset_extracted}, {dataset_trained}",
+    compare_rdm_euclid = calc_target_compare_rdm(distance.euclidean,
+                                                 list(corr_dict_source.values()),
+                                                 list(corr_dict_target.values()))
+    compare_rdm_spearman = calc_target_compare_rdm(spearman_dist,
+                                                   list(corr_dict_source.values()),
+                                                   list(corr_dict_target.values()))
+
+    plot_rdm_compare(compare_rdm_euclid, compare_rdm_spearman, list(corr_dict_source.keys()))
+    plt.title(f"Compare RDM values - pre: {dataset_trained} / extracted:{dataset_extracted}, {dataset_trained}",
               weight='semibold', fontsize=20)
     plt.show()
 
-    # version 2: compare already calculated RDM values
+    ### new graph - only diagonal of model RDM - values for euclid and speraman? and Acc (pre and ft?)
 
 
 

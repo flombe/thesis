@@ -11,33 +11,11 @@ from os.path import join
 check = ['erst', 'zweit', 'dre']
 print([join('_'+check+'.pt') for check in check])
 
-
-
 first_batches_chkpts = np.array([1, 3, 10, 30, 100, 300])
 zwei = np.array([1,3,10,30,100])
 out = first_batches_chkpts * 0.001
 print(out)
 print(np.append(out, zwei))
-
-
-
-# plot test
-import matplotlib.pyplot as plt
-import matplotlib
-import numpy as np
-
-print(matplotlib.get_backend())
-print(plt.isinteractive())
-#matplotlib.use('TkAgg')
-
-np.random.seed(19680801)
-data = np.random.randn(2, 100)
-
-fig, axs = plt.subplots(2, 2, figsize=(5, 5))
-axs[0, 0].hist(data[0])
-plt.show(block=True)
-plt.interactive(False)
-
 
 
 # dataframe handling
@@ -72,24 +50,11 @@ batch_size = 64
 lr = 0.0001
 run_name = 'test' ##
 dataset = datasets.MNIST(dataset_dir=dataset_dir, device=device)
-train_loader = dataset.get_train_loader(batch_size=batch_size)
+# train_loader = dataset.get_train_loader(batch_size=batch_size)
 
+# print('train_loader len * bs: ', len(train_loader)*batch_size)
+# print('len train_loader.dataset; ', len(train_loader.dataset))
 
-print('train_loader len * bs: ', len(train_loader)*batch_size)
-print('len train_loader.dataset; ', len(train_loader.dataset))
-
-
-
-dff.insert(3, 'pre_dataset', dataset_name)
-param = {'train_samples': len(train_loader.dataset),
-         'batch_size': batch_size,
-         'lr': lr}
-dff.insert(4, 'pre_param', [param] * len(dff))
-# dff.to_pickle(join(model_dir, 'df_' + run_name))
-# print('dataframe saved.')
-
-print(dff['pre_param'][0])
-print(dff['pre_param'][0]["lr"])
 
 
 
@@ -119,7 +84,7 @@ else:
     device = torch.device("cpu")
     print("Devise used = ", device)
 
-file = '/mnt/antares_raid/home/bemmerl/thesis/data/mnist2class/models_1/_extracted.pt'
+file = '/mnt/antares_raid/home/bemmerl/thesis/models/mnist/models_1/mnist_extracted.pt'
 data = torch.load(file)
 print(type(data))
 print(len(data))
@@ -132,7 +97,4 @@ print('Keys of value dict: ', data[keys[0]].keys())
 for i in range(7):
 	print('Len of activations for one model: ', list(data[keys[0]]['layers'])[i].shape)
 
-act = pd.DataFrame.from_dict(data)
-
-
-
+# act = pd.DataFrame.from_dict(data)

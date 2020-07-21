@@ -5,6 +5,7 @@ import argparse
 import datasets
 import train_utils
 from natsort import natsorted
+import numpy as np
 
 
 # safety fix seed
@@ -12,7 +13,8 @@ train_utils.set_seed(1)
 
 # extract activations on all layers for 500 fixed samples
 samples = 500
-batch_size = 20  # faster then bs=500
+batch_size = 1
+unique_labels = 10  # for mnist like datasets
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -41,7 +43,7 @@ def get_loader(dataset_name):
     return test_loader
 
 
-def extract(models_dir, test_loader, samples=samples, batch_size=batch_size):
+def extract(models_dir, test_loader, samples=samples, batch_size=batch_size, balanced=True):
 
     all_models = {}
     for file in natsorted(os.listdir(models_dir)):  # right order with natsort
@@ -54,17 +56,30 @@ def extract(models_dir, test_loader, samples=samples, batch_size=batch_size):
             with torch.no_grad():
                 model.eval()
 
-                all_layers_flattened = []
                 i = 0
+                all_layers_flattened = []
                 labels = []
-                for batch in test_loader:
-                    # print(batch[0].shape)
-                    all_layers = [batch[0]] + list(model.extract_all(batch[0].to(device), verbose=False))
-                    all_layers_flattened.append([out.view(batch_size, -1).cpu().data for out in all_layers])
-                    labels.append(batch[1].data)
-                    if i == int(samples / batch_size)-1:
-                        break
-                    i += 1
+                if balanced:
+                    class_counts = {}
+                    k = samples / unique_labels  # nr of samples per class
+                    for batch in test_loader:
+                        c = batch[1].item()  # get label
+                        class_counts[c] = class_counts.get(c, 0) + 1  # class count dict
+                        if class_counts[c] <= k:
+                            all_layers = [batch[0]] + list(model.extract_all(batch[0].to(device), verbose=False))
+                            all_layers_flattened.append([out.view(batch_size, -1).cpu().data for out in all_layers])
+                            labels.append(batch[1].data)
+                        if len(labels) == samples:
+                            break
+                    # print('labels & count: ', np.unique(np.array(labels), return_counts=True))
+                else:
+                    for batch in test_loader:
+                        all_layers = [batch[0]] + list(model.extract_all(batch[0].to(device), verbose=False))
+                        all_layers_flattened.append([out.view(batch_size, -1).cpu().data for out in all_layers])
+                        labels.append(batch[1].data)
+                        if i == int(samples / batch_size)-1:
+                            break
+                        i += 1
 
                 result = []
                 for layers in zip(*all_layers_flattened):
@@ -96,9 +111,9 @@ def extract_select(test_loader):
 
 # dataset and dataloader
 dataset_name = args.dataset
-if type(dataset_name) != str:
-    for dataset_name in dataset_name:
-        print('Extract for multiple datasets -- dataset = ', dataset_name)
-        extract_select(get_loader(dataset_name))
+# if type(dataset_name) != str:
+#     for dataset_name in dataset_name:
+#         print('Extract for multiple datasets -- dataset = ', dataset_name)
+#         extract_select(get_loader(dataset_name))
 
-extract_select(get_loader(dataset_name))
+extract_select(get_loader(dataset_name))  ## Balanced Dataset set TRUE as standard
