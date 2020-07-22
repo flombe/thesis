@@ -7,7 +7,6 @@ import train_utils
 from natsort import natsorted
 import numpy as np
 
-
 # safety fix seed
 train_utils.set_seed(1)
 
@@ -62,7 +61,7 @@ def extract(models_dir, test_loader, samples=samples, batch_size=batch_size, bal
                 if balanced:
                     class_counts = {}
                     k = samples / unique_labels  # nr of samples per class
-                    for batch in test_loader:
+                    for batch in test_loader:  ## set batch_size = 1!
                         c = batch[1].item()  # get label
                         class_counts[c] = class_counts.get(c, 0) + 1  # class count dict
                         if class_counts[c] <= k:
@@ -111,9 +110,4 @@ def extract_select(test_loader):
 
 # dataset and dataloader
 dataset_name = args.dataset
-# if type(dataset_name) != str:
-#     for dataset_name in dataset_name:
-#         print('Extract for multiple datasets -- dataset = ', dataset_name)
-#         extract_select(get_loader(dataset_name))
-
 extract_select(get_loader(dataset_name))  ## Balanced Dataset set TRUE as standard

@@ -14,13 +14,11 @@ import dill
 import pickle
 import time
 import math
+import seaborn as sns
 
 
 def correlationd_matrix(activations):
     n = len(activations)
-    # print(activations.shape)
-    activations = torch.flatten(activations, start_dim=1)  ## fix balanced extract - torch output with one dim too much
-    # print(activations.shape)
     correlationd = np.zeros((n, n))
     for i in tqdm(range(n)):
         for j in range(i, n):
@@ -86,34 +84,43 @@ def calc_target_compare_rdm(dist_fun, corr_dist_dict_source, corr_dist_dict_targ
     return compare_rdm_diagonal
 
 
-
-
-
-
-############
-
 def plot_rdm_compare(compare_rdm_euclid, compare_rdm_spearman, model_names):
-    fig, ax = plt.subplots(figsize=(16, 14), dpi=150)
-    plt.xlabel("Models")
-    plt.ylabel("RDM correlation")
+    fig, ax1 = plt.subplots(figsize=(8, 8), dpi=150)
+    # ax1.set_xticks(model_names)
+    ax1.xticks(range(0, len(model_names)), model_names, rotation=80)
+    ax1.set_xlabel('Models')
 
-    ax.plot(compare_rdm_euclid, xticklabels=model_names, label='euclid')
-    ax.plot(compare_rdm_spearman, xticklabels=model_names, label='spearman')
-    plt.legend()
+    ax1.set_ylabel('euclidian distance', color='r')
+    ax1.plot(model_names, compare_rdm_euclid, label='euclidian', color='r')
+    ax1.tick_params(axis='y', labelcolor='r')
 
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+    ax2.set_ylabel('spearman distance', color='b')
+    ax2.plot(model_names, compare_rdm_spearman, label='spearman', color='b')
+    ax2.tick_params(axis='y', labelcolor='b')
 
+    ax3 = ax1.twinx()
+    # Make some space on the right side for the extra y-axis.
+    fig.subplots_adjust(right=0.75)
+    # Move the last y-axis spine over to the right by 20% of the width of the axes
+    ax3.spines['right'].set_position(('axes', 1.3))
+    ax3.set_frame_on(True)
+    ax3.patch.set_visible(False)
 
+    acc = [0.1, 0.2, 0.3, 0.5, 0.7, 0.8, 0.85, 0.9, 0.94, 0.95, 0.96]
+    ax3.set_ylabel('Accuracy', color='g')
+    ax3.plot(model_names, acc, marker='o', linestyle='none', label='Acc', color='g')
+    ax3.tick_params(axis='y', labelcolor='g')
 
+    # fig.legend()
+    fig.tight_layout()
 
 
 def plot_rdm(rdm, model_names):
     fig = plt.figure(figsize=(16, 14), dpi=150)
     ax = seaborn.heatmap(rdm, cmap='rainbow', annot=True, fmt='6.3g', xticklabels=model_names, yticklabels=model_names,
-                         vmin=0, vmax=1)
+                         vmin=0, vmax=210)
     fig.autofmt_xdate(bottom=0.2, rotation=30, ha='right')
-    # n = 10  # Keeps every nth label
-    # [l.set_visible(False) for (i, l) in enumerate(ax.xaxis.get_ticklabels()) if i % n != 0]
-    # [l.set_visible(False) for (i, l) in enumerate(ax.yaxis.get_ticklabels()) if i % n != 0]
 
 
 def multi_plot_rdm(corr_dict, labels):
@@ -131,6 +138,23 @@ def multi_plot_rdm(corr_dict, labels):
         [l.set_visible(False) for (i, l) in enumerate(ax.xaxis.get_ticklabels()) if i % n != 0]
         [l.set_visible(False) for (i, l) in enumerate(ax.yaxis.get_ticklabels()) if i % n != 0]
     fig.delaxes(axs[3, 2])
+    plt.show()
+
+
+def multi_plot_histo(corr_dict, labels):
+    # histogram of corr_value distribution
+    n = math.sqrt(len(corr_dict))
+    fig2, axs2 = plt.subplots(math.ceil(n), math.floor(n), figsize=(16, 21), sharex='col', sharey='row', dpi=150)
+    fig2.subplots_adjust(hspace=.5, wspace=.001)
+
+    for ax2, val2 in tqdm(zip(axs2.ravel(), corr_dict.items())):
+        sns.distplot(val2[1], ax=ax2, vertical=True)  # vertical for count on y
+        ax2.set_title(val2[0], weight='semibold')
+        total = int(np.sum(val2[1]))
+        ax2.text(0.8, 0.1, join('sum: ' + str(total) + ' (' + str(int(total/(500*500*2)*100)) + '% of total)'))
+    fig2.delaxes(axs2[3, 2])
+    plt.show()
+
 
 
 # selects plots in main
@@ -144,12 +168,9 @@ def plotter(corr_dict, labels, dataset_trained, dataset_extracted, single_plot, 
 
     if multi_plot:
         # multi plot multiple Corr_matrices
-        print('> Multi-plot all models')
+        print('> Multi-plot all models and show distribution histogram')
         multi_plot_rdm(corr_dict, labels)
-        # adding 'title' doesn't work, since takes last ax element -- how to plot into fig space without call figure?
-        # plt.text(0.9, 0.1, f"Input RDMs \n pre: {dataset_trained} \n extracted: {dataset_extracted}", weight='semibold',
-        #           fontsize=12, transform=plt.gca().transAxes)
-        plt.show()
+        multi_plot_histo(corr_dict, labels)
 
     if rdm_plot:
         print('> Calc and plot RDM: of all models layer4 correlations')
@@ -167,6 +188,7 @@ def load_calc_corr(dataset_trained, dataset_extracted, sorted):
     root_path = os.getcwd()
     models_dir = join(root_path, 'models', dataset_trained)
     # TO-DO: for i in range(1, 11):  # for 10 seed folders
+    seed = 1
     models_dir = join(models_dir, 'models_1')
     load_extracted = join(models_dir, dataset_extracted + '_extracted.pt')
     models = torch.load(load_extracted)
@@ -183,13 +205,14 @@ def load_calc_corr(dataset_trained, dataset_extracted, sorted):
     if sorted==True: path = join(models_dir, dataset_extracted + '_sorted_corr_dict_layer4.pik')
 
     if not os.path.exists(path):
-        # on out of encoder so layer=4
+        # on out of encoder, so layer=4
         a = time.time()
         corr_dict_layer4 = calculate_activations_correlations(models, layer=4, sorted=sorted)
         print('time for corr_dict calculation: ', time.time() - a)
         # save it in models folder
         with open(str(path), 'wb') as f:
             dill.dump(corr_dict_layer4, f)
+        print(f'{dataset_extracted}_sorted_corr_dict_layer4.pik saved.')
     else:
         print('>> already calculated >> load cor_dict')
         with open(str(path), 'rb') as f:
@@ -205,35 +228,7 @@ def main(dataset_trained, dataset_extracted, sorted):
 
     # plots on one dataset
     plotter(corr_dict_layer4, labels, dataset_trained, dataset_extracted,
-            single_plot=False, multi_plot=False, rdm_plot=False)
-
-
-
-
-
-    #### add histogram
-
-    n = math.sqrt(len(corr_dict_layer4))
-    fig, axs = plt.subplots(math.ceil(n), math.floor(n), figsize=(16, 21), sharex='col', sharey='row', dpi=150)
-    fig.subplots_adjust(hspace=.5, wspace=.001)
-
-    for ax, val in tqdm(zip(axs.ravel(), corr_dict_layer4.items())):
-        ax.hist(val[1])
-        ax.set_title(val[0], weight='semibold')
-    fig.delaxes(axs[3, 2])
-
-    ####
-
-
-
-
-
-    # # Model RDM of source and target (trained and extracted dataset)
-    # if dataset_trained != dataset_extracted:
-    #     path = join(models_dir, dataset_extracted + '_corr_dict_layer4.pik')
-    #     print('>> already calculated >> load cor_dict')
-    #     with open(str(path), 'rb') as f:
-    #         corr_dict_layer4 = dill.load(f)
+            single_plot=False, multi_plot=True, rdm_plot=True)
 
     return corr_dict_layer4
 
@@ -255,14 +250,11 @@ if __name__ == '__main__':
     dataset_extracted = 'fashionmnist'
     corr_dict_target = main(dataset_trained, dataset_extracted, sorted=True)  # on target dataset
 
+
     # calc model RDM
     # overlapping dict keys (model names) - add dataset names
     corr_dict_source = {f'{k}@{dataset_trained}': v for k, v in corr_dict_source.items()}
     corr_dict_target = {f'{k}@{dataset_extracted}': v for k, v in corr_dict_target.items()}
-    # corr_dict_total = {}
-    # corr_dict_total.update(corr_dict_source)
-    # corr_dict_total.update(corr_dict_target)
-    # rdm = calc_rdm(spearman_dist, list(corr_dict_total.values()))
 
     compare_rdm_euclid = calc_target_compare_rdm(distance.euclidean,
                                                  list(corr_dict_source.values()),
@@ -273,10 +265,11 @@ if __name__ == '__main__':
 
     plot_rdm_compare(compare_rdm_euclid, compare_rdm_spearman, list(corr_dict_source.keys()))
     plt.title(f"Compare RDM values - pre: {dataset_trained} / extracted:{dataset_extracted}, {dataset_trained}",
-              weight='semibold', fontsize=20)
+              weight='semibold', fontsize=8)
     plt.show()
 
-    ### new graph - only diagonal of model RDM - values for euclid and speraman? and Acc (pre and ft?)
+
+
 
 
 
