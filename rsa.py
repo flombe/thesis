@@ -1,20 +1,19 @@
 import torch
 import numpy as np
-import scipy.stats
 import matplotlib.pyplot as plt
-import seaborn
+import seaborn as sns
+import pandas as pd
+import dill
+import time
+import math
 import os
+from os.path import join
+import scipy.stats
 from scipy.spatial import distance
 from scipy.stats import spearmanr
 from sklearn.metrics.pairwise import manhattan_distances
-from os.path import join
 from tqdm import tqdm
 from natsort import natsorted
-import dill
-import pickle
-import time
-import math
-import seaborn as sns
 
 
 def correlationd_matrix(activations):
@@ -84,14 +83,13 @@ def calc_target_compare_rdm(dist_fun, corr_dist_dict_source, corr_dist_dict_targ
     return compare_rdm_diagonal
 
 
-def plot_rdm_compare(compare_rdm_euclid, compare_rdm_spearman, model_names):
+def plot_rdm_compare(compare_rdm_euclid, compare_rdm_spearman, model_names, acc):
     fig, ax1 = plt.subplots(figsize=(8, 8), dpi=150)
-    # ax1.set_xticks(model_names)
-    ax1.xticks(range(0, len(model_names)), model_names, rotation=80)
+    ax1.tick_params(axis='x', labelsize=8, labelrotation=60)
     ax1.set_xlabel('Models')
 
-    ax1.set_ylabel('euclidian distance', color='r')
-    ax1.plot(model_names, compare_rdm_euclid, label='euclidian', color='r')
+    ax1.set_ylabel('euclidean distance', color='r')
+    ax1.plot(model_names, compare_rdm_euclid, label='euclidean', color='r')
     ax1.tick_params(axis='y', labelcolor='r')
 
     ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
@@ -101,13 +99,12 @@ def plot_rdm_compare(compare_rdm_euclid, compare_rdm_spearman, model_names):
 
     ax3 = ax1.twinx()
     # Make some space on the right side for the extra y-axis.
-    fig.subplots_adjust(right=0.75)
+    fig.subplots_adjust(right=0.65)
     # Move the last y-axis spine over to the right by 20% of the width of the axes
-    ax3.spines['right'].set_position(('axes', 1.3))
+    ax3.spines['right'].set_position(('axes', 1.2))
     ax3.set_frame_on(True)
     ax3.patch.set_visible(False)
 
-    acc = [0.1, 0.2, 0.3, 0.5, 0.7, 0.8, 0.85, 0.9, 0.94, 0.95, 0.96]
     ax3.set_ylabel('Accuracy', color='g')
     ax3.plot(model_names, acc, marker='o', linestyle='none', label='Acc', color='g')
     ax3.tick_params(axis='y', labelcolor='g')
@@ -118,7 +115,7 @@ def plot_rdm_compare(compare_rdm_euclid, compare_rdm_spearman, model_names):
 
 def plot_rdm(rdm, model_names):
     fig = plt.figure(figsize=(16, 14), dpi=150)
-    ax = seaborn.heatmap(rdm, cmap='rainbow', annot=True, fmt='6.3g', xticklabels=model_names, yticklabels=model_names,
+    ax = sns.heatmap(rdm, cmap='rainbow', annot=True, fmt='6.3g', xticklabels=model_names, yticklabels=model_names,
                          vmin=0, vmax=210)
     fig.autofmt_xdate(bottom=0.2, rotation=30, ha='right')
 
@@ -129,8 +126,8 @@ def multi_plot_rdm(corr_dict, labels):
     fig.subplots_adjust(hspace=.5, wspace=.001)
 
     for ax, val in tqdm(zip(axs.ravel(), corr_dict.items())):
-        seaborn.set(font_scale=0.8)
-        seaborn.heatmap(val[1], cmap='rainbow', ax=ax, cbar=True, xticklabels=labels, yticklabels=labels)
+        sns.set(font_scale=0.8)
+        sns.heatmap(val[1], cmap='rainbow', ax=ax, cbar=True, xticklabels=labels, yticklabels=labels)
         ax.set_title(val[0], weight='semibold')
 
         ax.tick_params(axis='both', labelsize=3, width=0.3, length=1)
@@ -148,13 +145,12 @@ def multi_plot_histo(corr_dict, labels):
     fig2.subplots_adjust(hspace=.5, wspace=.001)
 
     for ax2, val2 in tqdm(zip(axs2.ravel(), corr_dict.items())):
-        sns.distplot(val2[1], ax=ax2, vertical=True)  # vertical for count on y
+        sns.distplot(val2[1], ax=ax2)
         ax2.set_title(val2[0], weight='semibold')
         total = int(np.sum(val2[1]))
-        ax2.text(0.8, 0.1, join('sum: ' + str(total) + ' (' + str(int(total/(500*500*2)*100)) + '% of total)'))
+        ax2.text(0.85, 0.05, join('sum: ' + str(total) + ' (' + str(int(total/(500*500*2)*100)) + '% of total)'))
     fig2.delaxes(axs2[3, 2])
     plt.show()
-
 
 
 # selects plots in main
@@ -228,14 +224,13 @@ def main(dataset_trained, dataset_extracted, sorted):
 
     # plots on one dataset
     plotter(corr_dict_layer4, labels, dataset_trained, dataset_extracted,
-            single_plot=False, multi_plot=True, rdm_plot=True)
+            single_plot=False, multi_plot=False, rdm_plot=False)
 
     return corr_dict_layer4
 
 
 
 if __name__ == '__main__':
-
     # set device
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
@@ -244,28 +239,25 @@ if __name__ == '__main__':
         device = torch.device("cpu")
         print("Devise used = ", device)
 
-    dataset_trained = 'mnist'  # = dataset_extracted (both source dataset)
+    # set source(trained) and target(extracted) datasets
+    dataset_trained = 'mnist'
     corr_dict_source = main(dataset_trained, dataset_trained, sorted=True)
 
     dataset_extracted = 'fashionmnist'
     corr_dict_target = main(dataset_trained, dataset_extracted, sorted=True)  # on target dataset
 
 
-    # calc model RDM
-    # overlapping dict keys (model names) - add dataset names
-    corr_dict_source = {f'{k}@{dataset_trained}': v for k, v in corr_dict_source.items()}
-    corr_dict_target = {f'{k}@{dataset_extracted}': v for k, v in corr_dict_target.items()}
+    # calculate only diagonal of model RDM (=corr/dist of same model for source and target data)
+    compare_rdm_euclid = calc_target_compare_rdm(distance.euclidean, list(corr_dict_source.values()), list(corr_dict_target.values()))
+    compare_rdm_spearman = calc_target_compare_rdm(spearman_dist, list(corr_dict_source.values()), list(corr_dict_target.values()))
 
-    compare_rdm_euclid = calc_target_compare_rdm(distance.euclidean,
-                                                 list(corr_dict_source.values()),
-                                                 list(corr_dict_target.values()))
-    compare_rdm_spearman = calc_target_compare_rdm(spearman_dist,
-                                                   list(corr_dict_source.values()),
-                                                   list(corr_dict_target.values()))
+    # load Acc to add to plot
+    df = pd.read_pickle(join(os.getcwd(), 'models', dataset_trained, 'df_pre_'+dataset_trained))  #Fix to work generally
+    acc = df[df['seed'] == 1]['pre_test_acc']
 
-    plot_rdm_compare(compare_rdm_euclid, compare_rdm_spearman, list(corr_dict_source.keys()))
-    plt.title(f"Compare RDM values - pre: {dataset_trained} / extracted:{dataset_extracted}, {dataset_trained}",
-              weight='semibold', fontsize=8)
+    plot_rdm_compare(compare_rdm_euclid, compare_rdm_spearman, list(corr_dict_source.keys()), acc)
+    plt.title(f"Compare RDM values - for all models pre:{dataset_trained} on {dataset_extracted} & {dataset_trained}",
+              weight='semibold', fontsize=11.5)
     plt.show()
 
 

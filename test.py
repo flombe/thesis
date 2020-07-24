@@ -98,3 +98,8 @@ for i in range(7):
 	print('Len of activations for one model: ', list(data[keys[0]]['layers'])[i].shape)
 
 # act = pd.DataFrame.from_dict(data)
+
+### handy string manipulation
+# overlapping dict keys (model names) - add dataset names
+# corr_dict_source = {f'{k}@{dataset_trained}': v for k, v in corr_dict_source.items()}
+# corr_dict_target = {f'{k}@{dataset_extracted}': v for k, v in corr_dict_target.items()}
