@@ -34,6 +34,27 @@ for i in range(1,11):
 	df = pd.DataFrame(obj)
 	dff = dff.append(df, ignore_index=True)
 
+
+##############
+import torch
+# check if extract balanced
+dataset_trained = 'mnist'
+dataset_extracted = 'fashionmnist'
+
+for seed in range(1, 11):
+	root_path = os.getcwd()
+	models_dir = join(root_path, 'models', dataset_trained, 'models_' + str(seed))
+
+	load_extracted = join(models_dir, dataset_extracted + '_extracted.pt')
+	models = torch.load(load_extracted)
+	print(f'loaded {len(models)} models from - {load_extracted}')
+
+	# get labels once (since constant) for plotting
+	labels = list(models.values())[0]['labels']  # tensor, same for all models - use later for plots
+	print('labels and count: ', np.unique(np.array(labels), return_counts=True))  # check if balanced data
+##############
+
+
 import torch
 # set device
 if torch.cuda.is_available():

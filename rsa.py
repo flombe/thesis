@@ -69,7 +69,7 @@ def calc_rdm(dist_fun, corr_distances_dict):
     return rdm
 
 
-def calc_target_compare_rdm(dist_fun, corr_dist_dict_source, corr_dist_dict_target):
+def calc_compare_rdm(dist_fun, corr_dist_dict_source, corr_dist_dict_target):
     t_rdm = time.time()
     n = len(corr_dist_dict_source)
     print(len(corr_dist_dict_source) == len(corr_dist_dict_target))
@@ -179,22 +179,18 @@ def plotter(corr_dict, labels, dataset_trained, dataset_extracted, single_plot, 
         plt.show()
 
 
-def load_calc_corr(dataset_trained, dataset_extracted, sorted):
+def load_calc_corr(dataset_trained, dataset_extracted, sorted, seed=1):
     # load
     root_path = os.getcwd()
-    models_dir = join(root_path, 'models', dataset_trained)
-    # TO-DO: for i in range(1, 11):  # for 10 seed folders
-    seed = 1
-    models_dir = join(models_dir, 'models_1')
+    models_dir = join(root_path, 'models', dataset_trained, 'models_' + str(seed))
+
     load_extracted = join(models_dir, dataset_extracted + '_extracted.pt')
     models = torch.load(load_extracted)
-    print('loaded - ', load_extracted)
-    print('nr of models: ', len(models))
-    # print('loaded model list: ', [name for name, model in natsorted(models.items())])
+    print(f'loaded {len(models)} models from - {load_extracted}')
 
     # get labels once (since constant) for plotting
     labels = list(models.values())[0]['labels']  # tensor, same for all models - use later for plots
-    print('labels and count: ', np.unique(np.array(labels), return_counts=True))
+    print('labels and count: ', np.unique(np.array(labels), return_counts=True))  # check if balanced data
 
     # calculate or load Correlation_Dictionary for one layer
     path = join(models_dir, dataset_extracted + '_corr_dict_layer4.pik')
@@ -208,7 +204,7 @@ def load_calc_corr(dataset_trained, dataset_extracted, sorted):
         # save it in models folder
         with open(str(path), 'wb') as f:
             dill.dump(corr_dict_layer4, f)
-        print(f'{dataset_extracted}_sorted_corr_dict_layer4.pik saved.')
+        print(f'{path} saved.')
     else:
         print('>> already calculated >> load cor_dict')
         with open(str(path), 'rb') as f:
@@ -218,9 +214,9 @@ def load_calc_corr(dataset_trained, dataset_extracted, sorted):
     return corr_dict_layer4, labels
 
 
-def main(dataset_trained, dataset_extracted, sorted):
+def main(dataset_trained, dataset_extracted, sorted, seed=1):
     # load models and calc/load correlations
-    corr_dict_layer4, labels = load_calc_corr(dataset_trained, dataset_extracted, sorted)
+    corr_dict_layer4, labels = load_calc_corr(dataset_trained, dataset_extracted, sorted, seed=seed)
 
     # plots on one dataset
     plotter(corr_dict_layer4, labels, dataset_trained, dataset_extracted,
@@ -228,6 +224,20 @@ def main(dataset_trained, dataset_extracted, sorted):
 
     return corr_dict_layer4
 
+
+# function to get called in analyze.py to return compare_rdm values for all seeds
+def get_rdm_metric(source, target):
+    total_compare_rdm = []
+    for seed in range(1, 11):
+        source_corr_dict_layer4, _ = load_calc_corr(source, source, sorted=True, seed=seed)
+        target_corr_dict_layer4, _ = load_calc_corr(source, target, sorted=True, seed=seed)
+
+        compare_rdm = calc_compare_rdm(distance.euclidean,
+                                       list(source_corr_dict_layer4.values()),
+                                       list(target_corr_dict_layer4.values()))
+        total_compare_rdm.append(compare_rdm)
+
+    return np.concatenate(total_compare_rdm).ravel().tolist()
 
 
 if __name__ == '__main__':
@@ -241,26 +251,24 @@ if __name__ == '__main__':
 
     # set source(trained) and target(extracted) datasets
     dataset_trained = 'mnist'
-    corr_dict_source = main(dataset_trained, dataset_trained, sorted=True)
+    corr_dict_source = main(dataset_trained, dataset_trained, sorted=True, seed=1)  # only plot for seed 1
 
     dataset_extracted = 'fashionmnist'
-    corr_dict_target = main(dataset_trained, dataset_extracted, sorted=True)  # on target dataset
+    corr_dict_target = main(dataset_trained, dataset_extracted, sorted=True, seed=1)
 
 
     # calculate only diagonal of model RDM (=corr/dist of same model for source and target data)
-    compare_rdm_euclid = calc_target_compare_rdm(distance.euclidean, list(corr_dict_source.values()), list(corr_dict_target.values()))
-    compare_rdm_spearman = calc_target_compare_rdm(spearman_dist, list(corr_dict_source.values()), list(corr_dict_target.values()))
+    compare_rdm_euclid = calc_compare_rdm(distance.euclidean, list(corr_dict_source.values()), list(corr_dict_target.values()))
+    compare_rdm_spearman = calc_compare_rdm(spearman_dist, list(corr_dict_source.values()), list(corr_dict_target.values()))
 
     # load Acc to add to plot
-    df = pd.read_pickle(join(os.getcwd(), 'models', dataset_trained, 'df_pre_'+dataset_trained))  #Fix to work generally
+    df = pd.read_pickle(join(os.getcwd(), 'models', dataset_trained, 'df_pre_' + dataset_trained))
     acc = df[df['seed'] == 1]['pre_test_acc']
 
     plot_rdm_compare(compare_rdm_euclid, compare_rdm_spearman, list(corr_dict_source.keys()), acc)
     plt.title(f"Compare RDM values - for all models pre:{dataset_trained} on {dataset_extracted} & {dataset_trained}",
               weight='semibold', fontsize=11.5)
     plt.show()
-
-
 
 
 

@@ -41,12 +41,6 @@ class TorchDataset(Dataset):
             **self.loader_args)
         return test_loader
 
-    def get_balanced_test_loader(self, batch_sampler):
-        balanced_test_loader = torch.utils.data.DataLoader(
-            self.get_dataset_cls()(self.dataset_dir, train=False, transform=self.get_test_transform()),
-            batch_sampler=batch_sampler, **self.loader_args)
-        return balanced_test_loader
-
     def get_dataset_cls(self):
         raise NotImplementedError()
 

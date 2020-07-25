@@ -5,6 +5,7 @@ import argparse
 import datasets
 import train_utils
 from natsort import natsorted
+import tqdm
 import numpy as np
 
 # safety fix seed
@@ -98,7 +99,7 @@ def extract_select(test_loader):
     model_dir = join(os.getcwd(), 'models', args.trained_on)
     models = args.model_folder
     if models == 'all':
-        for i in range(1, 11):
+        for i in tqdm(range(1, 11)):
             models_dir = join(model_dir, 'models_' + str(i))
             extract(models_dir, test_loader=test_loader)
         return print('Extracted all 10 model folders.')
