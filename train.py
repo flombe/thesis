@@ -28,7 +28,7 @@ else:
 # set directory
 root_dir = os.getcwd()  #'/mnt/antares_raid/home/bemmerl/thesis'
 dataset_dir = join(root_dir, 'data', dataset_name)
-model_dir = join(root_dir, 'models', dataset_name) ###
+model_dir = join(root_dir, 'models', dataset_name)
 os.makedirs(model_dir, exist_ok=True)
 
 # save training stats in df

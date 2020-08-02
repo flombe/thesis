@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
     # extracted on both train and target dataset
     trained_dataset = 'mnist'
-    target_dataset = 'fashionmnist_noisy'  # extracted on
+    target_dataset = 'fashionmnist_pure_noise'  # extracted on
 
 
     root_dir = os.getcwd()
@@ -101,11 +101,11 @@ if __name__ == '__main__':
         df.to_pickle(join(df_path + '+metrics'))  # just to check - Later save as same name
     else:
         id_target, ss_target = calc_ID_SS(target_dataset)
-        df['ID_fashion_noisy'] = pd.Series(id_target)
-        df['SS_fashion_noisy'] = pd.Series(ss_target)
+        df['ID_noise'] = pd.Series(id_target)
+        df['SS_noise'] = pd.Series(ss_target)
 
         # RSA
         rdm_metric = rsa.get_rdm_metric(trained_dataset, target_dataset)  # standard = euclid dist.
-        df['RSA_fashion_noisy'] = rdm_metric
+        df['RSA_noise'] = rdm_metric
 
         df.to_pickle(join(df_path))

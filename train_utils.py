@@ -121,7 +121,7 @@ def evaluate(model, loader, device, criterion=F.nll_loss):
 
 
 # set checkpoints (for later log-plots choose log ticks)
-first_batches_chkpts = np.array([1, 3, 10, 30, 100, 300])
+first_batches_chkpts = np.array([0, 1, 3, 10, 30, 100, 300])
 epoch_chkpts = np.array([1, 3, 10, 30, 100])
 
 def train(model, train_loader, test_loader, optimizer, device, epochs, run_name, seed,
@@ -144,6 +144,25 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
     test_loss = []
     test_acc = []
     model_names = []
+
+
+    ## added untrained model (as benchmark)
+    if save == True:
+        if 0 in first_batches_chkpts:
+            model_names.append(join('model_' + str(run_name) + '_0.pt'))
+            torch.save(model, join(model_dir, model_names[-1]))
+
+            # save train stats
+            model.eval()
+
+            loss0, acc0 = evaluate(model, train_loader, device)
+            train_loss.append(loss0.item())
+            train_acc.append(acc0)
+
+            loss0, acc0 = evaluate(model, test_loader, device)
+            test_loss.append(loss0.item())
+            test_acc.append(acc0)
+
 
     for epoch in tqdm(range(epochs)):
 
@@ -246,26 +265,26 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
     writer.close()
 
     if save==True:
-        # train_stats = {
-        #     'model_name': model_names,
-        #     'seed': seed,
-        #     'pre_net': model.__class__.__name__,
-        #     'pre_epochs': np.append(first_batches_chkpts * 0.001, epoch_chkpts).tolist(),  ##
-        #     'pre_train_acc': train_acc,
-        #     'pre_train_loss': train_loss,
-        #     'pre_test_acc': test_acc,
-        #     'pre_test_loss': test_loss
-        # }
         train_stats = {
             'model_name': model_names,
             'seed': seed,
-            'ft_net': model.__class__.__name__,
-            'ft_epochs': np.append(first_batches_chkpts * 0.001, epoch_chkpts).tolist(),  ##
-            'ft_train_acc': train_acc,
-            'ft_train_loss': train_loss,
-            'ft_test_acc': test_acc,
-            'ft_test_loss': test_loss
+            'pre_net': model.__class__.__name__,
+            'pre_epochs': np.append(first_batches_chkpts * 0.001, epoch_chkpts).tolist(),  ##
+            'pre_train_acc': train_acc,
+            'pre_train_loss': train_loss,
+            'pre_test_acc': test_acc,
+            'pre_test_loss': test_loss
         }
+        # train_stats = {
+        #     'model_name': model_names,
+        #     'seed': seed,
+        #     'ft_net': model.__class__.__name__,
+        #     'ft_epochs': np.append(first_batches_chkpts * 0.001, epoch_chkpts).tolist(),  ##
+        #     'ft_train_acc': train_acc,
+        #     'ft_train_loss': train_loss,
+        #     'ft_test_acc': test_acc,
+        #     'ft_test_loss': test_loss
+        # }
         stats_file_path = join(model_dir, run_name + '_train_stats.json')
         with open(stats_file_path, 'w+') as f:
             json.dump(train_stats, f)

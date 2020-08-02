@@ -48,8 +48,8 @@ def ss_id_plot(df, dataset='pre'):
     plt.xlabel("Layers", weight='semibold')
     plt.xticks(range(7), labels=xticks)
 
-    # plt.legend(loc="lower left", prop={'size': 7.5}, frameon=True, fancybox=True, facecolor='white',
-    #            title='10 seed means')
+    plt.legend(loc="lower left", prop={'size': 7.5}, frameon=True, fancybox=True, facecolor='white',
+               title='10 seed means')
     plt.show()
 
 
