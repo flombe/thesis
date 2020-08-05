@@ -196,19 +196,19 @@ def load_calc_corr(dataset_trained, dataset_extracted, sorted, seed=1):
     path = join(models_dir, dataset_extracted + '_corr_dict_layer4.pik')
     if sorted==True: path = join(models_dir, dataset_extracted + '_sorted_corr_dict_layer4.pik')
 
-    if not os.path.exists(path):
+    #if not os.path.exists(path):
         # on out of encoder, so layer=4
-        a = time.time()
-        corr_dict_layer4 = calculate_activations_correlations(models, layer=4, sorted=sorted)
-        print('time for corr_dict calculation: ', time.time() - a)
-        # save it in models folder
-        with open(str(path), 'wb') as f:
-            dill.dump(corr_dict_layer4, f)
-        print(f'{path} saved.')
-    else:
-        print('>> already calculated >> load cor_dict')
-        with open(str(path), 'rb') as f:
-            corr_dict_layer4 = dill.load(f)
+    a = time.time()
+    corr_dict_layer4 = calculate_activations_correlations(models, layer=4, sorted=sorted)
+    print('time for corr_dict calculation: ', time.time() - a)
+    # save it in models folder
+    with open(str(path), 'wb') as f:
+        dill.dump(corr_dict_layer4, f)
+    print(f'{path} saved.')
+    # else:
+    #     print('>> already calculated >> load cor_dict')
+    #     with open(str(path), 'rb') as f:
+    #         corr_dict_layer4 = dill.load(f)
 
     if sorted: labels = np.sort(np.array(labels))
     return corr_dict_layer4, labels

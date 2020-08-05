@@ -5,7 +5,7 @@ import argparse
 import datasets
 import train_utils
 from natsort import natsorted
-import tqdm
+from tqdm import tqdm
 import numpy as np
 
 # safety fix seed

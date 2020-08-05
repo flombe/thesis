@@ -136,7 +136,7 @@ if __name__ is '__main__':
     test_loader = dataset.get_test_loader(batch_size=1, shuffle=False)
     dataset_name = 'fashionmnist'
 
-    for seed in range(2, 11):
+    for seed in range(1, 11):
         models_dir = join(root_dir, 'models', 'mnist', 'models_' + str(seed))
 
         extract_aug(models_dir, test_loader, samples=500, batch_size=1, arg='shuffle')
