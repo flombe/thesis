@@ -38,7 +38,7 @@ def calc_ID_SS(dataset):
         seed_ss = []
         for name, model in tqdm(extract.items()):
             print(name)
-            if name == 'model_pre_mnist_0':
+            if name == 'model_pre_mnist_0.pt':
                 layers = model['layers']  # input + 6 model output layers
                 labels = model['labels']
 
@@ -50,10 +50,15 @@ def calc_ID_SS(dataset):
                     tss, ssw = sum_of_squares.sum_squared(layer, labels)
                     ss.append(ssw / tss if tss != 0 else 0)
 
-                df[df['seed'] == seed & df['model_name'] == name]['ID_noise'] = ids  # add each single value
-                df[df['seed'] == seed & df['model_name'] == name]['SS_noise'] = ss
+                print(ids, ss)
+                print(df.loc[df.seed.eq(seed) & df.model_name.eq(name), 'ID_target'])
+                row_nr = 0 + (seed-1)*12
+                df.at[row_nr, 'ID_target'] = ids  # add each single value
+                df.at[row_nr, 'SS_target'] = ss
+
                 seed_ids.append(ids)
                 seed_ss.append(ss)
+                print(df.loc[df.seed.eq(seed) & df.model_name.eq(name), 'ID_target'])
 
         # df[df['seed'] == seed]['ID_pre'] = seed_ids  # add values for 11 models at once
         total_ids += seed_ids
@@ -73,7 +78,7 @@ if __name__ == '__main__':
 
     # extracted on both train and target dataset
     trained_dataset = 'mnist'
-    target_dataset = 'fashionmnist_pure_noise'  # extracted on
+    target_dataset = 'fashionmnist'  # extracted on
     # 'fashionmnist', +noise, shuffle
 
     root_dir = os.getcwd()
@@ -85,22 +90,18 @@ if __name__ == '__main__':
 
     if target_dataset == 'fashionmnist':
         # calc metrics and add to df
-        df['target_dataset'] = target_dataset
-        print(f'>> Calculate ID, SS for models pre-trained on {trained_dataset}, with target {target_dataset} <<<')
-        id_pre, ss_pre = calc_ID_SS(trained_dataset)
-        print(id_pre)
-        df['ID_pre'] = pd.Series(id_pre)  # add new column and all values at once
-        df['SS_pre'] = pd.Series(ss_pre)
+        # df['target_dataset'] = target_dataset
+        # print(f'>> Calculate ID, SS for models pre-trained on {trained_dataset}, with target {target_dataset} <<<')
+        # id_pre, ss_pre = calc_ID_SS(trained_dataset)
+        # print(id_pre)
+        # df['ID_pre'] = pd.Series(id_pre)  # add new column and all values at once
+        # df['SS_pre'] = pd.Series(ss_pre)
 
         id_target, ss_target = calc_ID_SS(target_dataset)
-        df['ID_target'] = pd.Series(id_target)
-        df['SS_target'] = pd.Series(ss_target)
+        # df['ID_target'] = pd.Series(id_target)
+        # df['SS_target'] = pd.Series(ss_target)
 
-        # RSA
-        rdm_metric = rsa.get_rdm_metric(trained_dataset, target_dataset)  # standard = euclid dist.
-        df['RSA'] = rdm_metric
-
-        df.to_pickle(join(df_path + '+metrics'))  # just to check - Later save as same name
+        df.to_pickle(join(df_path))
     else:
         id_target, ss_target = calc_ID_SS(target_dataset)
         print(id_target, ss_target)
@@ -108,7 +109,7 @@ if __name__ == '__main__':
         # df['SS_noise'] = pd.Series(ss_target)
 
         # RSA
-        rdm_metric = rsa.get_rdm_metric(trained_dataset, target_dataset)  # standard = euclid dist.
-        df['RSA_noise'] = rdm_metric
+        # rdm_metric = rsa.get_rdm_metric(trained_dataset, target_dataset)  # standard = euclid dist.
+        # df['RSA_fashion_shuffle'] = rdm_metric
 
         df.to_pickle(join(df_path))

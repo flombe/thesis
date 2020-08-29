@@ -229,7 +229,11 @@ def main(dataset_trained, dataset_extracted, sorted, seed=1):
 def get_rdm_metric(source, target):
     total_compare_rdm = []
     for seed in range(1, 11):
-        source_corr_dict_layer4, _ = load_calc_corr(source, source, sorted=True, seed=seed)
+        # source_corr_dict_layer4, _ = load_calc_corr(source, source, sorted=True, seed=seed)
+        path = join(os.getcwd(), 'models', source, 'models_' + str(seed), 'mnist_sorted_corr_dict_layer4.pik')
+        with open(str(path), 'rb') as f:
+            source_corr_dict_layer4 = dill.load(f)
+
         target_corr_dict_layer4, _ = load_calc_corr(source, target, sorted=True, seed=seed)
 
         compare_rdm = calc_compare_rdm(distance.euclidean,
