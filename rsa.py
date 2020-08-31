@@ -14,6 +14,7 @@ from scipy.stats import spearmanr
 from sklearn.metrics.pairwise import manhattan_distances
 from tqdm import tqdm
 from natsort import natsorted
+from skimage.util import view_as_blocks
 
 
 def correlationd_matrix(activations):
@@ -134,7 +135,7 @@ def multi_plot_rdm(corr_dict, labels):
         n = 10  # Keeps every nth label
         [l.set_visible(False) for (i, l) in enumerate(ax.xaxis.get_ticklabels()) if i % n != 0]
         [l.set_visible(False) for (i, l) in enumerate(ax.yaxis.get_ticklabels()) if i % n != 0]
-    fig.delaxes(axs[3, 2])
+    # fig.delaxes(axs[3, 2])
     plt.show()
 
 
@@ -145,11 +146,38 @@ def multi_plot_histo(corr_dict, labels):
     fig2.subplots_adjust(hspace=.5, wspace=.001)
 
     for ax2, val2 in tqdm(zip(axs2.ravel(), corr_dict.items())):
+        # val2[1] ndarray 500x500
+        block_view = view_as_blocks(val2[1], block_shape=(50, 50))
+        val_diag = np.array([])
+        val_nondiag = np.array([])
+        for i in range(10):
+            for j in range(10):
+                print(block_view[i, j].shape)
+                if i == j:
+                    val_diag = np.append(val_diag, block_view[i, j])
+                    print(val_diag.shape)
+                else:
+                    val_nondiag = np.append(val_nondiag, block_view[i, j])
+                    print(val_nondiag.shape)
+
+        print('end shape diag', val_diag.shape)
+        print('end shape nondiag',val_nondiag.shape)
+        sns.distplot(val_diag, ax=ax2)
+        sns.distplot(val_nondiag, ax=ax2)
+
         sns.distplot(val2[1], ax=ax2)
         ax2.set_title(val2[0], weight='semibold')
+
+        # add mean line to histogram
+        kdeline = ax2.lines[0]
+        mean = val2[1].mean()
+        height = np.interp(mean, kdeline.get_xdata(), kdeline.get_ydata())
+        ax2.vlines(mean, 0, height, color='blue', ls=':')
+
+        # add percent of total text
         total = int(np.sum(val2[1]))
         ax2.text(0.85, 0.05, join('sum: ' + str(total) + ' (' + str(int(total/(500*500*2)*100)) + '% of total)'))
-    fig2.delaxes(axs2[3, 2])
+
     plt.show()
 
 
@@ -165,7 +193,7 @@ def plotter(corr_dict, labels, dataset_trained, dataset_extracted, single_plot, 
     if multi_plot:
         # multi plot multiple Corr_matrices
         print('> Multi-plot all models and show distribution histogram')
-        multi_plot_rdm(corr_dict, labels)
+        #########multi_plot_rdm(corr_dict, labels)
         multi_plot_histo(corr_dict, labels)
 
     if rdm_plot:
@@ -196,19 +224,19 @@ def load_calc_corr(dataset_trained, dataset_extracted, sorted, seed=1):
     path = join(models_dir, dataset_extracted + '_corr_dict_layer4.pik')
     if sorted==True: path = join(models_dir, dataset_extracted + '_sorted_corr_dict_layer4.pik')
 
-    #if not os.path.exists(path):
+    if not os.path.exists(path):
         # on out of encoder, so layer=4
-    a = time.time()
-    corr_dict_layer4 = calculate_activations_correlations(models, layer=4, sorted=sorted)
-    print('time for corr_dict calculation: ', time.time() - a)
-    # save it in models folder
-    with open(str(path), 'wb') as f:
-        dill.dump(corr_dict_layer4, f)
-    print(f'{path} saved.')
-    # else:
-    #     print('>> already calculated >> load cor_dict')
-    #     with open(str(path), 'rb') as f:
-    #         corr_dict_layer4 = dill.load(f)
+        a = time.time()
+        corr_dict_layer4 = calculate_activations_correlations(models, layer=4, sorted=sorted)
+        print('time for corr_dict calculation: ', time.time() - a)
+        # save it in models folder
+        with open(str(path), 'wb') as f:
+            dill.dump(corr_dict_layer4, f)
+        print(f'{path} saved.')
+    else:
+        print('>> already calculated >> load cor_dict')
+        with open(str(path), 'rb') as f:
+            corr_dict_layer4 = dill.load(f)
 
     if sorted: labels = np.sort(np.array(labels))
     return corr_dict_layer4, labels
@@ -220,7 +248,7 @@ def main(dataset_trained, dataset_extracted, sorted, seed=1):
 
     # plots on one dataset
     plotter(corr_dict_layer4, labels, dataset_trained, dataset_extracted,
-            single_plot=False, multi_plot=False, rdm_plot=False)
+            single_plot=False, multi_plot=True, rdm_plot=False)
 
     return corr_dict_layer4
 
@@ -262,17 +290,18 @@ if __name__ == '__main__':
 
 
     # calculate only diagonal of model RDM (=corr/dist of same model for source and target data)
-    compare_rdm_euclid = calc_compare_rdm(distance.euclidean, list(corr_dict_source.values()), list(corr_dict_target.values()))
-    compare_rdm_spearman = calc_compare_rdm(spearman_dist, list(corr_dict_source.values()), list(corr_dict_target.values()))
 
-    # load Acc to add to plot
-    df = pd.read_pickle(join(os.getcwd(), 'models', dataset_trained, 'df_pre_' + dataset_trained))
-    acc = df[df['seed'] == 1]['pre_test_acc']
-
-    plot_rdm_compare(compare_rdm_euclid, compare_rdm_spearman, list(corr_dict_source.keys()), acc)
-    plt.title(f"Compare RDM values - for all models pre:{dataset_trained} on {dataset_extracted} & {dataset_trained}",
-              weight='semibold', fontsize=11.5)
-    plt.show()
+    # compare_rdm_euclid = calc_compare_rdm(distance.euclidean, list(corr_dict_source.values()), list(corr_dict_target.values()))
+    # compare_rdm_spearman = calc_compare_rdm(spearman_dist, list(corr_dict_source.values()), list(corr_dict_target.values()))
+    #
+    # # load Acc to add to plot
+    # df = pd.read_pickle(join(os.getcwd(), 'models', dataset_trained, 'df_pre_' + dataset_trained))
+    # acc = df[df['seed'] == 1]['pre_test_acc']
+    #
+    # plot_rdm_compare(compare_rdm_euclid, compare_rdm_spearman, list(corr_dict_source.keys()), acc)
+    # plt.title(f"Compare RDM values - for all models pre:{dataset_trained} on {dataset_extracted} & {dataset_trained}",
+    #           weight='semibold', fontsize=11.5)
+    # plt.show()
 
 
 
