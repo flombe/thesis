@@ -15,6 +15,7 @@ from sklearn.metrics.pairwise import manhattan_distances
 from tqdm import tqdm
 from natsort import natsorted
 from skimage.util import view_as_blocks
+import sklearn.manifold
 
 
 def correlationd_matrix(activations):
@@ -128,14 +129,13 @@ def multi_plot_rdm(corr_dict, labels):
 
     for ax, val in tqdm(zip(axs.ravel(), corr_dict.items())):
         sns.set(font_scale=0.8)
-        sns.heatmap(val[1], cmap='rainbow', ax=ax, cbar=True, xticklabels=labels, yticklabels=labels)
+        sns.heatmap(val[1], cmap='rainbow', ax=ax, cbar=True, xticklabels=labels, yticklabels=labels, vmax=1.5)
         ax.set_title(val[0], weight='semibold')
 
         ax.tick_params(axis='both', labelsize=3, width=0.3, length=1)
         n = 10  # Keeps every nth label
         [l.set_visible(False) for (i, l) in enumerate(ax.xaxis.get_ticklabels()) if i % n != 0]
         [l.set_visible(False) for (i, l) in enumerate(ax.yaxis.get_ticklabels()) if i % n != 0]
-    # fig.delaxes(axs[3, 2])
     plt.show()
 
 
@@ -152,7 +152,6 @@ def multi_plot_histo(corr_dict, labels):
         val_nondiag = np.array([])
         for i in range(10):
             for j in range(10):
-                print(block_view[i, j].shape)
                 if i == j:
                     val_diag = np.append(val_diag, block_view[i, j])
                     print(val_diag.shape)
@@ -162,27 +161,51 @@ def multi_plot_histo(corr_dict, labels):
 
         print('end shape diag', val_diag.shape)
         print('end shape nondiag',val_nondiag.shape)
-        sns.distplot(val_diag, ax=ax2)
-        sns.distplot(val_nondiag, ax=ax2)
+        sns.distplot(val_diag, ax=ax2, label='Corr.Matrix block diagonal', kde=False)
+        sns.distplot(val_nondiag, ax=ax2, label='Corr.Matrix non-diagonal', kde=False)
 
-        sns.distplot(val2[1], ax=ax2)
+        # sns.distplot(val2[1], ax=ax2)
         ax2.set_title(val2[0], weight='semibold')
+        # ax2.set_ylim(0, 5)
 
         # add mean line to histogram
-        kdeline = ax2.lines[0]
-        mean = val2[1].mean()
-        height = np.interp(mean, kdeline.get_xdata(), kdeline.get_ydata())
-        ax2.vlines(mean, 0, height, color='blue', ls=':')
+        # kdeline_diag = ax2.lines[0]
+        # mean = val_diag.mean()
+        # height = np.interp(mean, kdeline_diag.get_xdata(), kdeline_diag.get_ydata())
+        # ax2.vlines(mean, 0, height, color='blue', ls=':')
+        #
+        # kdeline = ax2.lines[1]
+        # mean = val_nondiag.mean()
+        # height = np.interp(mean, kdeline.get_xdata(), kdeline.get_ydata())
+        # ax2.vlines(mean, 0, height, color='crimson', ls=':')
 
         # add percent of total text
         total = int(np.sum(val2[1]))
         ax2.text(0.85, 0.05, join('sum: ' + str(total) + ' (' + str(int(total/(500*500*2)*100)) + '% of total)'))
 
+    plt.legend()
     plt.show()
 
 
+def MDS_plot(corr_dict, labels):
+
+    rdm = calc_rdm(distance.euclidean, list(corr_dict.values()))
+    model_names = list(corr_dict.keys())
+
+    # MDS embedding
+    embedding = sklearn.manifold.MDS(n_components=2, metric=True, dissimilarity='precomputed')
+    embed_rdm = embedding.fit_transform(rdm)
+    print(embed_rdm)
+
+    fig, ax = plt.subplots(figsize=(7, 7))
+    ax.scatter(embed_rdm[:, 0], embed_rdm[:, 1], cmap='rainbow', c=range(12), label=model_names)
+
+    for i, txt in enumerate(model_names):
+        ax.annotate(txt[16:-3], (embed_rdm[i, 0], embed_rdm[i, 1]), textcoords='offset points', xytext=(2,2))
+
+
 # selects plots in main
-def plotter(corr_dict, labels, dataset_trained, dataset_extracted, single_plot, multi_plot, rdm_plot):
+def plotter(corr_dict, labels, dataset_trained, dataset_extracted, single_plot, multi_plot, mds_plot, rdm_plot):
     if single_plot:
         # single plotting
         for model, correlation in corr_dict.items():
@@ -193,8 +216,14 @@ def plotter(corr_dict, labels, dataset_trained, dataset_extracted, single_plot, 
     if multi_plot:
         # multi plot multiple Corr_matrices
         print('> Multi-plot all models and show distribution histogram')
-        #########multi_plot_rdm(corr_dict, labels)
+        multi_plot_rdm(corr_dict, labels)
         multi_plot_histo(corr_dict, labels)
+
+    if mds_plot:
+        MDS_plot(corr_dict, labels)
+        plt.title("MDS of RDM - pre: " + dataset_trained + " / extracted: " + dataset_extracted, weight='semibold',
+                  fontsize=12)
+        plt.show()
 
     if rdm_plot:
         print('> Calc and plot RDM: of all models layer4 correlations')
@@ -248,7 +277,7 @@ def main(dataset_trained, dataset_extracted, sorted, seed=1):
 
     # plots on one dataset
     plotter(corr_dict_layer4, labels, dataset_trained, dataset_extracted,
-            single_plot=False, multi_plot=True, rdm_plot=False)
+            single_plot=False, multi_plot=True, mds_plot=False, rdm_plot=False)
 
     return corr_dict_layer4
 
