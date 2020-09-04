@@ -154,34 +154,34 @@ def multi_plot_histo(corr_dict, labels):
             for j in range(10):
                 if i == j:
                     val_diag = np.append(val_diag, block_view[i, j])
-                    print(val_diag.shape)
+                    # print(val_diag.shape)
                 else:
                     val_nondiag = np.append(val_nondiag, block_view[i, j])
-                    print(val_nondiag.shape)
+                    # print(val_nondiag.shape)
 
         print('end shape diag', val_diag.shape)
-        print('end shape nondiag',val_nondiag.shape)
-        sns.distplot(val_diag, ax=ax2, label='Corr.Matrix block diagonal', kde=False)
-        sns.distplot(val_nondiag, ax=ax2, label='Corr.Matrix non-diagonal', kde=False)
+        print('end shape nondiag', val_nondiag.shape)
+        sns.distplot(val_diag, ax=ax2, label='Corr.Matrix block diagonal')  # , kde=False)
+        sns.distplot(val_nondiag, ax=ax2, label='Corr.Matrix non-diagonal')  # , kde=False)
 
         # sns.distplot(val2[1], ax=ax2)
         ax2.set_title(val2[0], weight='semibold')
-        # ax2.set_ylim(0, 5)
+        ax2.set_ylim(0, 40)
 
         # add mean line to histogram
-        # kdeline_diag = ax2.lines[0]
-        # mean = val_diag.mean()
-        # height = np.interp(mean, kdeline_diag.get_xdata(), kdeline_diag.get_ydata())
-        # ax2.vlines(mean, 0, height, color='blue', ls=':')
-        #
-        # kdeline = ax2.lines[1]
-        # mean = val_nondiag.mean()
-        # height = np.interp(mean, kdeline.get_xdata(), kdeline.get_ydata())
-        # ax2.vlines(mean, 0, height, color='crimson', ls=':')
+        kdeline_diag = ax2.lines[0]
+        mean = val_diag.mean()
+        height = np.interp(mean, kdeline_diag.get_xdata(), kdeline_diag.get_ydata())
+        ax2.vlines(mean, 0, height, color='blue', ls=':')
+
+        kdeline = ax2.lines[1]
+        mean = val_nondiag.mean()
+        height = np.interp(mean, kdeline.get_xdata(), kdeline.get_ydata())
+        ax2.vlines(mean, 0, height, color='crimson', ls=':')
 
         # add percent of total text
-        total = int(np.sum(val2[1]))
-        ax2.text(0.85, 0.05, join('sum: ' + str(total) + ' (' + str(int(total/(500*500*2)*100)) + '% of total)'))
+        # total = int(np.sum(val2[1]))
+        # ax2.text(0.85, 0.05, join('sum: ' + str(total) + ' (' + str(int(total/(500*500*2)*100)) + '% of total)'))
 
     plt.legend()
     plt.show()
@@ -201,11 +201,13 @@ def MDS_plot(corr_dict, labels):
     ax.scatter(embed_rdm[:, 0], embed_rdm[:, 1], cmap='rainbow', c=range(12), label=model_names)
 
     for i, txt in enumerate(model_names):
-        ax.annotate(txt[16:-3], (embed_rdm[i, 0], embed_rdm[i, 1]), textcoords='offset points', xytext=(2,2))
+        ax.annotate(txt[16:-3], (embed_rdm[i, 0], embed_rdm[i, 1]), textcoords='offset points', xytext=(2, 2))
 
 
 # selects plots in main
-def plotter(corr_dict, labels, dataset_trained, dataset_extracted, single_plot, multi_plot, mds_plot, rdm_plot):
+def plotter(corr_dict, labels, dataset_trained, dataset_extracted,
+            single_plot, multi_plot, multi_plot_hist, mds_plot, rdm_plot):
+
     if single_plot:
         # single plotting
         for model, correlation in corr_dict.items():
@@ -215,8 +217,11 @@ def plotter(corr_dict, labels, dataset_trained, dataset_extracted, single_plot, 
 
     if multi_plot:
         # multi plot multiple Corr_matrices
-        print('> Multi-plot all models and show distribution histogram')
+        print('> Multi-plot all models')
         multi_plot_rdm(corr_dict, labels)
+
+    if multi_plot_hist:
+        print('> Distribution histogram of all models')
         multi_plot_histo(corr_dict, labels)
 
     if mds_plot:
@@ -277,7 +282,11 @@ def main(dataset_trained, dataset_extracted, sorted, seed=1):
 
     # plots on one dataset
     plotter(corr_dict_layer4, labels, dataset_trained, dataset_extracted,
-            single_plot=False, multi_plot=True, mds_plot=False, rdm_plot=False)
+            single_plot=False,
+            multi_plot=False,
+            multi_plot_hist=True,
+            mds_plot=True,
+            rdm_plot=False)
 
     return corr_dict_layer4
 
@@ -312,9 +321,9 @@ if __name__ == '__main__':
 
     # set source(trained) and target(extracted) datasets
     dataset_trained = 'mnist'
-    corr_dict_source = main(dataset_trained, dataset_trained, sorted=True, seed=1)  # only plot for seed 1
+    # corr_dict_source = main(dataset_trained, dataset_trained, sorted=True, seed=1)  # only plot for seed 1
 
-    dataset_extracted = 'fashionmnist'
+    dataset_extracted = 'fashionmnist_pure_noise'
     corr_dict_target = main(dataset_trained, dataset_extracted, sorted=True, seed=1)
 
 
