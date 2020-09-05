@@ -166,7 +166,7 @@ def multi_plot_histo(corr_dict, labels):
 
         # sns.distplot(val2[1], ax=ax2)
         ax2.set_title(val2[0], weight='semibold')
-        ax2.set_ylim(0, 40)
+        ax2.set_ylim(0, 5)
 
         # add mean line to histogram
         kdeline_diag = ax2.lines[0]
@@ -241,7 +241,7 @@ def plotter(corr_dict, labels, dataset_trained, dataset_extracted,
         plt.show()
 
 
-def load_calc_corr(dataset_trained, dataset_extracted, sorted, seed=1):
+def load_calc_corr(dataset_trained, dataset_extracted, sorted, seed=1, layer=4):
     # load
     root_path = os.getcwd()
     models_dir = join(root_path, 'models', dataset_trained, 'models_' + str(seed))
@@ -255,37 +255,37 @@ def load_calc_corr(dataset_trained, dataset_extracted, sorted, seed=1):
     print('labels and count: ', np.unique(np.array(labels), return_counts=True))  # check if balanced data
 
     # calculate or load Correlation_Dictionary for one layer
-    path = join(models_dir, dataset_extracted + '_corr_dict_layer4.pik')
-    if sorted==True: path = join(models_dir, dataset_extracted + '_sorted_corr_dict_layer4.pik')
+    path = join(models_dir, dataset_extracted + f'_corr_dict_layer{layer}.pik')
+    if sorted==True: path = join(models_dir, dataset_extracted + f'_sorted_corr_dict_layer{layer}.pik')
 
     if not os.path.exists(path):
-        # on out of encoder, so layer=4
+        # on out of encoder, so layer=4, or otherwise specified
         a = time.time()
-        corr_dict_layer4 = calculate_activations_correlations(models, layer=4, sorted=sorted)
+        corr_dict_layer = calculate_activations_correlations(models, layer=layer, sorted=sorted)
         print('time for corr_dict calculation: ', time.time() - a)
         # save it in models folder
         with open(str(path), 'wb') as f:
-            dill.dump(corr_dict_layer4, f)
+            dill.dump(corr_dict_layer, f)
         print(f'{path} saved.')
     else:
         print('>> already calculated >> load cor_dict')
         with open(str(path), 'rb') as f:
-            corr_dict_layer4 = dill.load(f)
+            corr_dict_layer = dill.load(f)
 
     if sorted: labels = np.sort(np.array(labels))
-    return corr_dict_layer4, labels
+    return corr_dict_layer, labels
 
 
-def main(dataset_trained, dataset_extracted, sorted, seed=1):
+def main(dataset_trained, dataset_extracted, sorted, seed=1, layer=4):
     # load models and calc/load correlations
-    corr_dict_layer4, labels = load_calc_corr(dataset_trained, dataset_extracted, sorted, seed=seed)
+    corr_dict_layer4, labels = load_calc_corr(dataset_trained, dataset_extracted, sorted, seed=seed, layer=layer)
 
     # plots on one dataset
     plotter(corr_dict_layer4, labels, dataset_trained, dataset_extracted,
             single_plot=False,
             multi_plot=False,
-            multi_plot_hist=True,
-            mds_plot=True,
+            multi_plot_hist=False,
+            mds_plot=False,
             rdm_plot=False)
 
     return corr_dict_layer4
@@ -310,6 +310,43 @@ def get_rdm_metric(source, target):
     return np.concatenate(total_compare_rdm).ravel().tolist()
 
 
+def all_layer_plot(dataset_trained, dataset_extracted, sorted, seed=1):
+    layer_names = ['in', 'conv1', 'pool1', 'conv2', 'pool2', 'fc1', 'output']
+    plt.figure(figsize=(10, 10))
+    for layer in range(7):
+        corr_dict,_ = load_calc_corr(dataset_trained, 'fashionmnist', sorted, seed=seed, layer=layer)
+        mean = []
+        for model in corr_dict.items():
+            ## model[1] ndarray 500x500
+            # block_view = view_as_blocks(model[1], block_shape=(50, 50))
+            # val_diag = np.array([])
+            # val_nondiag = np.array([])
+            # for i in range(10):
+            #     for j in range(10):
+            #         if i == j:
+            #             val_diag = np.append(val_diag, block_view[i, j])
+            #         else:
+            #             val_nondiag = np.append(val_nondiag, block_view[i, j])
+            mean.append(model[1].mean())
+        p = plt.plot(range(12), mean, label=layer_names[layer])
+
+        # again for noise inputs
+        corr_dict,_ = load_calc_corr(dataset_trained, 'fashionmnist_pure_noise', sorted, seed=seed, layer=layer)
+        mean = []
+        for model in corr_dict.items():
+            mean.append(model[1].mean())
+        plt.plot(range(12), mean, linestyle='--', label=f'{layer_names[layer]}_noise', c=p[0].get_color())
+
+    plt.xlabel('models')
+    plt.ylabel('mean correlation')
+    plt.title('RSA mean Corr. all layers Comparison (fashionMNIST, Noise)')
+    plt.xlim(0, 11)
+    plt.ylim(0, 1)
+    plt.xticks(range(12), list(corr_dict.keys()), rotation=70)
+    plt.legend()
+    plt.show()
+
+
 if __name__ == '__main__':
     # set device
     if torch.cuda.is_available():
@@ -319,12 +356,18 @@ if __name__ == '__main__':
         device = torch.device("cpu")
         print("Devise used = ", device)
 
+    # specify layer to analyze on
+    layer = 6
+
     # set source(trained) and target(extracted) datasets
     dataset_trained = 'mnist'
-    # corr_dict_source = main(dataset_trained, dataset_trained, sorted=True, seed=1)  # only plot for seed 1
+    # corr_dict_source = main(dataset_trained, dataset_trained, sorted=True, seed=1, layer=layer)  # only plot for seed 1
 
     dataset_extracted = 'fashionmnist_pure_noise'
-    corr_dict_target = main(dataset_trained, dataset_extracted, sorted=True, seed=1)
+    # corr_dict_target = main(dataset_trained, dataset_extracted, sorted=True, seed=1, layer=layer)
+
+    # plot to compare corr means of all layers for all models
+    all_layer_plot(dataset_trained, dataset_extracted, sorted=True, seed=1)
 
 
     # calculate only diagonal of model RDM (=corr/dist of same model for source and target data)
