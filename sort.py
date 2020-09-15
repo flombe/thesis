@@ -25,12 +25,10 @@ model_dir = join(root_dir, 'models', dataset_name)
 
 df_added = pd.read_pickle(join(model_dir, 'df_pre_mnistadded'))
 
-for i in range(0, 119, 12):
-    print(i)
-    df_added[i:i+12] = df_added[i:i+12].sort_values(by=['model_name'], ignore_index=True)
 
+## sort by seed and model_name using natsort
 # df = df_added
-# df['model_name'] = pd.Categorical(df['model_name'], ordered=True, categories=natsorted(df['model_name'].unique()))
-# df = df.sort_values('model_name')
+# idx, *_ = zip(*natsorted(zip(df.index, df.seed, df.model_name), key=lambda x: (x[1], x[2])))
+# df = df.iloc[list(idx)]
 
 # df.to_pickle(join(model_dir, 'df_' + run_name + 'added'))

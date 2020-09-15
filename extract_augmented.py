@@ -139,9 +139,6 @@ if __name__ is '__main__':
     for seed in range(1, 11):
         models_dir = join(root_dir, 'models', 'mnist', 'models_' + str(seed))
 
-        extract_aug(models_dir, test_loader, samples=500, batch_size=1, arg='shuffle')
-        extract_aug(models_dir, test_loader, samples=500, batch_size=1, arg='noisy')
-        extract_aug(models_dir, test_loader, samples=500, batch_size=1, arg='pure_noise')
-
-
-
+        #extract_aug(models_dir, test_loader, samples=500, batch_size=1, arg='shuffle')
+        #extract_aug(models_dir, test_loader, samples=500, batch_size=1, arg='noisy')
+        #extract_aug(models_dir, test_loader, samples=500, batch_size=1, arg='pure_noise')

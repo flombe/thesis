@@ -347,6 +347,12 @@ def all_layer_plot(dataset_trained, dataset_extracted, sorted, seed=1):
     plt.show()
 
 
+### to-do
+    # diff between mean blue and organge in histograms  (p41. at pool2 highest?)
+    # histograms: show median change as one line
+
+
+
 if __name__ == '__main__':
     # set device
     if torch.cuda.is_available():

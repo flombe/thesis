@@ -15,7 +15,7 @@ from torch.utils.tensorboard import SummaryWriter
 # parse args from sh script
 def train_args_parser():
     parser = argparse.ArgumentParser(description='Training Parameters')
-    parser.add_argument('--dataset', default='mnist', choices=['mnist', 'mnist2class', 'fashionmnist', 'cifar10'],
+    parser.add_argument('--dataset', default='mnist', choices=['mnist', 'mnist2class', 'mnist_noise_struct', 'fashionmnist', 'cifar10'],
                         type=str , metavar='D', help='trainings dataset name')
     parser.add_argument('--epochs', default=200, type=int, metavar='E',
                         help='number of total epochs to run')
@@ -125,7 +125,7 @@ first_batches_chkpts = np.array([0, 1, 3, 10, 30, 100, 300])
 epoch_chkpts = np.array([1, 3, 10, 30, 100])
 
 def train(model, train_loader, test_loader, optimizer, device, epochs, run_name, seed,
-          criterion=F.nll_loss, save=True, output_dir=None, verbose=True):
+          criterion=F.nll_loss, save=True, ft=False, output_dir=None, verbose=True):
     model_dir = None
     if output_dir is not None:
         model_dir = join(output_dir, 'models_' + str(seed))
@@ -264,7 +264,8 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
 
     writer.close()
 
-    if save==True:
+    # save training or finetuning stats dict to df
+    if save == True & ft == False:
         train_stats = {
             'model_name': model_names,
             'seed': seed,
@@ -275,19 +276,21 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
             'pre_test_acc': test_acc,
             'pre_test_loss': test_loss
         }
-        # train_stats = {
-        #     'model_name': model_names,
-        #     'seed': seed,
-        #     'ft_net': model.__class__.__name__,
-        #     'ft_epochs': np.append(first_batches_chkpts * 0.001, epoch_chkpts).tolist(),  ##
-        #     'ft_train_acc': train_acc,
-        #     'ft_train_loss': train_loss,
-        #     'ft_test_acc': test_acc,
-        #     'ft_test_loss': test_loss
-        # }
-        stats_file_path = join(model_dir, run_name + '_train_stats.json')
-        with open(stats_file_path, 'w+') as f:
-            json.dump(train_stats, f)
+    else:  # save == True & ft == True
+        train_stats = {
+            'model_name': model_names,
+            'seed': seed,
+            'ft_net': model.__class__.__name__,
+            'ft_epochs': np.append(first_batches_chkpts * 0.001, epoch_chkpts).tolist(),  ##
+            'ft_train_acc': train_acc,
+            'ft_train_loss': train_loss,
+            'ft_test_acc': test_acc,
+            'ft_test_loss': test_loss
+        }
+
+    stats_file_path = join(model_dir, run_name + '_train_stats.json')
+    with open(stats_file_path, 'w+') as f:
+        json.dump(train_stats, f)
 
     # create dataframe
     df = pd.DataFrame(train_stats)

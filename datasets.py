@@ -82,6 +82,26 @@ class MNIST2class(MNIST):
         return test_loader
 
 
+class MNIST_noise_struct(MNIST):
+    def name(self):
+        return 'mnist_noise_struct'
+
+    def get_train_loader(self, batch_size=32):
+        train_loader = torch.utils.data.DataLoader(
+            datasets.MNIST(self.dataset_dir, train=True, download=False,
+                           transform=transforms.ToTensor()),
+            batch_size=batch_size, shuffle=True,
+            **self.loader_args)
+        return train_loader
+
+    def get_test_loader(self, batch_size=32, shuffle=True):
+        test_loader = torch.utils.data.DataLoader(
+            datasets.MNIST(self.dataset_dir, train=False, transform=transforms.ToTensor()),
+            batch_size=batch_size, shuffle=shuffle,
+            **self.loader_args)
+        return test_loader
+
+
 class FashionMNIST(TorchDataset):
     def get_test_transform(self):
         transform = transforms.Compose([
@@ -98,10 +118,21 @@ class FashionMNIST(TorchDataset):
 
 
 class CIFAR10(TorchDataset):
+    def get_train_transform(self):
+        transform = transforms.Compose([
+            # transforms.Resize((224, 224), interpolation=2),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomCrop(32, 4),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+        ])
+        return transform
+
     def get_test_transform(self):
         transform = transforms.Compose([
+            # transforms.Resize((224, 224), interpolation=2),
             transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
         ])
         return transform
 
@@ -110,7 +141,6 @@ class CIFAR10(TorchDataset):
 
     def name(self):
         return 'cifar10'
-
 
 
 class BalancedBatchSampler(BatchSampler):

@@ -47,6 +47,10 @@ for seed_run in range(1, seeds+1):
         model = mnist_archs.mnistConvNet2class()
         dataset = datasets.MNIST2class(dataset_dir=dataset_dir, device=device)
 
+    elif dataset_name == 'mnist_noise_struct':
+        model = mnist_archs.mnistConvNet()
+        dataset = datasets.MNIST_noise_struct(dataset_dir=dataset_dir, device=device)
+
     elif dataset_name == 'fashionmnist':
         model = mnist_archs.mnistConvNet()
         dataset = datasets.FashionMNIST(dataset_dir=dataset_dir, device=device)
@@ -66,6 +70,7 @@ for seed_run in range(1, seeds+1):
 
     # Training
     optimizer = optim.Adam(model.parameters(), lr=lr)  ## Adam instead of SGD
+    if dataset_name=='cifar10': optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9)
     train_acc, train_loss, test_acc, test_loss, df = train_utils.train(model=model, train_loader=train_loader,
                                                                    test_loader=test_loader, optimizer=optimizer,
                                                                    device=device, criterion=criterion, epochs=epochs,

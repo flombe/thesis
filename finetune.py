@@ -48,7 +48,7 @@ for seed in range(1, 11):
 
             # add pre-train checkpoint name to run_name for ft
             # print(file.split(str(pretrain_dataset), 1)[1][:-3])  # add source model name for saving
-            pretrain_checkpt = file.split(str(pretrain_dataset), 1)[1][:-3]  # naming is eg. model_pre_mnist_0_1.pt
+            pretrain_checkpt = file.split(str(pretrain_dataset[-6:]), 1)[1][:-3]  # naming is eg. model_pre_mnist_0_1.pt
             run_name_sub = join(run_name + pretrain_checkpt)
 
             # print(list(model.fc1.parameters()))
@@ -66,6 +66,8 @@ for seed in range(1, 11):
                 dataset = datasets.MNIST(dataset_dir=dataset_dir, device=device)
             elif dataset_name == 'fashionmnist':
                 dataset = datasets.FashionMNIST(dataset_dir=dataset_dir, device=device)
+            elif dataset_name == 'mnist_noise_struct':
+                dataset = datasets.MNIST_noise_struct(dataset_dir=dataset_dir, device=device)
             criterion = F.nll_loss
             ## for 'cifar10' diff. layers and criterion (F.cross_entropy)
 
@@ -79,7 +81,7 @@ for seed in range(1, 11):
                                                                            test_loader=test_loader, optimizer=optimizer,
                                                                            device=device, criterion=criterion,
                                                                            epochs=epochs, output_dir=output_dir,
-                                                                           run_name=run_name_sub, seed=seed)
+                                                                           run_name=run_name_sub, seed=seed, ft=True)
             dff = dff.append(df, ignore_index=True)
             print(dff)
             print('Done fine-tuning run ', model)
