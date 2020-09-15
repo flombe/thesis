@@ -1,11 +1,11 @@
 #!/bin/bash
 export CUDA_VISIBLE_DEVICES=0;
 
-dataset='mnist'  # fine-tune dataset
+dataset='fashionmnist'  # fine-tune dataset
 epochs=100
 bs=64
 lr=0.0001
-run_name='ft_noise_struct_mnist'
+run_name='ft_mnist_noise_struct_mnist'
 pre_dataset='mnist_noise_struct'  # pre_trained models
 # assume a 10 seed pre_training
 

@@ -27,8 +27,7 @@ ratio = 0.1
 
 for label in range(0, 10):
     idx = np.random.choice(784, int(784 * ratio), replace=False)  # get 78 random indices
-    label_values = np.ones(int(784 * ratio)) * label/10  # assign same 0.1 * label nr. value
-    # label_values = np.random.uniform(0, 1, int(784 * rate_fixed))  # problem: if some are randomly very close together
+    label_values = np.random.uniform(0, 1, int(784 * ratio))  # same distribution assigned to all label values
     for i in range(len(train_labels)):
         if train_labels[i] == label:
             train_data[i][idx] = label_values  # change 78 values of these labels to a shared value

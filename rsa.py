@@ -315,42 +315,42 @@ def all_layer_plot(dataset_trained, dataset_extracted, sorted, seed=1):
     plt.figure(figsize=(10, 10))
     for layer in range(7):
         corr_dict,_ = load_calc_corr(dataset_trained, 'fashionmnist', sorted, seed=seed, layer=layer)
-        mean = []
+        diag_mean = []
+        nondiag_mean = []
         for model in corr_dict.items():
             ## model[1] ndarray 500x500
-            # block_view = view_as_blocks(model[1], block_shape=(50, 50))
-            # val_diag = np.array([])
-            # val_nondiag = np.array([])
-            # for i in range(10):
-            #     for j in range(10):
-            #         if i == j:
-            #             val_diag = np.append(val_diag, block_view[i, j])
-            #         else:
-            #             val_nondiag = np.append(val_nondiag, block_view[i, j])
-            mean.append(model[1].mean())
-        p = plt.plot(range(12), mean, label=layer_names[layer])
+            block_view = view_as_blocks(model[1], block_shape=(50, 50))
+            val_diag = np.array([])
+            val_nondiag = np.array([])
+            for i in range(10):
+                for j in range(10):
+                    if i == j:
+                        val_diag = np.append(val_diag, block_view[i, j])
+                    else:
+                        val_nondiag = np.append(val_nondiag, block_view[i, j])
+            diag_mean.append(val_diag.mean())
+            nondiag_mean.append(val_nondiag.mean())
+        # p = plt.plot(range(12), mean, label=layer_names[layer])
+        if layer_names[layer]=='pool2':
+            p = plt.plot(range(12), diag_mean, '--', label=f'{layer_names[layer]}_diag', alpha=0.2)
+            plt.plot(range(12), nondiag_mean, linestyle='dotted', label=f'{layer_names[layer]}_nondiag', c=p[0].get_color(), alpha=0.2)
+            plt.plot(range(12), [x1 - x2 for (x1, x2) in zip(nondiag_mean, diag_mean)], label=f'{layer_names[layer]}_delta', c=p[0].get_color())
 
-        # again for noise inputs
-        corr_dict,_ = load_calc_corr(dataset_trained, 'fashionmnist_pure_noise', sorted, seed=seed, layer=layer)
-        mean = []
-        for model in corr_dict.items():
-            mean.append(model[1].mean())
-        plt.plot(range(12), mean, linestyle='--', label=f'{layer_names[layer]}_noise', c=p[0].get_color())
+        # # again for noise inputs
+        # corr_dict,_ = load_calc_corr(dataset_trained, 'fashionmnist_pure_noise', sorted, seed=seed, layer=layer)
+        # mean = []
+        # for model in corr_dict.items():
+        #     mean.append(model[1].mean())
+        # plt.plot(range(12), mean, linestyle='--', label=f'{layer_names[layer]}_noise', c=p[0].get_color())
 
     plt.xlabel('models')
     plt.ylabel('mean correlation')
-    plt.title('RSA mean Corr. all layers Comparison (fashionMNIST, Noise)')
+    plt.title('RSA mean Corr. all layers - Diagonal Delta')
     plt.xlim(0, 11)
     plt.ylim(0, 1)
     plt.xticks(range(12), list(corr_dict.keys()), rotation=70)
     plt.legend()
     plt.show()
-
-
-### to-do
-    # diff between mean blue and organge in histograms  (p41. at pool2 highest?)
-    # histograms: show median change as one line
-
 
 
 if __name__ == '__main__':

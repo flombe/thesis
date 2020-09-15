@@ -48,7 +48,7 @@ for seed in range(1, 11):
 
             # add pre-train checkpoint name to run_name for ft
             # print(file.split(str(pretrain_dataset), 1)[1][:-3])  # add source model name for saving
-            pretrain_checkpt = file.split(str(pretrain_dataset[-6:]), 1)[1][:-3]  # naming is eg. model_pre_mnist_0_1.pt
+            pretrain_checkpt = file.split(str(pretrain_dataset), 1)[1][:-3]  # naming is eg. model_pre_mnist_0_1.pt
             run_name_sub = join(run_name + pretrain_checkpt)
 
             # print(list(model.fc1.parameters()))
