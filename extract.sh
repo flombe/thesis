@@ -3,7 +3,7 @@
 
 export CUDA_VISIBLE_DEVICES=0;
 
-trained_on='fashionmnist'
+trained_on='mnist_noise_struct'
 extract_dataset='mnist_noise_struct'  # 'mnist' 'fashionmnist'
 model_folder='all' #'1'
 

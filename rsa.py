@@ -363,17 +363,17 @@ if __name__ == '__main__':
         print("Devise used = ", device)
 
     # specify layer to analyze on
-    layer = 6
+    layer = 4
 
     # set source(trained) and target(extracted) datasets
-    dataset_trained = 'mnist'
-    # corr_dict_source = main(dataset_trained, dataset_trained, sorted=True, seed=1, layer=layer)  # only plot for seed 1
+    dataset_trained = 'mnist_noise_struct'
+    corr_dict_source = main(dataset_trained, dataset_trained, sorted=True, seed=1, layer=layer)  # only plot for seed 1
 
-    dataset_extracted = 'fashionmnist_pure_noise'
-    # corr_dict_target = main(dataset_trained, dataset_extracted, sorted=True, seed=1, layer=layer)
+    dataset_extracted = 'mnist_noise_struct'
+    corr_dict_target = main(dataset_trained, dataset_extracted, sorted=True, seed=1, layer=layer)
 
     # plot to compare corr means of all layers for all models
-    all_layer_plot(dataset_trained, dataset_extracted, sorted=True, seed=1)
+    # all_layer_plot(dataset_trained, dataset_extracted, sorted=True, seed=1)
 
 
     # calculate only diagonal of model RDM (=corr/dist of same model for source and target data)
