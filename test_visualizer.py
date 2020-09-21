@@ -23,7 +23,7 @@ root_dir = os.getcwd()
 models_dir = join(root_dir, 'models', trained_dataset)
 
 # load df
-df_path = join(models_dir, 'df_pre_noise_struct')
+df_path = join(models_dir, 'df_pre_mnist_noise_struct')
 df = pd.read_pickle(df_path)
 
 
@@ -35,6 +35,7 @@ train_loader = dataset.get_train_loader(batch_size=1)
 for i in range(5):
     image, label = next(iter(train_loader))
     print(label)
+    print(image.mean())
     plt.imshow(image.squeeze(), cmap="gray")
     plt.title(label)
     plt.show()

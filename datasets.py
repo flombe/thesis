@@ -102,6 +102,11 @@ class MNIST_noise_struct(MNIST):
         return test_loader
 
 
+class MNIST_noise(MNIST_noise_struct):
+    def name(self):
+        return 'mnist_noise'
+
+
 class FashionMNIST(TorchDataset):
     def get_test_transform(self):
         transform = transforms.Compose([

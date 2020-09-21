@@ -159,14 +159,13 @@ def multi_plot_histo(corr_dict, labels):
                     val_nondiag = np.append(val_nondiag, block_view[i, j])
                     # print(val_nondiag.shape)
 
-        print('end shape diag', val_diag.shape)
-        print('end shape nondiag', val_nondiag.shape)
+        print('- end shape diag', val_diag.shape, '/ nondiag', val_nondiag.shape)
         sns.distplot(val_diag, ax=ax2, label='Corr.Matrix block diagonal')  # , kde=False)
         sns.distplot(val_nondiag, ax=ax2, label='Corr.Matrix non-diagonal')  # , kde=False)
 
         # sns.distplot(val2[1], ax=ax2)
         ax2.set_title(val2[0], weight='semibold')
-        ax2.set_ylim(0, 5)
+        #ax2.set_ylim(0, 5)
 
         # add mean line to histogram
         kdeline_diag = ax2.lines[0]
@@ -283,10 +282,10 @@ def main(dataset_trained, dataset_extracted, sorted, seed=1, layer=4):
     # plots on one dataset
     plotter(corr_dict_layer4, labels, dataset_trained, dataset_extracted,
             single_plot=False,
-            multi_plot=False,
-            multi_plot_hist=False,
-            mds_plot=False,
-            rdm_plot=False)
+            multi_plot=True,
+            multi_plot_hist=True,
+            mds_plot=True,
+            rdm_plot=True)
 
     return corr_dict_layer4
 
@@ -314,7 +313,7 @@ def all_layer_plot(dataset_trained, dataset_extracted, sorted, seed=1):
     layer_names = ['in', 'conv1', 'pool1', 'conv2', 'pool2', 'fc1', 'output']
     plt.figure(figsize=(10, 10))
     for layer in range(7):
-        corr_dict,_ = load_calc_corr(dataset_trained, 'fashionmnist', sorted, seed=seed, layer=layer)
+        corr_dict,_ = load_calc_corr(dataset_trained, dataset_extracted, sorted, seed=seed, layer=layer)
         diag_mean = []
         nondiag_mean = []
         for model in corr_dict.items():
@@ -366,11 +365,11 @@ if __name__ == '__main__':
     layer = 4
 
     # set source(trained) and target(extracted) datasets
-    dataset_trained = 'mnist_noise_struct'
+    dataset_trained = 'mnist_noise'
     corr_dict_source = main(dataset_trained, dataset_trained, sorted=True, seed=1, layer=layer)  # only plot for seed 1
 
-    dataset_extracted = 'mnist_noise_struct'
-    corr_dict_target = main(dataset_trained, dataset_extracted, sorted=True, seed=1, layer=layer)
+    dataset_extracted = 'mnist'
+    # corr_dict_target = main(dataset_trained, dataset_extracted, sorted=True, seed=1, layer=layer)
 
     # plot to compare corr means of all layers for all models
     # all_layer_plot(dataset_trained, dataset_extracted, sorted=True, seed=1)

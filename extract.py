@@ -21,9 +21,9 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # parse args form sh script
 parser = argparse.ArgumentParser()
 parser.add_argument('--trained_on', default='mnist',
-                    choices=['mnist', 'mnist2class', 'fashionmnist', 'mnist_noise_struct'])
+                    choices=['mnist', 'mnist2class', 'fashionmnist', 'mnist_noise_struct', 'mnist_noise'])
 parser.add_argument('--dataset', default='mnist',
-                    choices=['mnist', 'mnist2class', 'fashionmnist', 'mnist_noise_struct', 'cifar10'])
+                    choices=['mnist', 'mnist2class', 'fashionmnist', 'mnist_noise_struct', 'mnist_noise', 'cifar10'])
 parser.add_argument('--model_folder', default='all', help='select specific model folder number or all')
 args = parser.parse_args()
 
@@ -35,6 +35,8 @@ def get_loader(dataset_name):
         dataset = datasets.MNIST(dataset_dir=dataset_dir, device=device)
     elif dataset_name == 'mnist2class':
         dataset = datasets.MNIST2class(dataset_dir=dataset_dir, device=device)
+    elif dataset_name == 'mnist_noise':
+        dataset = datasets.MNIST_noise(dataset_dir=dataset_dir, device=device)
     elif dataset_name == 'fashionmnist':
         dataset = datasets.FashionMNIST(dataset_dir=dataset_dir, device=device)
     elif dataset_name == 'mnist_noise_struct':

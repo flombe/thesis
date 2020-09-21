@@ -47,6 +47,10 @@ for seed_run in range(1, seeds+1):
         model = mnist_archs.mnistConvNet2class()
         dataset = datasets.MNIST2class(dataset_dir=dataset_dir, device=device)
 
+    elif dataset_name == 'mnist_noise':
+        model = mnist_archs.mnistConvNet()
+        dataset = datasets.MNIST_noise(dataset_dir=dataset_dir, device=device)
+
     elif dataset_name == 'mnist_noise_struct':
         model = mnist_archs.mnistConvNet()
         dataset = datasets.MNIST_noise_struct(dataset_dir=dataset_dir, device=device)

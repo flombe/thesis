@@ -15,7 +15,8 @@ from torch.utils.tensorboard import SummaryWriter
 # parse args from sh script
 def train_args_parser():
     parser = argparse.ArgumentParser(description='Training Parameters')
-    parser.add_argument('--dataset', default='mnist', choices=['mnist', 'mnist2class', 'mnist_noise_struct', 'fashionmnist', 'cifar10'],
+    parser.add_argument('--dataset', default='mnist', choices=['mnist', 'mnist2class', 'mnist_noise',
+                                                               'mnist_noise_struct', 'fashionmnist', 'cifar10'],
                         type=str , metavar='D', help='trainings dataset name')
     parser.add_argument('--epochs', default=200, type=int, metavar='E',
                         help='number of total epochs to run')
