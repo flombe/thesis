@@ -292,21 +292,37 @@ def main(dataset_trained, dataset_extracted, sorted, seed=1, layer=4):
 
 # function to get called in analyze.py to return compare_rdm values for all seeds
 def get_rdm_metric(source, target):
-    total_compare_rdm = []
+    total_corr_diag_delta = []
     for seed in range(1, 11):
-        # source_corr_dict_layer4, _ = load_calc_corr(source, source, sorted=True, seed=seed)
-        path = join(os.getcwd(), 'models', source, 'models_' + str(seed), 'mnist_sorted_corr_dict_layer4.pik')
-        with open(str(path), 'rb') as f:
-            source_corr_dict_layer4 = dill.load(f)
+        total_diag_mean = []
+        total_nondiag_mean = []
 
-        target_corr_dict_layer4, _ = load_calc_corr(source, target, sorted=True, seed=seed)
+        for layer in range(7):
+            corr_dict,_ = load_calc_corr(source, target, sorted, seed=seed, layer=layer)
+            diag_mean = []
+            nondiag_mean = []
 
-        compare_rdm = calc_compare_rdm(distance.euclidean,
-                                       list(source_corr_dict_layer4.values()),
-                                       list(target_corr_dict_layer4.values()))
-        total_compare_rdm.append(compare_rdm)
+            for model in corr_dict.items():
+                ## model[1] ndarray 500x500
+                block_view = view_as_blocks(model[1], block_shape=(50, 50))
+                val_diag = np.array([])
+                val_nondiag = np.array([])
+                for i in range(10):
+                    for j in range(10):
+                        if i == j:
+                            val_diag = np.append(val_diag, block_view[i, j])
+                        else:
+                            val_nondiag = np.append(val_nondiag, block_view[i, j])
+                diag_mean.append(val_diag.mean())
+                nondiag_mean.append(val_nondiag.mean())
 
-    return np.concatenate(total_compare_rdm).ravel().tolist()
+            total_diag_mean.append(diag_mean)
+            total_nondiag_mean.append(nondiag_mean)
+
+        total_corr_diag_delta += [x1 - x2 for (x1, x2) in zip(total_diag_mean, total_nondiag_mean)]
+    print(type(total_corr_diag_delta), total_corr_diag_delta)
+    return total_corr_diag_delta
+# .tolist()
 
 
 def all_layer_plot(dataset_trained, dataset_extracted, sorted, seed=1):
@@ -365,14 +381,14 @@ if __name__ == '__main__':
     layer = 4
 
     # set source(trained) and target(extracted) datasets
-    dataset_trained = 'mnist_noise'
-    corr_dict_source = main(dataset_trained, dataset_trained, sorted=True, seed=1, layer=layer)  # only plot for seed 1
+    dataset_trained = 'mnist_noise_struct'
+    # corr_dict_source = main(dataset_trained, dataset_trained, sorted=True, seed=1, layer=layer)  # only plot for seed 1
 
     dataset_extracted = 'mnist'
     # corr_dict_target = main(dataset_trained, dataset_extracted, sorted=True, seed=1, layer=layer)
 
     # plot to compare corr means of all layers for all models
-    # all_layer_plot(dataset_trained, dataset_extracted, sorted=True, seed=1)
+    all_layer_plot(dataset_trained, dataset_extracted, sorted=True, seed=1)
 
 
     # calculate only diagonal of model RDM (=corr/dist of same model for source and target data)

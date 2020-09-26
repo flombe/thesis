@@ -70,42 +70,26 @@ if __name__ == '__main__':
 
 
     # extracted on both train and target dataset
-    trained_dataset = 'mnist'
-    target_dataset = 'fashionmnist_pure_noise'  # extracted on
-
+    pre_dataset = 'mnist_noise_struct'
+    target_dataset = 'mnist'  # extracted on
 
     root_dir = os.getcwd()
-    models_dir = join(root_dir, 'models', trained_dataset)
+    models_dir = join(root_dir, 'models', pre_dataset)
 
     # load df
-    df_path = join(models_dir, 'df_pre_' + trained_dataset + '+metrics')
+    df_path = join(models_dir, 'df_pre_' + pre_dataset)
     df = pd.read_pickle(df_path)
 
-    if target_dataset == 'fashionmnist':
-        # calc metrics and add to df
-        df['target_dataset'] = target_dataset
-        print(f'>> Calculate ID, SS for models pre-trained on {trained_dataset}, with target {target_dataset} <<<')
-        id_pre, ss_pre = calc_ID_SS(trained_dataset)
-        print(id_pre)
-        df['ID_pre'] = pd.Series(id_pre)  # add new column and all values at once
-        df['SS_pre'] = pd.Series(ss_pre)
 
-        id_target, ss_target = calc_ID_SS(target_dataset)
-        df['ID_target'] = pd.Series(id_target)
-        df['SS_target'] = pd.Series(ss_target)
+    # calc ID, SS and add to df
+    print(f'>>> Calculate ID, SS for models pre-trained on {pre_dataset}, on target {target_dataset} <<<')
 
-        # RSA
-        rdm_metric = rsa.get_rdm_metric(trained_dataset, target_dataset)  # standard = euclid dist.
-        df['RSA'] = rdm_metric
+    id, ss = calc_ID_SS(target_dataset)
+    df[f'ID_{target_dataset}'] = pd.Series(id)
+    df[f'SS_{target_dataset}'] = pd.Series(ss)
 
-        df.to_pickle(join(df_path + '+metrics'))  # just to check - Later save as same name
-    else:
-        id_target, ss_target = calc_ID_SS(target_dataset)
-        df['ID_noise'] = pd.Series(id_target)
-        df['SS_noise'] = pd.Series(ss_target)
+    # RSA
+    rdm_metric = rsa.get_rdm_metric(pre_dataset, target_dataset)  # diag-nondiag corr delta
+    df[f'RSA_{target_dataset}'] = rdm_metric
 
-        # RSA
-        rdm_metric = rsa.get_rdm_metric(trained_dataset, target_dataset)  # standard = euclid dist.
-        df['RSA_noise'] = rdm_metric
-
-        df.to_pickle(join(df_path))
+    df.to_pickle(join(df_path + '+metrics'))  # just to check - Later save as same name

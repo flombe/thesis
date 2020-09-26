@@ -68,6 +68,8 @@ for seed in range(1, 11):
                 dataset = datasets.FashionMNIST(dataset_dir=dataset_dir, device=device)
             elif dataset_name == 'mnist_noise_struct':
                 dataset = datasets.MNIST_noise_struct(dataset_dir=dataset_dir, device=device)
+            elif dataset_name == 'mnist_noise':
+                dataset = datasets.MNIST_noise(dataset_dir=dataset_dir, device=device)
             criterion = F.nll_loss
             ## for 'cifar10' diff. layers and criterion (F.cross_entropy)
 

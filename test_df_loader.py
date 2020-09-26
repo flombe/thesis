@@ -13,14 +13,14 @@ else:
     print("Devise used = ", device)
 
 
-trained_dataset = 'fashionmnist'
+trained_dataset = 'mnist'
 target_dataset = 'mnist'
 
 root_dir = os.getcwd()
 models_dir = join(root_dir, 'models', trained_dataset)
 
 # load df
-df_path = join(models_dir, 'ft_mnist/df_ft_'+trained_dataset+'_mnist')
+df_path = join(models_dir, 'df_pre_mnistadded')
 df = pd.read_pickle(df_path)
 
 # df = df.reset_index(drop=True)
