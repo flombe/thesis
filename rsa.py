@@ -290,19 +290,17 @@ def main(dataset_trained, dataset_extracted, sorted, seed=1, layer=4):
     return corr_dict_layer4
 
 
-# function to get called in analyze.py to return compare_rdm values for all seeds
+# function to get called in analyze.py to return correlation delta on all layers for all models and seeds
 def get_rdm_metric(source, target):
-    total_corr_diag_delta = []
+    total_deltas = []
     for seed in range(1, 11):
-        total_diag_mean = []
-        total_nondiag_mean = []
+        layer_deltas = []
 
         for layer in range(7):
             corr_dict,_ = load_calc_corr(source, target, sorted, seed=seed, layer=layer)
-            diag_mean = []
-            nondiag_mean = []
+            delta = []
 
-            for model in corr_dict.items():
+            for model in corr_dict.items():  # corr_dict is sorted
                 ## model[1] ndarray 500x500
                 block_view = view_as_blocks(model[1], block_shape=(50, 50))
                 val_diag = np.array([])
@@ -313,16 +311,17 @@ def get_rdm_metric(source, target):
                             val_diag = np.append(val_diag, block_view[i, j])
                         else:
                             val_nondiag = np.append(val_nondiag, block_view[i, j])
-                diag_mean.append(val_diag.mean())
-                nondiag_mean.append(val_nondiag.mean())
+                delta.append(val_diag.mean() - val_nondiag.mean())
 
-            total_diag_mean.append(diag_mean)
-            total_nondiag_mean.append(nondiag_mean)
+            layer_deltas.append(delta)  # list of lists [[12], ..7]
 
-        total_corr_diag_delta += [x1 - x2 for (x1, x2) in zip(total_diag_mean, total_nondiag_mean)]
-    print(type(total_corr_diag_delta), total_corr_diag_delta)
-    return total_corr_diag_delta
-# .tolist()
+        for i in range(0, 12):
+            print([item[i] for item in layer_deltas])
+            total_deltas.append([item[i] for item in layer_deltas])  # resort to [[7], ..12]
+        print(len(total_deltas))  # 12
+
+    print(len(total_deltas))  # 120
+    return total_deltas
 
 
 def all_layer_plot(dataset_trained, dataset_extracted, sorted, seed=1):
@@ -346,7 +345,8 @@ def all_layer_plot(dataset_trained, dataset_extracted, sorted, seed=1):
             diag_mean.append(val_diag.mean())
             nondiag_mean.append(val_nondiag.mean())
         # p = plt.plot(range(12), mean, label=layer_names[layer])
-        if layer_names[layer]=='pool2':
+        if layer_names[layer] == layer:
+        #if layer_names[layer] == 'pool2':
             p = plt.plot(range(12), diag_mean, '--', label=f'{layer_names[layer]}_diag', alpha=0.2)
             plt.plot(range(12), nondiag_mean, linestyle='dotted', label=f'{layer_names[layer]}_nondiag', c=p[0].get_color(), alpha=0.2)
             plt.plot(range(12), [x1 - x2 for (x1, x2) in zip(nondiag_mean, diag_mean)], label=f'{layer_names[layer]}_delta', c=p[0].get_color())
@@ -360,7 +360,7 @@ def all_layer_plot(dataset_trained, dataset_extracted, sorted, seed=1):
 
     plt.xlabel('models')
     plt.ylabel('mean correlation')
-    plt.title('RSA mean Corr. all layers - Diagonal Delta')
+    plt.title(f'RSA mean Corr. all layers - Diagonal Delta \n (pre: {dataset_trained}, on: {dataset_extracted})')
     plt.xlim(0, 11)
     plt.ylim(0, 1)
     plt.xticks(range(12), list(corr_dict.keys()), rotation=70)
@@ -381,7 +381,7 @@ if __name__ == '__main__':
     layer = 4
 
     # set source(trained) and target(extracted) datasets
-    dataset_trained = 'mnist_noise_struct'
+    dataset_trained = 'mnist_noise'
     # corr_dict_source = main(dataset_trained, dataset_trained, sorted=True, seed=1, layer=layer)  # only plot for seed 1
 
     dataset_extracted = 'mnist'
