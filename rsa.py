@@ -345,8 +345,8 @@ def all_layer_plot(dataset_trained, dataset_extracted, sorted, seed=1):
             diag_mean.append(val_diag.mean())
             nondiag_mean.append(val_nondiag.mean())
         # p = plt.plot(range(12), mean, label=layer_names[layer])
-        if layer_names[layer] == layer:
-        #if layer_names[layer] == 'pool2':
+        # if layer_names[layer] == layer:
+        if layer_names[layer] == 'pool2':
             p = plt.plot(range(12), diag_mean, '--', label=f'{layer_names[layer]}_diag', alpha=0.2)
             plt.plot(range(12), nondiag_mean, linestyle='dotted', label=f'{layer_names[layer]}_nondiag', c=p[0].get_color(), alpha=0.2)
             plt.plot(range(12), [x1 - x2 for (x1, x2) in zip(nondiag_mean, diag_mean)], label=f'{layer_names[layer]}_delta', c=p[0].get_color())
@@ -368,6 +368,51 @@ def all_layer_plot(dataset_trained, dataset_extracted, sorted, seed=1):
     plt.show()
 
 
+def all_delta_plot(dataset_extracted, sorted, seed=1):
+    checkpts = ['0', '0_1', '0_3', '0_10', '0_30', '0_100', '0_300', '1', '3', '10', '30', '100']
+    datasets = ['mnist_noise', 'mnist_noise_struct', 'mnist', 'fashionmnist']
+
+    plt.style.use('seaborn')
+    plt.figure(figsize=(10, 10))
+    layer = 4
+
+    for pre_set in datasets:
+        corr_dict,_ = load_calc_corr(pre_set, dataset_extracted, sorted, seed=seed, layer=layer)
+        diag_mean = []
+        nondiag_mean = []
+        for model in corr_dict.items():
+            ## model[1] ndarray 500x500
+            block_view = view_as_blocks(model[1], block_shape=(50, 50))
+            val_diag = np.array([])
+            val_nondiag = np.array([])
+            for i in range(10):
+                for j in range(10):
+                    if i == j:
+                        val_diag = np.append(val_diag, block_view[i, j])
+                    else:
+                        val_nondiag = np.append(val_nondiag, block_view[i, j])
+            diag_mean.append(val_diag.mean())
+            nondiag_mean.append(val_nondiag.mean())
+
+        if len(diag_mean)==11:
+            p = plt.plot(range(12)[1:], diag_mean, '--', label=f'{pre_set}_diag', alpha=0.2)
+            plt.plot(range(12)[1:], nondiag_mean, linestyle='dotted', label=f'{pre_set}_nondiag', c=p[0].get_color(), alpha=0.2)
+            plt.plot(range(12)[1:], [x1 - x2 for (x1, x2) in zip(nondiag_mean, diag_mean)], label=f'{pre_set}_delta', c=p[0].get_color())
+        else:
+            p = plt.plot(range(12), diag_mean, '--', label=f'{pre_set}_diag', alpha=0.2)
+            plt.plot(range(12), nondiag_mean, linestyle='dotted', label=f'{pre_set}_nondiag', c=p[0].get_color(), alpha=0.2)
+            plt.plot(range(12), [x1 - x2 for (x1, x2) in zip(nondiag_mean, diag_mean)], label=f'{pre_set}_delta', c=p[0].get_color())
+
+    plt.xlabel('models pre-train duration')
+    plt.ylabel('mean correlation')
+    plt.title(f'RSA mean Corr. Diagonal Delta (extracted: {dataset_extracted}, layer 4)', weight='semibold')
+    plt.xlim(0, 11)
+    plt.ylim(0, 1)
+    plt.xticks(range(12), checkpts)
+    plt.legend(frameon=True, fancybox=True, facecolor='white')
+    plt.show()
+
+
 if __name__ == '__main__':
     # set device
     if torch.cuda.is_available():
@@ -381,15 +426,16 @@ if __name__ == '__main__':
     layer = 4
 
     # set source(trained) and target(extracted) datasets
-    dataset_trained = 'mnist_noise'
+    dataset_trained = 'mnist_noise_struct'
     # corr_dict_source = main(dataset_trained, dataset_trained, sorted=True, seed=1, layer=layer)  # only plot for seed 1
 
-    dataset_extracted = 'mnist'
+    dataset_extracted = 'fashionmnist'
     # corr_dict_target = main(dataset_trained, dataset_extracted, sorted=True, seed=1, layer=layer)
 
     # plot to compare corr means of all layers for all models
-    all_layer_plot(dataset_trained, dataset_extracted, sorted=True, seed=1)
+    # all_layer_plot(dataset_trained, dataset_extracted, sorted=True, seed=1)
 
+    all_delta_plot(dataset_extracted, sorted=True, seed=1)
 
     # calculate only diagonal of model RDM (=corr/dist of same model for source and target data)
 
