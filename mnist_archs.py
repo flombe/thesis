@@ -73,3 +73,14 @@ class mnistConvNet2class(mnistConvNet):
         self.fc1 = nn.Linear(1600, 128)
         self.dropout2 = nn.Dropout2d(0.5)
         self.fc2 = nn.Linear(128, 2)  ## 2 output layers
+
+
+class mnistConvNet5class(mnistConvNet):
+    def __init__(self):
+        super(mnistConvNet5class, self).__init__()
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3)
+        self.dropout1 = nn.Dropout2d(0.25)
+        self.fc1 = nn.Linear(1600, 128)
+        self.dropout2 = nn.Dropout2d(0.5)
+        self.fc2 = nn.Linear(128, 5)  ## 5 output layers

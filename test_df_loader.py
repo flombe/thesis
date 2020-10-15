@@ -13,14 +13,14 @@ else:
     print("Devise used = ", device)
 
 
-trained_dataset = 'mnist_noise_struct'
-target_dataset = 'mnist'
+trained_dataset = 'imagenet'
+target_dataset = 'custom3D'
 
 root_dir = os.getcwd()
 models_dir = join(root_dir, 'models', trained_dataset)
 
 # load df
-df_path = join(models_dir, 'df_pre_mnist_noise_struct+metrics')
+df_path = join(models_dir, f'ft_custom3D/df_ft_{trained_dataset}_{target_dataset}')
 df = pd.read_pickle(df_path)
 
 # df = df.reset_index(drop=True)

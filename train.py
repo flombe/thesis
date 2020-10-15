@@ -3,6 +3,7 @@ from os.path import join
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.optim import lr_scheduler
 import mnist_archs
 import train_utils
 import datasets
@@ -51,6 +52,14 @@ for seed_run in range(1, seeds+1):
         model = mnist_archs.mnistConvNet()
         dataset = datasets.MNIST_noise(dataset_dir=dataset_dir, device=device)
 
+    elif dataset_name == 'mnist_split1':
+        model = mnist_archs.mnistConvNet5class()
+        dataset = datasets.MNIST_split1(dataset_dir=dataset_dir, device=device)
+
+    elif dataset_name == 'mnist_split2':
+        model = mnist_archs.mnistConvNet5class()
+        dataset = datasets.MNIST_split2(dataset_dir=dataset_dir, device=device)
+
     elif dataset_name == 'mnist_noise_struct':
         model = mnist_archs.mnistConvNet()
         dataset = datasets.MNIST_noise_struct(dataset_dir=dataset_dir, device=device)
@@ -63,9 +72,14 @@ for seed_run in range(1, seeds+1):
         model = vgg_arch.vgg16(pretrained=False, num_classes=10)
         dataset = datasets.CIFAR10(dataset_dir=dataset_dir, device=device)
 
+    elif dataset_name == 'custom3D':
+        model = vgg_arch.vgg16(pretrained=False, num_classes=40)
+        dataset = datasets.Custom3D(dataset_dir=dataset_dir, device=device)
+
     model.to(device)
     criterion = F.nll_loss  # with F.log_softmax on output = CrossEntropyLoss
-    if dataset_name=='cifar10': criterion = F.cross_entropy
+    if dataset_name == 'cifar10': criterion = F.cross_entropy
+    if dataset_name == 'custom3D': criterion = F.cross_entropy
     print(model)
 
     # loaders
@@ -74,12 +88,16 @@ for seed_run in range(1, seeds+1):
 
     # Training
     optimizer = optim.Adam(model.parameters(), lr=lr)  ## Adam instead of SGD
-    if dataset_name=='cifar10': optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9)
+    if dataset_name == 'cifar10': optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9)
+    if dataset_name == 'custom3D':
+        optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9)
+        # exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=20, gamma=0.1)
+
     train_acc, train_loss, test_acc, test_loss, df = train_utils.train(model=model, train_loader=train_loader,
                                                                    test_loader=test_loader, optimizer=optimizer,
                                                                    device=device, criterion=criterion, epochs=epochs,
                                                                    output_dir=model_dir, run_name=run_name,
-                                                                   seed=seed_run, save=True)
+                                                                   seed=seed_run, save=True, scheduler=False)
     dff = dff.append(df, ignore_index=True)
     #print(dff)
     print('Done trainings run ', seed_run)

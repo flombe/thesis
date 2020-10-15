@@ -8,15 +8,13 @@ import pandas as pd
 from natsort import natsorted
 
 # plot fine-tune on dataset_name on pre-trained models of 10 seeds
-pre_dataset = 'mnist_noise'
-ft_dataset = 'fashionmnist'
+pre_dataset = 'mnist_split2'
+ft_dataset = 'mnist'
 
-plot_acc = False
-plot_delta = False
-plot_delta2 = False
-plot_compare_pre = False
-plot_compare_switched = False
-plot_compare_switched_singles = True
+plot_acc = True
+plot_delta = True
+plot_compare_switched = True
+plot_compare_switched_singles = False
 
 
 root_dir = os.getcwd()
@@ -105,39 +103,8 @@ if plot_acc:
     plt.show()
 
 
-
-# Plot Acc Delta post-ft vs. base-case
+# Plot Acc Delta post-ft vs. base-case  +std
 if plot_delta:
-    fig2, ax2 = plt.subplots(figsize=(6, 6), dpi=150)
-    plt.title(f"pre: {pre_dataset}, ft: {ft_dataset} \n Delta Post-ft Acc. - base-case Acc.")
-    plt.xlabel("Fine-Tuning/training Epochs (batch1 to epoch100)")
-    plt.ylabel("Post-Ft/training Test Accuracy")
-
-    for check in mydict.keys():
-        accs = mydict[check]
-
-        mean = []
-        for i in range(accs.shape[1]):
-            mean.append(np.mean(accs[:,i]))
-        ax2.plot(total[1:], mean[1:]-target_means, label=(str(check)))
-
-    ax2.axhline(linewidth=0.5, color='lightgrey')
-
-    #plt.ylim((-5, 25))
-    ax2.minorticks_on()
-    plt.xscale("log")
-    # plt.xticks(xticks, rotation=80)
-    # f = lambda x,pos: str(x).rstrip('0').rstrip('.')
-    # ax2.get_xaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(f))
-    # ax2.xaxis.set_tick_params(which='minor', bottom=False)
-    plt.legend(loc=1)
-    plt.tight_layout()
-    plt.show()
-
-
-
-# Plot Acc Delta post-ft vs. base-case - adj. with std
-if plot_delta2:
     fig2, ax2 = plt.subplots(figsize=(6, 6), dpi=150)
     plt.title(f"pre: {pre_dataset}, ft: {ft_dataset} \n Delta Post-ft Acc. - base-case Acc.")
     plt.xlabel("Fine-Tuning/training Epochs (batch1 to epoch100)")
@@ -152,118 +119,25 @@ if plot_delta2:
         ax2.plot(total[1:], mean[1:]-target_means, label=(str(check)))
 
     base = ax2.axhline(linewidth=0.5, color='k')
+    # std
     ax2.fill_between(total[1:], 2 * target_stds, -2 * target_stds, color=base.get_color(),
                      alpha=0.05, label='std_base')
 
-    plt.ylim(bottom=-5)
+    plt.ylim(bottom=-5)  ##
     ax2.minorticks_on()
-    plt.xscale("log")
-    # plt.xticks(xticks, rotation=80)
-    # f = lambda x,pos: str(x).rstrip('0').rstrip('.')
-    # ax2.get_xaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(f))
-    # ax2.xaxis.set_tick_params(which='minor', bottom=False)
-    plt.legend(loc=1)
-    plt.tight_layout()
-    plt.show()
-
-
-
-
-
-# Plot Acc Delta post-ft vs. base-case - for multiple pre_train datasets of only one model (e.g. 1 ep)
-if plot_compare_pre:
-    fig, ax = plt.subplots(figsize=(6, 6), dpi=150)
-    plt.title(f"Delta ft-base Acc. on ft: {ft_dataset}")
-    plt.xlabel("Pre-training Epochs (batch1 to epoch100)")
-    plt.ylabel("Accuracy")
-
-    # load base case - mnist/fashionmnist with df
-    base_dir = join(root_dir, 'models', ft_dataset)
-    if ft_dataset == 'fashionmnist':
-        df = pd.read_pickle(join(base_dir, "df_pre_fashion"))
-    else:
-        df = pd.read_pickle(join(base_dir, "df_pre_" + ft_dataset))
-
-    # get mean 'pre_test_acc' for every model_name of target task
-    target_means = df.groupby('model_name')['pre_test_acc'].apply(lambda g: np.mean(g.values.tolist(), axis=0))
-    target_stds = df.groupby('model_name')['pre_test_acc'].apply(lambda g: np.std(g.values.tolist(), axis=0))
-    target_means = target_means.reindex(index=natsorted(target_means.index))
-    target_stds = target_stds.reindex(index=natsorted(target_stds.index))
-
-    # pre datasets
-    datasets = ['mnist_noise', 'mnist_noise_struct', 'fashionmnist']  # 'fashionmnist'
-
-    for pre_set in datasets:
-        print(pre_set)
-
-        models_dir = join(root_dir, 'models', pre_set, 'ft_' + ft_dataset)
-        run_name = join(f'ft_{pre_set}_{ft_dataset}_')  # 'ft_mnist2_mnist_'
-        # if ft_dataset == 'fashionmnist': run_name = join(f'ft_{pre_dataset}_fashionmnist_')  # naming only fashion
-        if ft_dataset == 'fashionmnist':
-            if pre_set == 'mnist_noise_struct': run_name = join(f'ft_{pre_set}_mnist_')
-            if pre_set == 'mnist': run_name = join(f'ft_{pre_set}_fashion_')
-
-        # load the acc.values for all the presets with the json training files  (just because of legacy code)
-        mydict = dict()
-        # check = '1'
-        for check in checkpts:
-            # if check == '1':
-            if pre_set == 'mnist': accs = np.zeros((10, 11))
-            else: accs = np.zeros((10, 12))
-            for seed in range(1, 11):
-                model_dir = join(models_dir, 'models_' + str(seed))
-                train_stats = join(model_dir, run_name + check + '_train_stats.json')
-
-                # concat batch and epoch stats for Acc
-                test_acc = []
-                with open(train_stats, 'r') as myfile:
-                    data = myfile.read()
-                obj = json.loads(data)
-                test_acc += obj['ft_test_acc']
-
-                accs[seed - 1] = test_acc
-            mydict.update({check: accs})
-
-
-        for check in mydict.keys():
-            accs = mydict[check]
-            mean = []
-            for i in range(accs.shape[1]):
-                mean.append(np.mean(accs[:, i]))
-            print(mean)
-            print(len(total), len(mean), len(target_means))
-
-            if pre_set == 'mnist': ax.plot(total[1:], mean-target_means, label=(str(check + ' ' + pre_set)))
-            else: ax.plot(total[1:], mean[1:]-target_means, label=(str(check + ' ' + pre_set)))
-
-
-
-    base = ax.axhline(label=(str('1' + ' fashionmnist')), c='k')
-
-    base = ax.axhline(linewidth=0.5, color='k')
-    # # ax.fill_between(total[1:], 2 * target_stds, -2 * target_stds, color=base.get_color(),
-    # #                  alpha=0.05, label='std_base')
-
-    # plt.ylim(bottom=-5
-    ax.minorticks_on()
     plt.xscale("log")
     plt.xticks(xticks, rotation=80)
     f = lambda x,pos: str(x).rstrip('0').rstrip('.')
-    ax.get_xaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(f))
-    ax.xaxis.set_tick_params(which='minor', bottom=False)
+    ax2.get_xaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(f))
+    ax2.xaxis.set_tick_params(which='minor', bottom=False)
     plt.legend(loc=1)
     plt.tight_layout()
     plt.show()
 
 
 
-#
+# plot single plots for all pre with ft and pre-train switched
 if plot_compare_switched:
-    # fig, ax = plt.subplots(figsize=(6, 6), dpi=150)
-    # plt.title(f"Delta ft-base Acc. on ft: {ft_dataset}")
-    # plt.xlabel("Pre-training Epochs (batch1 to epoch100)")
-    # plt.ylabel("Accuracy")
-
     # load base case - mnist/fashionmnist with df
     base_dir = join(root_dir, 'models', ft_dataset)
     if ft_dataset == 'fashionmnist':
@@ -278,7 +152,7 @@ if plot_compare_switched:
     target_stds = target_stds.reindex(index=natsorted(target_stds.index))
 
     # pre datasets
-    datasets = ['mnist_noise', 'mnist_noise_struct', 'fashionmnist']  # 'fashionmnist'
+    datasets = ['mnist_noise', 'mnist_noise_struct', 'mnist_split1', 'mnist_split2', 'mnist', 'fashionmnist']
 
     for pre_set in datasets:
         print(pre_set)
@@ -295,7 +169,9 @@ if plot_compare_switched:
         # check = '1'
         for check in checkpts:
             # if check == '1':
-            if pre_set == 'mnist': accs = np.zeros((10, 11))
+            if pre_set == 'mnist':
+                if ft_dataset == 'mnist': accs = np.zeros((10, 12))
+                else: accs = np.zeros((10, 11))
             else: accs = np.zeros((10, 12))
             for seed in range(1, 11):
                 model_dir = join(models_dir, 'models_' + str(seed))
@@ -361,6 +237,7 @@ if plot_compare_switched:
         plt.show()
 
 
+# plot compare switched with all pre in one plot for one ft-epoch
 if plot_compare_switched_singles:
     plt.style.use('seaborn')
     fig, ax = plt.subplots(figsize=(6, 6), dpi=150)
@@ -382,7 +259,7 @@ if plot_compare_switched_singles:
     target_stds = target_stds.reindex(index=natsorted(target_stds.index))
 
     # pre datasets
-    datasets = ['mnist_noise', 'mnist_noise_struct', 'mnist']  # 'fashionmnist'
+    datasets = ['mnist_noise', 'mnist_noise_struct', 'mnist_split1', 'mnist_split2', 'mnist', 'fashionmnist']
 
     for pre_set in datasets:
         print(pre_set)
@@ -397,7 +274,9 @@ if plot_compare_switched_singles:
         # load the acc.values for all the presets with the json training files  (just because of legacy code)
         mydict = dict()
         for check in checkpts:
-            if pre_set == 'mnist': accs = np.zeros((10, 11))
+            if pre_set == 'mnist':
+                if ft_dataset == 'mnist': accs = np.zeros((10, 12))
+                else: accs = np.zeros((10, 11))
             else: accs = np.zeros((10, 12))
             for seed in range(1, 11):
                 model_dir = join(models_dir, 'models_' + str(seed))
@@ -415,7 +294,6 @@ if plot_compare_switched_singles:
 
         lines = np.zeros((11, 11))
         std_inverted = np.zeros((11, 11))
-        std_base = []
         j = 0
         # check = '1'
         for check in mydict.keys():
@@ -427,19 +305,19 @@ if plot_compare_switched_singles:
                 mean.append(np.mean(accs[:, i]))
                 std.append(np.std(accs[:, i]))
 
-            if len(mean)==12:
+            if len(mean)==12:  # cut the 0 case, that's only available for all models
+                print('len=12 cut first one for model_0')
                 mean = mean[1:]
                 std = std[1:]
-                std_0 = std[:1]  ##
             # print(len(total), len(mean), len(target_means))
             lines[j] = mean-target_means
             std_inverted[j] = std
-            std_base.append(std_0)
             j += 1
 
-        # for i in range(11):
+
         # pick model to plot
-        model_nr = 8
+        model_nr = 4  ###
+
         ax.plot(total[1:], lines[:, model_nr], label=str(checkpts[model_nr] + ' ' + pre_set))
         ax.fill_between(total[1:], lines[:, model_nr] + 2 * np.array(std_inverted[:, model_nr]),
                                    lines[:, model_nr] - 2 * np.array(std_inverted[:, model_nr]), alpha=0.05)

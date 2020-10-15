@@ -16,9 +16,11 @@ from torch.utils.tensorboard import SummaryWriter
 def train_args_parser():
     parser = argparse.ArgumentParser(description='Training Parameters')
     parser.add_argument('--dataset', default='mnist', choices=['mnist', 'mnist2class', 'mnist_noise',
-                                                               'mnist_noise_struct', 'fashionmnist', 'cifar10'],
+                                                               'mnist_noise_struct', 'mnist_split1', 'mnist_split2',
+                                                               'fashionmnist', 'cifar10', 'imagenet', 'custom3D',
+                                                               'random_init'],
                         type=str , metavar='D', help='trainings dataset name')
-    parser.add_argument('--epochs', default=200, type=int, metavar='E',
+    parser.add_argument('--epochs', default=100, type=int, metavar='E',
                         help='number of total epochs to run')
     parser.add_argument('--bs', '--batch-size', default=64, type=int,
                         metavar='BS', help='mini-batch size (default: 64)')
@@ -124,9 +126,17 @@ def evaluate(model, loader, device, criterion=F.nll_loss):
 # set checkpoints (for later log-plots choose log ticks)
 first_batches_chkpts = np.array([0, 1, 3, 10, 30, 100, 300])
 epoch_chkpts = np.array([1, 3, 10, 30, 100])
+bs_factor = 0.001
 
 def train(model, train_loader, test_loader, optimizer, device, epochs, run_name, seed,
-          criterion=F.nll_loss, save=True, ft=False, output_dir=None, verbose=True):
+          criterion=F.nll_loss, save=True, ft=False, output_dir=None, verbose=True, scheduler=False):
+
+    # for custom3D - bs=12 --> different batch epoch split
+    if model.__class__.__name__ == 'VGG':
+        print('Using lr scheduler for training.')
+        first_batches_chkpts = np.array([0, 1, 3, 10, 30])
+        bs_factor = 0.01
+
     model_dir = None
     if output_dir is not None:
         model_dir = join(output_dir, 'models_' + str(seed))
@@ -172,6 +182,7 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
         run_sample_nr = 0
 
         model.train()
+
         for i, data in enumerate(train_loader, 0):
             model.train()
             inputs, labels = data
@@ -186,6 +197,7 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
+
 
             # last batch is only 32 samples!! 60K/64 = 937.5 -> train_loader 0-936 with 64, but 937 only 32
             run_train_loss += loss.item() * inputs.size(0)  # loss mean of batch * batch size (for last one diff)
@@ -241,7 +253,7 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
                 model_names.append(join('model_' + str(run_name) + '_' + str(epoch_count) + '.pt'))
                 torch.save(model, join(model_dir, model_names[-1]))
 
-                if seed is not 1:  # only calculate at checkpts
+                if seed != 1:  # only calculate at checkpts
                     model.eval()
                     tr_loss, tr_acc = evaluate(model, train_loader, device)
                     tst_loss, tst_acc = evaluate(model, test_loader, device)
@@ -263,37 +275,42 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
                                    'train acc': tr_acc}, epoch)
         writer.add_graph(model, inputs)
 
+        if scheduler != False:
+            scheduler.step()  # pytorch scheduler step after optimizer
+            print(scheduler.get_last_lr())
+
     writer.close()
 
     # save training or finetuning stats dict to df
-    if save == True & ft == False:
-        train_stats = {
-            'model_name': model_names,
-            'seed': seed,
-            'pre_net': model.__class__.__name__,
-            'pre_epochs': np.append(first_batches_chkpts * 0.001, epoch_chkpts).tolist(),  ##
-            'pre_train_acc': train_acc,
-            'pre_train_loss': train_loss,
-            'pre_test_acc': test_acc,
-            'pre_test_loss': test_loss
-        }
-    else:  # save == True & ft == True
-        train_stats = {
-            'model_name': model_names,
-            'seed': seed,
-            'ft_net': model.__class__.__name__,
-            'ft_epochs': np.append(first_batches_chkpts * 0.001, epoch_chkpts).tolist(),  ##
-            'ft_train_acc': train_acc,
-            'ft_train_loss': train_loss,
-            'ft_test_acc': test_acc,
-            'ft_test_loss': test_loss
-        }
+    if save == True:
+        if ft == False:
+            train_stats = {
+                'model_name': model_names,
+                'seed': seed,
+                'pre_net': model.__class__.__name__,
+                'pre_epochs': np.append(first_batches_chkpts * bs_factor, epoch_chkpts).tolist(),  ##
+                'pre_train_acc': train_acc,
+                'pre_train_loss': train_loss,
+                'pre_test_acc': test_acc,
+                'pre_test_loss': test_loss
+            }
+        else:  # save == True & ft == True
+            train_stats = {
+                'model_name': model_names,
+                'seed': seed,
+                'ft_net': model.__class__.__name__,
+                'ft_epochs': np.append(first_batches_chkpts * bs_factor, epoch_chkpts).tolist(),  ##
+                'ft_train_acc': train_acc,
+                'ft_train_loss': train_loss,
+                'ft_test_acc': test_acc,
+                'ft_test_loss': test_loss
+            }
 
-    stats_file_path = join(model_dir, run_name + '_train_stats.json')
-    with open(stats_file_path, 'w+') as f:
-        json.dump(train_stats, f)
+        stats_file_path = join(model_dir, run_name + '_train_stats.json')
+        with open(stats_file_path, 'w+') as f:
+            json.dump(train_stats, f)
 
-    # create dataframe
-    df = pd.DataFrame(train_stats)
+        # create dataframe
+        df = pd.DataFrame(train_stats)
 
     return train_loss, train_acc, test_loss, test_acc, df

@@ -27,7 +27,7 @@ class VGG(nn.Module):
         super(VGG, self).__init__()
         self.features = features
         self.classifier = nn.Sequential(
-            nn.Linear(512, 4096),     ### 512*7*7
+            nn.Linear(512*7*7, 4096),     ### just 512 for cifar
             nn.ReLU(True),
             nn.Dropout(),
             nn.Linear(4096, 4096),

@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import os
 from os.path import join
 import pandas as pd
+from natsort import natsorted
 
 import datasets
 import train_utils
@@ -40,14 +41,15 @@ for seed in range(1, 11):
     model_dir = join(source_dir, 'models_' + str(seed))
     print(model_dir)
 
-    for file in os.listdir(model_dir):
-        if file.startswith("model_"):
+    for file in natsorted(os.listdir(model_dir)):
+        if file.startswith("model_") and file.endswith(".pt"):
             print(file)
             # Load model
             model = torch.load(join(model_dir, file))
 
             # add pre-train checkpoint name to run_name for ft
             # print(file.split(str(pretrain_dataset), 1)[1][:-3])  # add source model name for saving
+            # pretrain_checkpt = file.split(str(pretrain_dataset[:-5]), 1)[1][:-3]  # for fashionmnist
             pretrain_checkpt = file.split(str(pretrain_dataset), 1)[1][:-3]  # naming is eg. model_pre_mnist_0_1.pt
             run_name_sub = join(run_name + pretrain_checkpt)
 
@@ -70,6 +72,10 @@ for seed in range(1, 11):
                 dataset = datasets.MNIST_noise_struct(dataset_dir=dataset_dir, device=device)
             elif dataset_name == 'mnist_noise':
                 dataset = datasets.MNIST_noise(dataset_dir=dataset_dir, device=device)
+            elif dataset_name == 'mnist_split1':
+                dataset = datasets.MNIST_split1(dataset_dir=dataset_dir, device=device)
+            elif dataset_name == 'mnist_split2':
+                dataset = datasets.MNIST_split2(dataset_dir=dataset_dir, device=device)
             criterion = F.nll_loss
             ## for 'cifar10' diff. layers and criterion (F.cross_entropy)
 
@@ -83,7 +89,8 @@ for seed in range(1, 11):
                                                                            test_loader=test_loader, optimizer=optimizer,
                                                                            device=device, criterion=criterion,
                                                                            epochs=epochs, output_dir=output_dir,
-                                                                           run_name=run_name_sub, seed=seed, ft=True)
+                                                                           run_name=run_name_sub, seed=seed, ft=True,
+                                                                               scheduler=False)
             dff = dff.append(df, ignore_index=True)
             print(dff)
             print('Done fine-tuning run ', model)

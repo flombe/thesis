@@ -1,22 +1,14 @@
 import numpy as np
-
-Input = [np.array([1, 2, 3]),
-		np.array([4, 5, 6]),
-		np.array([7.2, 8.2, 9.2])]
-
-print([[*(Input[m][k] for m in range(len(Input)))] for k in range(3)])
-print([np.mean([*(Input[m][k] for m in range(len(Input)))]) for k in range(3)])
-
+import torch
+import os
 from os.path import join
-check = ['erst', 'zweit', 'dre']
-print([join('_'+check+'.pt') for check in check])
 
-first_batches_chkpts = np.array([1, 3, 10, 30, 100, 300])
-zwei = np.array([1,3,10,30,100])
-out = first_batches_chkpts * 0.001
-print(out)
-print(np.append(out, zwei))
-
+root_dir = os.getcwd()
+model_dir = join(root_dir, 'models', 'imagenet')
+extract = torch.load(join(model_dir, 'custom3D_extracted.pt'))
+print(type(extract))
+for i in range(len(extract['model_vgg16_pre_imagenet.pt']['layers'])):
+	print(extract['model_vgg16_pre_imagenet.pt']['layers'][i].shape)
 
 # dataframe handling
 import pandas as pd

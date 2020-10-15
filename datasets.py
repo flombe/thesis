@@ -2,7 +2,9 @@ from torchvision import datasets, transforms
 import torch
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import BatchSampler
+from torchvision import datasets, transforms
 import numpy as np
+import os
 
 
 class Dataset:
@@ -82,6 +84,16 @@ class MNIST2class(MNIST):
         return test_loader
 
 
+class MNIST_split1(MNIST2class):
+    def name(self):
+        return 'mnist_split1'
+
+
+class MNIST_split2(MNIST2class):
+    def name(self):
+        return 'mnist_split2'
+
+
 class MNIST_noise_struct(MNIST):
     def name(self):
         return 'mnist_noise_struct'
@@ -146,6 +158,56 @@ class CIFAR10(TorchDataset):
 
     def name(self):
         return 'cifar10'
+
+
+class Custom3D(Dataset):
+    def __init__(self, dataset_dir, device):
+        self.dataset_dir = dataset_dir
+        self.loader_args = {'num_workers': 10, 'pin_memory': True} if device.type == 'cuda' else {}
+
+        self.train_data = datasets.ImageFolder(os.path.join(dataset_dir, 'train'), self.get_train_transform())
+        self.test_data = datasets.ImageFolder(os.path.join(dataset_dir, 'test'), self.get_test_transform())
+        self.class_names = self.train_data.classes
+
+    def __len__(self):
+        return len(self.train_data)+len(self.test_data)
+
+    def __getitem__(self, idx):
+        if idx < len(self.train_data):
+            image, label = self.train_data[idx]
+        else:
+            image, label = self.test_data[idx - len(self.train_data)]
+        return image, self.class_names[label]
+
+    def get_train_transform(self):
+        transform = transforms.Compose([
+            transforms.Resize((224, 224), interpolation=2),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+        ])
+        return transform
+
+    def get_test_transform(self):
+        transform = transforms.Compose([
+            transforms.Resize((224, 224), interpolation=2),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+        ])
+        return transform
+
+    def get_train_loader(self, batch_size=32, shuffle=True):
+        train_loader = torch.utils.data.DataLoader(self.train_data, batch_size=batch_size, shuffle=shuffle, **self.loader_args)
+        return train_loader
+
+    def get_test_loader(self, batch_size=32, shuffle=True):
+        test_loader = torch.utils.data.DataLoader(self.test_data, batch_size=batch_size, shuffle=shuffle, **self.loader_args)
+        return test_loader
+
+    def get_dataset_cls(self):
+        return datasets.Custom3D
+
+    def name(self):
+        return 'custom3D'
 
 
 class BalancedBatchSampler(BatchSampler):

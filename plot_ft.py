@@ -7,21 +7,21 @@ import matplotlib
 import pandas
 
 # plot fine-tune on dataset_name on pre-trained models of 10 seeds
-pre_dataset = 'mnist'
-ft_dataset = 'fashionmnist'
+pre_dataset = 'mnist_split2'
+ft_dataset = 'mnist'
 
 root_dir = os.getcwd()
 models_dir = join(root_dir, 'models', pre_dataset, 'ft_' + ft_dataset)
 
-# run_name = join(f'ft_{pre_dataset}_{ft_dataset}_')  # 'ft_mnist2_mnist_'
-run_name = join(f'ft_{pre_dataset}_fashion_')
+run_name = join(f'ft_{pre_dataset}_{ft_dataset}_')  # 'ft_mnist2_mnist_'
+# run_name = join(f'ft_{pre_dataset}_fashion_')
 
 # for log scale use xsteps = [0.001, 0.01, 0.1, 1, 10, 100] eql. to 1, 10, 100 batches, 1,10,100 epochs
 # for little finer plot add 3s (roughly halfway on log-scale)
-checkpts = ['0_1', '0_3', '0_10', '0_30', '0_100', '0_300', '1', '3', '10', '30', '100']
-xticks = [0.001,0.003,0.01,0.03,0.1,0.3,1,3,10,30,100]
+checkpts = ['0', '0_1', '0_3', '0_10', '0_30', '0_100', '0_300', '1', '3', '10', '30', '100']
+xticks = [0.0, 0.001,0.003,0.01,0.03,0.1,0.3,1,3,10,30,100]
 
-x = np.array([1,3,10,30,100,300], dtype=int)
+x = np.array([0, 1,3,10,30,100,300], dtype=int)
 bs = x/937.5
 ep = np.array([1,3,10,30,100], dtype=int)
 total = np.append(bs, ep)
@@ -29,7 +29,7 @@ total = np.append(bs, ep)
 # aggregate Acc's from 10 seed runs of 11 different models in dict
 mydict = dict()
 for check in checkpts:
-    accs = np.zeros((10, 11))
+    accs = np.zeros((10, 12))
     for seed in range(1,11):
         model_dir = join(models_dir, 'models_' + str(seed))
         train_stats = join(model_dir, run_name + check + '_train_stats.json')
@@ -76,10 +76,10 @@ for check in mydict.keys():
 plt.ylim((0,100))
 ax1.minorticks_on()
 plt.xscale("log")
-plt.xticks(xticks, rotation=80)
-f = lambda x,pos: str(x).rstrip('0').rstrip('.')
-ax1.get_xaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(f))
-ax1.xaxis.set_tick_params(which='minor', bottom=False)
+# plt.xticks(xticks, rotation=80)
+# f = lambda x,pos: str(x).rstrip('0').rstrip('.')
+# ax1.get_xaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(f))
+# ax1.xaxis.set_tick_params(which='minor', bottom=False)
 plt.legend(loc=4)
 plt.tight_layout()
 plt.show()
@@ -113,12 +113,12 @@ for check in mydict.keys():
 
     else: ax3.plot(total[6:], mean[6:], label=(str(check)))
 
-plt.ylim((78, 93))
+# plt.ylim((78, 93))
 ax3.minorticks_on()
 plt.xscale("log")
-plt.xticks(xticks[6:])
-ax3.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
-ax3.xaxis.set_tick_params(which='minor', bottom=False)
+# plt.xticks(xticks[6:])
+# ax3.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+# ax3.xaxis.set_tick_params(which='minor', bottom=False)
 plt.legend(loc=4)
 plt.tight_layout()
 plt.show()
@@ -155,10 +155,10 @@ for check in ['0_1', '100']:
 plt.ylim((0,100))
 ax2.minorticks_on()
 plt.xscale("log")
-plt.xticks(xticks, rotation=80)
-f = lambda x,pos: str(x).rstrip('0').rstrip('.')
-ax2.get_xaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(f))
-ax2.xaxis.set_tick_params(which='minor', bottom=False)
+# plt.xticks(xticks, rotation=80)
+# f = lambda x,pos: str(x).rstrip('0').rstrip('.')
+# ax2.get_xaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(f))
+# ax2.xaxis.set_tick_params(which='minor', bottom=False)
 plt.legend(loc=4)
 plt.tight_layout()
 plt.show()
@@ -175,7 +175,7 @@ plt.xlabel("Pre-Training Epochs (batch1 to epoch100)")
 plt.ylabel("Post-Ft Accuracy")
 plt.ylabel("Detail Post-Ft Accuracy")
 
-lines = np.zeros((11, 11))
+lines = np.zeros((12, 12))
 j = 0
 for check in mydict.keys():
     accs = mydict[check]
@@ -195,10 +195,10 @@ for i in range(11):
 plt.ylim((0,100))
 ax1.minorticks_on()
 plt.xscale("log")
-plt.xticks(xticks, rotation=80)
-f = lambda x,pos: str(x).rstrip('0').rstrip('.')
-ax1.get_xaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(f))
-ax1.xaxis.set_tick_params(which='minor', bottom=False)
+# plt.xticks(xticks, rotation=80)
+# f = lambda x,pos: str(x).rstrip('0').rstrip('.')
+# ax1.get_xaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(f))
+# ax1.xaxis.set_tick_params(which='minor', bottom=False)
 plt.legend(loc=4, title='fine-tuned for')
 plt.tight_layout()
 plt.show()

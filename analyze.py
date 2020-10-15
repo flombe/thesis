@@ -26,36 +26,39 @@ def computeID(r, number_resampling=50, fraction=0.9, distance_metric='euclidean'
     error = np.std(ID)
     return mean, error
 
+def calc_ID_SS(extract):
+    ID = []
+    SS = []
+    for name, model in tqdm(extract.items()):
+        print(name)
+        layers = model['layers']
+        labels = model['labels']
 
-def calc_ID_SS(dataset):
+        ids = []
+        ss = []
+        for layer in layers:
+            id, error = computeID(layer)
+            ids.append(id)
+            tss, ssw = sum_of_squares.sum_squared(layer, labels)
+            ss.append(ssw / tss if tss != 0 else 0)
+
+        ID.append(ids)
+        SS.append(ss)
+
+    return ID, SS
+
+def calc_ID_SS_seeds(dataset):
     total_ids = []
     total_ss = []
     for seed in tqdm(range(1, 11)):  # for 10 seed folders
         path = join(models_dir, 'models_' + str(seed))
         extract = torch.load(join(path, dataset + '_extracted.pt'))  # map_location='cpu'
 
-        seed_ids = []
-        seed_ss = []
-        for name, model in tqdm(extract.items()):
-            print(name)
-            layers = model['layers']  # input + 6 model output layers
-            labels = model['labels']
-
-            ids = []
-            ss = []
-            for layer in layers:
-                id, error = computeID(layer)
-                ids.append(id)
-                tss, ssw = sum_of_squares.sum_squared(layer, labels)
-                ss.append(ssw / tss if tss != 0 else 0)
-
-            # df[df['seed']==seed & df['model_name']==name]['target_dataset'] = ids  # add each single value
-            seed_ids.append(ids)
-            seed_ss.append(ss)
-
+        seed_ids, seed_ss = calc_ID_SS(extract)
         # df[df['seed'] == seed]['ID_pre'] = seed_ids  # add values for 11 models at once
         total_ids += seed_ids
         total_ss += seed_ss
+
     return total_ids, total_ss
 
 
@@ -70,26 +73,33 @@ if __name__ == '__main__':
 
 
     # extracted on both train and target dataset
-    pre_dataset = 'mnist_noise_struct'
-    target_dataset = 'mnist'  # extracted on
+    pre_dataset = 'imagenet'
+    target_dataset = 'custom3D'  # extracted on
 
     root_dir = os.getcwd()
     models_dir = join(root_dir, 'models', pre_dataset)
 
     # load df
-    df_path = join(models_dir, 'df_pre_' + pre_dataset + '+metrics')
+    df_path = join(models_dir, 'df_pre_' + pre_dataset + '+metrics')  # + '+metrics')
     df = pd.read_pickle(df_path)
-
 
     # calc ID, SS and add to df
     print(f'>>> Calculate ID, SS for models pre-trained on {pre_dataset}, on target {target_dataset} <<<')
 
-    # id, ss = calc_ID_SS(target_dataset)
+    # if target_dataset == 'custom3D':
+    #     extract = torch.load(join(models_dir, target_dataset + '_extracted.pt'))
+    #     id, ss = calc_ID_SS(extract)
+    # else:
+    #     id, ss = calc_ID_SS_seeds(target_dataset)
+    # print(id, ss)
     # df[f'ID_{target_dataset}'] = pd.Series(id)
     # df[f'SS_{target_dataset}'] = pd.Series(ss)
 
     # RSA
-    rdm_metric = rsa.get_rdm_metric(pre_dataset, target_dataset)  # diag-nondiag corr delta
+    if target_dataset == 'custom3D':
+        rdm_metric = rsa.get_rdm_metric_vgg(pre_dataset, target_dataset)
+    else:
+        rdm_metric = rsa.get_rdm_metric(pre_dataset, target_dataset)  # diag-nondiag corr delta
     df[f'RSA_{target_dataset}'] = rdm_metric
 
-    #df.to_pickle(join(df_path + '+metrics'))  # just to check - Later save as same name
+    df.to_pickle(join(df_path + '+metrics2'))  # just to check - Later save as same name

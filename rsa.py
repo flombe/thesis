@@ -240,10 +240,12 @@ def plotter(corr_dict, labels, dataset_trained, dataset_extracted,
         plt.show()
 
 
-def load_calc_corr(dataset_trained, dataset_extracted, sorted, seed=1, layer=4):
+def load_calc_corr(dataset_trained, dataset_extracted, sorted, seed, layer=4):
     # load
     root_path = os.getcwd()
     models_dir = join(root_path, 'models', dataset_trained, 'models_' + str(seed))
+    if not os.path.exists(models_dir):
+        models_dir = join(root_path, 'models', dataset_trained)  # case of no seeds
 
     load_extracted = join(models_dir, dataset_extracted + '_extracted.pt')
     models = torch.load(load_extracted)
@@ -323,6 +325,38 @@ def get_rdm_metric(source, target):
     print(len(total_deltas))  # 120
     return total_deltas
 
+# for vgg16 architecture
+def get_rdm_metric_vgg(source, target):
+    layer_deltas = []
+    total_deltas = []
+
+    for layer in range(9):
+        corr_dict,_ = load_calc_corr(source, target, sorted, seed=1, layer=layer)
+        delta = []
+
+        for model in corr_dict.items():  # corr_dict is sorted
+            ## model[1] ndarray 500x500
+            block_view = view_as_blocks(model[1], block_shape=(30, 30))  # 30 samples per class
+            val_diag = np.array([])
+            val_nondiag = np.array([])
+            for i in range(10):
+                for j in range(10):
+                    if i == j:
+                        val_diag = np.append(val_diag, block_view[i, j])
+                    else:
+                        val_nondiag = np.append(val_nondiag, block_view[i, j])
+            delta.append(val_diag.mean() - val_nondiag.mean())
+
+        layer_deltas.append(delta)  # list of lists [[1], ..9]
+
+    print(layer_deltas)
+    for i in range(0, 1):
+        print([item[i] for item in layer_deltas])
+        total_deltas.append([item[i] for item in layer_deltas])  # resort to [[9], ..1]
+    print(len(total_deltas))  # 1
+
+    return total_deltas
+
 
 def all_layer_plot(dataset_trained, dataset_extracted, sorted, seed=1):
     layer_names = ['in', 'conv1', 'pool1', 'conv2', 'pool2', 'fc1', 'output']
@@ -370,7 +404,7 @@ def all_layer_plot(dataset_trained, dataset_extracted, sorted, seed=1):
 
 def all_delta_plot(dataset_extracted, sorted, seed=1):
     checkpts = ['0', '0_1', '0_3', '0_10', '0_30', '0_100', '0_300', '1', '3', '10', '30', '100']
-    datasets = ['mnist_noise', 'mnist_noise_struct', 'mnist', 'fashionmnist']
+    datasets = ['mnist_noise', 'mnist_noise_struct', 'mnist_split1', 'mnist', 'fashionmnist']
 
     plt.style.use('seaborn')
     plt.figure(figsize=(10, 10))
@@ -426,7 +460,7 @@ if __name__ == '__main__':
     layer = 4
 
     # set source(trained) and target(extracted) datasets
-    dataset_trained = 'mnist_noise_struct'
+    dataset_trained = 'mnist_split1'
     # corr_dict_source = main(dataset_trained, dataset_trained, sorted=True, seed=1, layer=layer)  # only plot for seed 1
 
     dataset_extracted = 'fashionmnist'
