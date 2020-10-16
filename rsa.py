@@ -127,7 +127,7 @@ def multi_plot_rdm(corr_dict, labels):
     fig, axs = plt.subplots(math.ceil(n), math.floor(n), figsize=(16, 21), sharex='col', sharey='row', dpi=250)
     fig.subplots_adjust(hspace=.5, wspace=.001)
 
-    for ax, val in tqdm(zip(axs.ravel(), corr_dict.items())):
+    for ax, val in tqdm(zip(fig.axes, corr_dict.items())):
         sns.set(font_scale=0.8)
         sns.heatmap(val[1], cmap='rainbow', ax=ax, cbar=True, xticklabels=labels, yticklabels=labels, vmax=1.5)
         ax.set_title(val[0], weight='semibold')
@@ -145,7 +145,7 @@ def multi_plot_histo(corr_dict, labels):
     fig2, axs2 = plt.subplots(math.ceil(n), math.floor(n), figsize=(16, 21), sharex='col', sharey='row', dpi=150)
     fig2.subplots_adjust(hspace=.5, wspace=.001)
 
-    for ax2, val2 in tqdm(zip(axs2.ravel(), corr_dict.items())):
+    for ax2, val2 in tqdm(zip(fig2.axes, corr_dict.items())):
         # val2[1] ndarray 500x500
         block_view = view_as_blocks(val2[1], block_shape=(50, 50))
         val_diag = np.array([])
@@ -210,7 +210,7 @@ def plotter(corr_dict, labels, dataset_trained, dataset_extracted,
     if single_plot:
         # single plotting
         for model, correlation in corr_dict.items():
-            plot_rdm(correlation)
+            plot_rdm(correlation, labels)
             plt.title(join("1-CorrelationMatrix on 500 inputs of ", model), weight='semibold')
             plt.show()
 
@@ -285,8 +285,8 @@ def main(dataset_trained, dataset_extracted, sorted, seed=1, layer=4):
     plotter(corr_dict_layer4, labels, dataset_trained, dataset_extracted,
             single_plot=False,
             multi_plot=True,
-            multi_plot_hist=True,
-            mds_plot=True,
+            multi_plot_hist=False,
+            mds_plot=False,
             rdm_plot=True)
 
     return corr_dict_layer4
@@ -359,15 +359,21 @@ def get_rdm_metric_vgg(source, target):
 
 
 def all_layer_plot(dataset_trained, dataset_extracted, sorted, seed=1):
-    layer_names = ['in', 'conv1', 'pool1', 'conv2', 'pool2', 'fc1', 'output']
+    if dataset_extracted == 'custom3D':
+        layer_names = ['in', 'pool1', 'pool2', 'pool3', 'pool4', 'pool5', 'fc1', 'fc2', 'out']
+        block_size = 30
+    else:
+        layer_names = ['in', 'conv1', 'pool1', 'conv2', 'pool2', 'fc1', 'output']
+        block_size = 50
+
     plt.figure(figsize=(10, 10))
-    for layer in range(7):
+    for layer in range(len(layer_names)):
         corr_dict,_ = load_calc_corr(dataset_trained, dataset_extracted, sorted, seed=seed, layer=layer)
         diag_mean = []
         nondiag_mean = []
         for model in corr_dict.items():
             ## model[1] ndarray 500x500
-            block_view = view_as_blocks(model[1], block_shape=(50, 50))
+            block_view = view_as_blocks(model[1], block_shape=(block_size, block_size))
             val_diag = np.array([])
             val_nondiag = np.array([])
             for i in range(10):
@@ -379,11 +385,11 @@ def all_layer_plot(dataset_trained, dataset_extracted, sorted, seed=1):
             diag_mean.append(val_diag.mean())
             nondiag_mean.append(val_nondiag.mean())
         # p = plt.plot(range(12), mean, label=layer_names[layer])
-        # if layer_names[layer] == layer:
-        if layer_names[layer] == 'pool2':
-            p = plt.plot(range(12), diag_mean, '--', label=f'{layer_names[layer]}_diag', alpha=0.2)
-            plt.plot(range(12), nondiag_mean, linestyle='dotted', label=f'{layer_names[layer]}_nondiag', c=p[0].get_color(), alpha=0.2)
-            plt.plot(range(12), [x1 - x2 for (x1, x2) in zip(nondiag_mean, diag_mean)], label=f'{layer_names[layer]}_delta', c=p[0].get_color())
+        if layer_names[layer] == layer:
+        # if layer_names[layer] == 'pool2':
+            p = plt.plot(range(len(corr_dict.items())), diag_mean, '--', label=f'{layer_names[layer]}_diag', alpha=0.2)
+            plt.plot(range(len(corr_dict.items())), nondiag_mean, linestyle='dotted', label=f'{layer_names[layer]}_nondiag', c=p[0].get_color(), alpha=0.2)
+            plt.plot(range(len(corr_dict.items())), [x1 - x2 for (x1, x2) in zip(nondiag_mean, diag_mean)], label=f'{layer_names[layer]}_delta', c=p[0].get_color())
 
         # # again for noise inputs
         # corr_dict,_ = load_calc_corr(dataset_trained, 'fashionmnist_pure_noise', sorted, seed=seed, layer=layer)
@@ -395,9 +401,9 @@ def all_layer_plot(dataset_trained, dataset_extracted, sorted, seed=1):
     plt.xlabel('models')
     plt.ylabel('mean correlation')
     plt.title(f'RSA mean Corr. all layers - Diagonal Delta \n (pre: {dataset_trained}, on: {dataset_extracted})')
-    plt.xlim(0, 11)
+    plt.xlim(0, len(corr_dict.items())-1)
     plt.ylim(0, 1)
-    plt.xticks(range(12), list(corr_dict.keys()), rotation=70)
+    plt.xticks(range(len(corr_dict.items())), list(corr_dict.keys()), rotation=70)
     plt.legend()
     plt.show()
 
@@ -457,19 +463,19 @@ if __name__ == '__main__':
         print("Devise used = ", device)
 
     # specify layer to analyze on
-    layer = 4
+    layer = 5  #4
 
     # set source(trained) and target(extracted) datasets
-    dataset_trained = 'mnist_split1'
+    dataset_trained = 'imagenet'
     # corr_dict_source = main(dataset_trained, dataset_trained, sorted=True, seed=1, layer=layer)  # only plot for seed 1
 
-    dataset_extracted = 'fashionmnist'
-    # corr_dict_target = main(dataset_trained, dataset_extracted, sorted=True, seed=1, layer=layer)
+    dataset_extracted = 'custom3D'
+    #corr_dict_target = main(dataset_trained, dataset_extracted, sorted=False, seed=1, layer=layer)
 
     # plot to compare corr means of all layers for all models
-    # all_layer_plot(dataset_trained, dataset_extracted, sorted=True, seed=1)
+    all_layer_plot(dataset_trained, dataset_extracted, sorted=False, seed=1)
 
-    all_delta_plot(dataset_extracted, sorted=True, seed=1)
+    all_delta_plot(dataset_extracted, sorted=False, seed=1)
 
     # calculate only diagonal of model RDM (=corr/dist of same model for source and target data)
 

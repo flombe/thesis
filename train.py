@@ -88,10 +88,11 @@ for seed_run in range(1, seeds+1):
 
     # Training
     optimizer = optim.Adam(model.parameters(), lr=lr)  ## Adam instead of SGD
-    if dataset_name == 'cifar10': optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9)
+    if dataset_name == 'cifar10':
+        optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9)
     if dataset_name == 'custom3D':
         optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9)
-        # exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=20, gamma=0.1)
+        exp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
 
     train_acc, train_loss, test_acc, test_loss, df = train_utils.train(model=model, train_loader=train_loader,
                                                                    test_loader=test_loader, optimizer=optimizer,

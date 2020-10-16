@@ -65,7 +65,10 @@ def ss_id_plot_adj(df, dataset='pre'):
         ID_col = f'ID_{dataset}'
         SS_col = f'SS_{dataset}'
 
-    xticks = ['in', 'conv1', 'pool1', 'conv2', 'pool2', 'fc1', 'output']  # layer names
+    if df['pre_net'][0] == 'vgg16':
+        xticks = ['in', 'pool1', 'pool2', 'pool3', 'pool4', 'pool5', 'fc1', 'fc2', 'out']
+    else:
+        xticks = ['in', 'conv1', 'pool1', 'conv2', 'pool2', 'fc1', 'output']  # layer names
     plt.style.use('seaborn')
     plt.rcParams['axes.prop_cycle'] = plt.cycler(color=plt.cm.tab20c.colors)  # set color scheme
 
@@ -90,7 +93,7 @@ def ss_id_plot_adj(df, dataset='pre'):
     plt.ylabel("SSW/TSS", weight='semibold')
 
     plt.xlabel("Layers", weight='semibold')
-    plt.xticks(range(7), labels=xticks)
+    plt.xticks(range(len(xticks)), labels=xticks)
 
     plt.legend(loc="lower left", prop={'size': 7.5}, frameon=True, fancybox=True, facecolor='white',
                title='10 seed means')
@@ -100,7 +103,7 @@ def ss_id_plot_adj(df, dataset='pre'):
 
 if __name__ == '__main__':
     ###
-    dataset_trained = 'mnist'
+    dataset_trained = 'imagenet'
     model_folder = 'all'  # 'all' or 'nr'
     ###
 
@@ -109,9 +112,9 @@ if __name__ == '__main__':
 
     if model_folder == 'all':
         # load df
-        df_path = join(models_dir, 'df_pre_' + dataset_trained + 'added')
+        df_path = join(models_dir, 'df_pre_' + dataset_trained + '+metrics')  # + 'added'
         df = pd.read_pickle(df_path)
 
         # specify id and ss on 'pre' or 'target' data
-        ss_id_plot(df, 'pre')
-        #ss_id_plot_adj(df, 'mnist')
+        #ss_id_plot(df, 'pre')
+        ss_id_plot_adj(df, 'custom3D')

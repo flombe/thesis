@@ -12,8 +12,8 @@ pre_dataset = 'mnist_split2'
 ft_dataset = 'mnist'
 
 plot_acc = True
-plot_delta = True
-plot_compare_switched = True
+plot_delta = False
+plot_compare_switched = False
 plot_compare_switched_singles = False
 
 
