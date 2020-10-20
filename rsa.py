@@ -466,7 +466,7 @@ if __name__ == '__main__':
     layer = 5  #4
 
     # set source(trained) and target(extracted) datasets
-    dataset_trained = 'imagenet'
+    dataset_trained = 'places365'
     # corr_dict_source = main(dataset_trained, dataset_trained, sorted=True, seed=1, layer=layer)  # only plot for seed 1
 
     dataset_extracted = 'custom3D'

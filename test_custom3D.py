@@ -7,7 +7,7 @@ from torchvision import datasets, models, transforms
 from datasets import Custom3D
 import pandas as pd
 
-compare_plot = False
+compare_plot = True
 
 # set device
 if torch.cuda.is_available():
@@ -25,7 +25,7 @@ bs = 1
 # set dir
 root_dir = os.getcwd()
 dataset_dir = join(root_dir, 'data', dataset_name)  # target data for ft
-source_dir = join(root_dir, 'models', pretrain_dataset)
+source_dir = join(root_dir, 'models', pretrain_dataset, 'vgg16')
 output_dir = join(source_dir, 'ft_' + dataset_name)  # new folder for fine-tuned models
 
 if dataset_name == 'custom3D':

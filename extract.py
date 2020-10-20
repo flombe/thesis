@@ -22,7 +22,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 parser = argparse.ArgumentParser()
 parser.add_argument('--trained_on', default='mnist',
                     choices=['mnist', 'mnist2class', 'fashionmnist', 'mnist_noise_struct', 'mnist_noise', 'cifar10',
-                             'mnist_split1', 'mnist_split2', 'imagenet', 'custom3D'])
+                             'mnist_split1', 'mnist_split2', 'vgg16/imagenet', 'vgg16/custom3D', 'vgg16/places365'])
 parser.add_argument('--dataset', default='mnist',
                     choices=['mnist', 'mnist2class', 'fashionmnist', 'mnist_noise_struct', 'mnist_noise', 'cifar10',
                              'mnist_split1', 'mnist_split2', 'imagenet', 'custom3D'])

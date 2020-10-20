@@ -8,14 +8,14 @@ import pandas as pd
 from natsort import natsorted
 
 ###########
-pre_dataset = 'imagenet'
+pre_dataset = 'places365'  # 'imagenet'
 ft_dataset = 'custom3D'
 
 plot_acc = True
 ###########
 
 root_dir = os.getcwd()
-models_dir = join(root_dir, 'models')
+models_dir = join(root_dir, 'models', 'vgg16')
 
 # ticks for plot - batches and epochs with bs=12 and 1200 samples
 checkpts = ['0', '0_1', '0_3', '0_10', '0_30', '1', '3', '10', '30', '100']
@@ -25,17 +25,17 @@ total = np.array(xticks)
 plt.rcParams['axes.prop_cycle'] = plt.cycler(color=plt.cm.Paired.colors)  # set color scheme
 
 
-# Plot Acc on VGG16 custom3D for different ft or pre
+# Plot Acc on VGG16 custom3D for different ft or pre cases
 if plot_acc:
 
-    pre_dataset = ['random_init', 'imagenet', 'custom3D']
+    pre_datasets = ['random_init', pre_dataset, 'custom3D']
 
     fig1, ax1 = plt.subplots(figsize=(6, 7), dpi=150)
     plt.title(f"Accuracies of VGG-16 models on {ft_dataset}")
     plt.xlabel("Fine-Tuning/training Epochs (batch1 to epoch100)")
     plt.ylabel("Test Accuracy")
 
-    for dataset in pre_dataset:
+    for dataset in pre_datasets:
 
         if dataset == ft_dataset:
             load_dir = join(models_dir, dataset, 'models_1')
@@ -55,8 +55,8 @@ if plot_acc:
 
     # additional
     for add_case in ['_lastlayer', '_3conv', '_onlyfc']:
-        load_dir = join(models_dir, 'imagenet', 'ft_' + ft_dataset + add_case)
-        label = f"ft_imagenet_{ft_dataset}{add_case}"
+        load_dir = join(models_dir, pre_dataset, 'ft_' + ft_dataset + add_case)
+        label = f"ft_{pre_dataset}_{ft_dataset}{add_case}"
         # load Acc from df
         df = pd.read_pickle(join(load_dir, "df_" + label))
         test_acc = df['ft_test_acc']

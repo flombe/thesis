@@ -18,7 +18,7 @@ def train_args_parser():
     parser.add_argument('--dataset', default='mnist', choices=['mnist', 'mnist2class', 'mnist_noise',
                                                                'mnist_noise_struct', 'mnist_split1', 'mnist_split2',
                                                                'fashionmnist', 'cifar10', 'imagenet', 'custom3D',
-                                                               'random_init'],
+                                                               'random_init', 'places365'],
                         type=str , metavar='D', help='trainings dataset name')
     parser.add_argument('--epochs', default=100, type=int, metavar='E',
                         help='number of total epochs to run')

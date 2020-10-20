@@ -20,7 +20,7 @@ root_dir = os.getcwd()
 models_dir = join(root_dir, 'models', trained_dataset)
 
 # load df
-df_path = join(models_dir, f'ft_custom3D/df_ft_{trained_dataset}_{target_dataset}')
+df_path = join(models_dir, f'df_pre_{trained_dataset}+metrics')
 df = pd.read_pickle(df_path)
 
 # df = df.reset_index(drop=True)
