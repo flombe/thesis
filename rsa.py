@@ -285,9 +285,9 @@ def main(dataset_trained, dataset_extracted, sorted, seed=1, layer=4):
     plotter(corr_dict_layer4, labels, dataset_trained, dataset_extracted,
             single_plot=False,
             multi_plot=True,
-            multi_plot_hist=False,
+            multi_plot_hist=True,
             mds_plot=False,
-            rdm_plot=True)
+            rdm_plot=False)
 
     return corr_dict_layer4
 
@@ -463,22 +463,25 @@ if __name__ == '__main__':
         print("Devise used = ", device)
 
     # specify layer to analyze on
-    layer = 5  #4
+    layer = 5  # 4
 
     # set source(trained) and target(extracted) datasets
-    dataset_trained = 'places365'
+    dataset_trained = 'vgg16/vggface'
     # corr_dict_source = main(dataset_trained, dataset_trained, sorted=True, seed=1, layer=layer)  # only plot for seed 1
 
     dataset_extracted = 'custom3D'
-    #corr_dict_target = main(dataset_trained, dataset_extracted, sorted=False, seed=1, layer=layer)
+    corr_dict_target = main(dataset_trained, dataset_extracted, sorted=True, seed=1, layer=layer)
 
     # plot to compare corr means of all layers for all models
-    all_layer_plot(dataset_trained, dataset_extracted, sorted=False, seed=1)
+    all_layer_plot(dataset_trained, dataset_extracted, sorted=True, seed=1)
 
-    all_delta_plot(dataset_extracted, sorted=False, seed=1)
+    all_delta_plot(dataset_extracted, sorted=True, seed=1)
+
+
+
+
 
     # calculate only diagonal of model RDM (=corr/dist of same model for source and target data)
-
     # compare_rdm_euclid = calc_compare_rdm(distance.euclidean, list(corr_dict_source.values()), list(corr_dict_target.values()))
     # compare_rdm_spearman = calc_compare_rdm(spearman_dist, list(corr_dict_source.values()), list(corr_dict_target.values()))
     #

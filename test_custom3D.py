@@ -54,19 +54,3 @@ if compare_plot:
         plt.title(label)
         plt.show()
 
-
-def create_df():
-    # manualy plug in pre-train data if online available
-    pre_stats = {
-        'model_name': ['model_vgg16_pre_imagenet'],
-        'pre_net': ['vgg16'],
-        'pre_dataset': ['imagenet'],
-        'pre_epochs': [74],
-        'pre_top1': [(100-28.41)/100],
-        'pre_top5': [(100-9.62)/100]
-    }
-
-    # create dataframe
-    df = pd.DataFrame(pre_stats)
-    df.to_pickle(join(source_dir, 'df_pre_imagenet'))
-

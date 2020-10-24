@@ -8,7 +8,7 @@ import pandas as pd
 from natsort import natsorted
 
 ###########
-pre_dataset = 'places365'  # 'imagenet'
+pre_dataset = 'vggface'  # 'imagenet'
 ft_dataset = 'custom3D'
 
 plot_acc = True
@@ -50,7 +50,7 @@ if plot_acc:
             # load Acc from df
             df = pd.read_pickle(join(load_dir, "df_" + label))
             test_acc = df['ft_test_acc']
-
+        print(test_acc)
         ax1.plot(total, test_acc, label=str(label))
 
     # additional

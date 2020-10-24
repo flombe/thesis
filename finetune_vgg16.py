@@ -55,20 +55,10 @@ if dataset_name == 'custom3D':
     test_loader = dataset.get_test_loader(batch_size=bs)
     class_names = dataset.class_names
 
-if pretrain_dataset == 'imagenet':
-    # check if pre-trained model already saved
-    model_path = join(source_dir, 'model_vgg16_pre_imagenet.pt')
-    if os.path.exists(model_path):
-        model_pre = torch.load(model_path)
-    else:
-        # load & save pretrained model/weights
-        model_pre = vgg16(pretrained=True)  # pre-trained on imageNet
-        torch.save(model_pre, model_path)
-        print(model_path, ' saved.')
-else:
-    # load model
-    model_path = join(source_dir, f'model_vgg16_pre_{pretrain_dataset}.pt')
-    model_pre = torch.load(model_path)
+
+# load model
+model_path = join(source_dir, f'model_vgg16_pre_{pretrain_dataset}.pt')
+model_pre = torch.load(model_path)
 
 # define finetune model - freeze pre-trained params and newly initialize last layers
 print(model_pre)
@@ -93,6 +83,9 @@ if pretrain_dataset == 'imagenet':
     num_ftrs = model_ft.classifier._modules['6'].in_features
     model_ft.classifier._modules['6'] = nn.Linear(num_ftrs, n_out_classes)
 else:
+    # model_ft.features._modules['conv5_1'] = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    # model_ft.features._modules['conv5_2'] = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+
     model_ft.features._modules['conv5_3'] = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
     num_ftrs = model_ft.classifier._modules['fc6'].in_features
@@ -101,8 +94,8 @@ else:
     num_ftrs = model_ft.classifier._modules['fc7'].in_features
     model_ft.classifier._modules['fc7'] = nn.Linear(num_ftrs, 4096)
 
-    num_ftrs = model_ft.classifier._modules['fc8a'].in_features
-    model_ft.classifier._modules['fc8a'] = nn.Linear(num_ftrs, n_out_classes)
+    num_ftrs = model_ft.classifier._modules['fc8'].in_features
+    model_ft.classifier._modules['fc8'] = nn.Linear(num_ftrs, n_out_classes)
 
 
 model_ft = model_ft.to(device)  # on cuda
