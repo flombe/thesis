@@ -23,7 +23,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--trained_on', default='mnist',
                     choices=['mnist', 'mnist2class', 'fashionmnist', 'mnist_noise_struct', 'mnist_noise', 'cifar10',
                              'mnist_split1', 'mnist_split2', 'vgg16/imagenet', 'vgg16/custom3D', 'vgg16/places365',
-                             'vgg16/vggface'])
+                             'vgg16/vggface', 'vgg16/cars'])
 parser.add_argument('--dataset', default='mnist',
                     choices=['mnist', 'mnist2class', 'fashionmnist', 'mnist_noise_struct', 'mnist_noise', 'cifar10',
                              'mnist_split1', 'mnist_split2', 'imagenet', 'custom3D'])

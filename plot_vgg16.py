@@ -8,7 +8,7 @@ import pandas as pd
 from natsort import natsorted
 
 ###########
-pre_dataset = 'vggface'  # 'imagenet'
+pre_dataset = 'cars'  # 'imagenet'
 ft_dataset = 'custom3D'
 
 plot_acc = True

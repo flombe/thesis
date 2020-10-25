@@ -287,6 +287,83 @@ def get_vgg16_cars():
 
     return model
 
+def cifar10_test(model):
+    model.eval()
+
+    import datasets
+    dataset_dir = join(os.getcwd(), 'data', 'cifar10')
+    dataset = datasets.CIFAR10(dataset_dir=dataset_dir, device=device)
+    test_loader = dataset.get_test_loader(batch_size=1)
+    image, label = next(iter(test_loader))
+
+    print(label)
+    print(image.shape)  ## torch.Size([1, 3, 224, 224])
+
+    plt.imshow(image.cpu().squeeze().permute(1, 2, 0))
+    plt.show()
+
+    # forward pass
+    out = model.forward(image.to(device))
+
+    print('VGG-19 on Cifar10 - sample label: {}'.format(label))
+    # output the prediction
+    _, predicted = torch.max(out.data, 1)
+    print('Model prediction: ', predicted)
+
+def get_vgg19_cifar10():
+    # from  https://github.com/chengyangfu/pytorch-vgg-cifar10
+
+    import torch.nn as nn
+    model = vgg_arch.vgg19(pretrained=False, num_classes=10)
+    # print(model)
+    model.classifier = nn.Sequential(
+        nn.Linear(512, 512),  # pooling reduce cifar dim so much that only 512 let in the end
+        nn.ReLU(True),
+        nn.Dropout(),
+        nn.Linear(512, 512),
+        nn.ReLU(True),
+        nn.Dropout(),
+        nn.Linear(512, 10),
+    )
+    print(model)
+
+    checkpoint = torch.load(join(source_dir, 'model_best.pth.tar'))
+    start_epoch = checkpoint['epoch']
+    best_prec1 = checkpoint['best_prec1']
+    print(start_epoch, best_prec1)
+    # print(checkpoint['state_dict'])
+
+    new_state_dict = dict()
+    for key in checkpoint['state_dict'].keys():
+        # print(key, checkpoint['state_dict'][key].shape)
+        if str(key).startswith('features.'):
+            print(str(key[:8] + key[15:]))
+            new_state_dict[str(key[:8] + key[15:])] = checkpoint['state_dict'][key]
+        else:
+            new_state_dict[key] = checkpoint['state_dict'][key]
+
+    newer_state_dict = dict()
+    print('--- Layers with key name difference ---')
+    for key1, key2 in zip(new_state_dict.keys(), model.state_dict().keys()):
+        if key1 == key2:
+            newer_state_dict[key1] = new_state_dict[key1]
+        else:
+            print(key1, new_state_dict[key1].shape)
+            print(key2, model.state_dict()[key2].shape)
+            print('-------')
+            newer_state_dict[key2] = new_state_dict[key1]
+
+
+    model.load_state_dict(newer_state_dict)
+    print("=> loaded checkpoint (epoch {})".format(checkpoint['epoch']))
+
+    # test model on cifar10 sample
+    model = model.to(device)
+    cifar10_test(model)
+
+    return model
+
+
 def create_df_pre(net, pre_dataset, ep, top1, top5):
     pre_stats = {
         'model_name': [f'model_{net}_pre_{pre_dataset}'],
@@ -308,6 +385,7 @@ if __name__=='__main__':
     init_imagenet = False
     init_vggface = False
     init_cars = False
+    init_cifar10 = True
 
     ## places365
     if init_places365:
@@ -351,7 +429,7 @@ if __name__=='__main__':
 
         # run finetune_vgg16.sh to ft on custom3D
 
-    ## VGGFace
+    ## Cars
     if init_cars:
         # Cars dataset contains 16,185 images of 196 classes of cars. https://ai.stanford.edu/~jkrause/cars/car_dataset.html
         # https://github.com/afifai/car_recognizer_aiforsea
@@ -367,7 +445,24 @@ if __name__=='__main__':
 
         # run finetune_vgg16.sh to ft on custom3D
 
+    ## Cifar10
+    if init_cifar10:
+        # https://github.com/geifmany/cifar-vgg
 
+        pretrain_dataset = 'vgg16/cifar10'
+        source_dir = join(os.getcwd(), 'models', pretrain_dataset)
+
+        # model = get_vgg19_cifar10()
+        # torch.save(model, join(source_dir, 'model_vgg19_pre_cifar10.pt'))
+
+        model = torch.load(join(source_dir, 'model_vgg19_pre_cifar10.pt'))
+        model = model.to(device)
+        cifar10_test(model)
+
+        # create and save df with online available pre-train data
+        df = create_df_pre(net='vgg19', pre_dataset='cifar10', ep='233', top1=0.9243, top5='')
+
+        # run finetune_vgg16.sh to ft on custom3D
 
 
 

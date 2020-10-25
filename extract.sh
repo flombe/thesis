@@ -3,7 +3,7 @@
 
 export CUDA_VISIBLE_DEVICES=0;
 
-trained_on='vgg16/vggface'  # 'mnist' or 'vgg16/imagenet'
+trained_on='vgg16/cars'  # 'mnist' or 'vgg16/imagenet'
 extract_dataset='custom3D'  # 'mnist' 'fashionmnist'
 model_folder='1' #'all'
 
