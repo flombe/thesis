@@ -44,6 +44,7 @@ print(' >> Run {run_name} on dataset {dataset} on pre-trained {pre} models. <<'.
 
 # set dir
 root_dir = os.getcwd()
+print(root_dir)
 dataset_dir = join(root_dir, 'data', dataset_name)  # target data for ft
 source_dir = join(root_dir, 'models', 'vgg16', pretrain_dataset)
 output_dir = join(source_dir, 'ft_' + dataset_name)  ## + '_3conv'  # new folder for fine-tuned models
@@ -57,7 +58,7 @@ if dataset_name == 'custom3D':
 
 
 # load model
-model_path = join(source_dir, f'model_vgg16_pre_{pretrain_dataset}.pt')
+model_path = join(source_dir, f'model_vgg19_pre_{pretrain_dataset}.pt')
 model_pre = torch.load(model_path)
 
 # define finetune model - freeze pre-trained params and newly initialize last layers
@@ -66,22 +67,18 @@ model_ft = model_pre
 for param in model_ft.parameters():
     param.requires_grad = False
 
-if pretrain_dataset == 'imagenet':
+if pretrain_dataset in ['imagenet', 'cifar10']:
     ## additional layers newly init
     # model_ft.features._modules['24'] = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
     # model_ft.features._modules['26'] = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
     # Parameters of newly constructed modules have requires_grad=True by default
-    model_ft.features._modules['28'] = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    # model_ft.features._modules['28'] = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    model_ft.features._modules['34'] = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
-    num_ftrs = model_ft.classifier._modules['0'].in_features
-    model_ft.classifier._modules['0'] = nn.Linear(num_ftrs, 4096)
-
-    num_ftrs = model_ft.classifier._modules['3'].in_features
-    model_ft.classifier._modules['3'] = nn.Linear(num_ftrs, 4096)
-
-    num_ftrs = model_ft.classifier._modules['6'].in_features
-    model_ft.classifier._modules['6'] = nn.Linear(num_ftrs, n_out_classes)
+    model_ft.classifier._modules['0'] = nn.Linear(512*7*7, 4096)  # hard-plug nr of feat
+    model_ft.classifier._modules['3'] = nn.Linear(4096, 4096)
+    model_ft.classifier._modules['6'] = nn.Linear(4096, n_out_classes)
 else:
     # model_ft.features._modules['conv5_1'] = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
     # model_ft.features._modules['conv5_2'] = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))

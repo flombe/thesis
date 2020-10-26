@@ -327,7 +327,7 @@ def get_vgg19_cifar10():
     )
     print(model)
 
-    checkpoint = torch.load(join(source_dir, 'model_best.pth.tar'))
+    checkpoint = torch.load(join(source_dir, 'model_best_vgg19_cifar.pth.tar'))
     start_epoch = checkpoint['epoch']
     best_prec1 = checkpoint['best_prec1']
     print(start_epoch, best_prec1)
@@ -385,7 +385,7 @@ if __name__=='__main__':
     init_imagenet = False
     init_vggface = False
     init_cars = False
-    init_cifar10 = True
+    init_cifar10 = False
 
     ## places365
     if init_places365:
