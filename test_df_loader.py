@@ -13,14 +13,15 @@ else:
     print("Devise used = ", device)
 
 
-trained_dataset = 'imagenet'
+trained_dataset = 'vgg16/cifar10'
 target_dataset = 'custom3D'
 
 root_dir = os.getcwd()
 models_dir = join(root_dir, 'models', trained_dataset)
 
 # load df
-df_path = join(models_dir, f'df_pre_{trained_dataset}+metrics')
+# df_path = join(models_dir, f'df_pre_{trained_dataset}+metrics')
+df_path = join(models_dir, 'ft_custom3D/df_ft_cifar10_custom3D')
 df = pd.read_pickle(df_path)
 
 # df = df.reset_index(drop=True)

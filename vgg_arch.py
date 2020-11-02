@@ -127,6 +127,134 @@ class VGG(nn.Module):
 
         return [out0, out1, out2, out3, out4, out5, out6, out7, out8]
 
+    def extract_all_vgg19(self, x):
+        # Sequential(
+        # (0): Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))                                                           [345/980]
+        # (1): ReLU(inplace=True)
+        # (2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (3): ReLU(inplace=True)
+        # (4): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+        # (5): Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (6): ReLU(inplace=True)
+        # (7): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (8): ReLU(inplace=True)
+        # (9): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+        # (10): Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (11): ReLU(inplace=True)
+        # (12): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (13): ReLU(inplace=True)
+        # (14): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (15): ReLU(inplace=True)
+        # (16): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (17): ReLU(inplace=True)
+        # (18): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+        # (19): Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (20): ReLU(inplace=True)
+        # (21): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (22): ReLU(inplace=True)
+        # (23): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (24): ReLU(inplace=True)
+        # (25): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (26): ReLU(inplace=True)
+        # (27): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+        # (28): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (29): ReLU(inplace=True)
+        # (30): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (31): ReLU(inplace=True)
+        # (32): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (33): ReLU(inplace=True)
+        # (34): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (35): ReLU(inplace=True)
+        # (36): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+        # )
+
+        # from pooling layers 1,2,3,4,5
+        out0 = x
+        out1 = self.features[4](F.relu(self.features[2](F.relu(self.features[0](x)))))
+        out2 = self.features[9](F.relu(self.features[7](F.relu(self.features[5](out1)))))
+        out3 = self.features[18](F.relu(self.features[16](
+            F.relu(self.features[14](F.relu(self.features[12](F.relu(self.features[10](out2)))))))))
+        out4 = self.features[27](F.relu(self.features[25](
+            F.relu(self.features[23](F.relu(self.features[21](F.relu(self.features[19](out3)))))))))
+        out5 = self.features[36](F.relu(self.features[34](
+            F.relu(self.features[32](F.relu(self.features[30](F.relu(self.features[28](out4)))))))))
+
+        # from the classifier part
+        # --> mismatch of 7x7x512 output for custom3D and init for cifar10 with only 1x1x512 dim going into classifer
+        # --> can't extract activations on fc layers.
+        # out6 = F.relu(self.classifier[0](out5.view(out5.size(0), -1)))
+        # out7 = F.relu(self.classifier[3](out6))
+        # out8 = F.relu(self.classifier[6](out7))
+
+        return [out0, out1, out2, out3, out4, out5]
+
+    def extract_all_vgg16bn(self, x):
+        # Sequential(
+        # (0): Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        # (2): ReLU(inplace=True)
+        # (3): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (4): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        # (5): ReLU(inplace=True)
+        # (6): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+        # (7): Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (8): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        # (9): ReLU(inplace=True)
+        # (10): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (11): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        # (12): ReLU(inplace=True)
+        # (13): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+        # (14): Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (15): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        # (16): ReLU(inplace=True)
+        # (17): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (18): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        # (19): ReLU(inplace=True)
+        # (20): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (21): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        # (22): ReLU(inplace=True)
+        # (23): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+        # (24): Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (25): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        # (26): ReLU(inplace=True)
+        # (27): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (28): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        # (29): ReLU(inplace=True)
+        # (30): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (31): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        # (32): ReLU(inplace=True)
+        # (33): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+        # (34): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (35): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        # (36): ReLU(inplace=True)
+        # (37): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (38): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        # (39): ReLU(inplace=True)
+        # (40): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        # (41): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        # (42): ReLU(inplace=True)
+        # (43): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+        # )
+
+        # from pooling layers 1,2,3,4,5
+        out0 = x
+        out1 = self.features[6](F.relu(self.features[4](self.features[3](F.relu(self.features[1](self.features[0](x)))))))
+        out2 = self.features[13](F.relu(self.features[11](self.features[10](F.relu(self.features[8](self.features[7](out1)))))))
+        out3 = self.features[23](F.relu(self.features[21](self.features[20](
+            F.relu(self.features[18](self.features[17](F.relu(self.features[15](self.features[14](out2))))))))))
+        out4 = self.features[33](F.relu(self.features[31](self.features[30](
+            F.relu(self.features[28](self.features[27](F.relu(self.features[25](self.features[24](out3))))))))))
+        out5 = self.features[43](F.relu(self.features[41](self.features[40](
+            F.relu(self.features[38](self.features[37](F.relu(self.features[35](self.features[34](out4))))))))))
+
+        # from the classifier part
+        out6 = F.relu(self.classifier[0](out5.view(out5.size(0), -1)))
+        out7 = F.relu(self.classifier[3](out6))
+        out8 = F.relu(self.classifier[6](out7))
+
+        return [out0, out1, out2, out3, out4, out5, out6, out7, out8]
+
+
     def _initialize_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):

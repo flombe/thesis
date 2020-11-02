@@ -16,6 +16,7 @@ from tqdm import tqdm
 from natsort import natsorted
 from skimage.util import view_as_blocks
 import sklearn.manifold
+import pandas as pd
 
 
 def correlationd_matrix(activations):
@@ -26,6 +27,14 @@ def correlationd_matrix(activations):
             correlationd[i, j] = correlationd[j, i] = 1 - scipy.stats.pearsonr(activations[i],
                                                                                activations[j])[0]  #[0] for pearson coeff
     return correlationd
+
+# def correlationd_matrix(activations):
+#     print(type(activations))
+#     df = pd.DataFrame(activations).astype(float)
+#     print(df)
+#     correlationd = df.T.corr(method='spearman')
+#     print(correlationd)
+#     return 1 - correlationd.to_numpy()
 
 
 def calculate_activations_correlations(models, layer, sorted=False):
@@ -129,6 +138,9 @@ def multi_plot_rdm(corr_dict, labels):
 
     for ax, val in tqdm(zip(fig.axes, corr_dict.items())):
         sns.set(font_scale=0.8)
+
+        print(val[1])
+
         sns.heatmap(val[1], cmap='rainbow', ax=ax, cbar=True, xticklabels=labels, yticklabels=labels, vmax=1.5)
         ax.set_title(val[0], weight='semibold')
 
@@ -140,36 +152,58 @@ def multi_plot_rdm(corr_dict, labels):
 
 
 def multi_plot_histo(corr_dict, labels):
+    #plt.style.use('seaborn')
     # histogram of corr_value distribution
     n = math.sqrt(len(corr_dict))
-    fig2, axs2 = plt.subplots(math.ceil(n), math.floor(n), figsize=(16, 21), sharex='col', sharey='row', dpi=150)
+    fig2, axs2 = plt.subplots(math.ceil(n), math.floor(n), figsize=(8, 10), sharex='col', sharey='row', dpi=150)
     fig2.subplots_adjust(hspace=.5, wspace=.001)
 
+    if dataset_extracted == 'custom3D':
+        layer_names = ['in', 'pool1', 'pool2', 'pool3', 'pool4', 'pool5', 'fc1', 'fc2', 'out']
+        block_size = 30
+        nr_lables = 40
+    else:
+        layer_names = ['in', 'conv1', 'pool1', 'conv2', 'pool2', 'fc1', 'output']
+        block_size = 50
+        nr_lables = 10
+
     for ax2, val2 in tqdm(zip(fig2.axes, corr_dict.items())):
-        # val2[1] ndarray 500x500
-        block_view = view_as_blocks(val2[1], block_shape=(50, 50))
+        # val2[1] ndarray 500x500  or 1200x1200
+        block_view = view_as_blocks(val2[1], block_shape=(block_size, block_size))  # put in block shapes
+        # print(block_view.shape)  # (40, 40, 30, 30)
+
         val_diag = np.array([])
+        val_blockdiag = np.array([])
         val_nondiag = np.array([])
-        for i in range(10):
-            for j in range(10):
-                if i == j:
-                    val_diag = np.append(val_diag, block_view[i, j])
-                    # print(val_diag.shape)
+
+        for i in range(nr_lables):
+            for j in range(nr_lables):
+                if i == j:  # diagonal block
+                    B = block_view[i, j]
+                    # print('Block matrix: ', B.shape)
+                    val_diag = np.append(val_diag, B.diagonal())
+                    # print('Diagonal: ', B.diagonal().shape)
+                    B = B[~np.eye(B.shape[0], dtype=bool)].reshape(B.shape[0], -1)  # drop diagonal elements
+                    # print('Block-diagonal without diagonal: ', B.shape)
+                    val_blockdiag = np.append(val_blockdiag, B)
+                    # print(val_blockdiag.shape)
                 else:
                     val_nondiag = np.append(val_nondiag, block_view[i, j])
                     # print(val_nondiag.shape)
 
-        print('- end shape diag', val_diag.shape, '/ nondiag', val_nondiag.shape)
-        sns.distplot(val_diag, ax=ax2, label='Corr.Matrix block diagonal')  # , kde=False)
+        print(f'- end shape: diag {val_diag.shape} / block-diag {val_blockdiag.shape} / non-diag {val_nondiag.shape}')
+        sns.distplot(val_blockdiag, ax=ax2, label='Corr.Matrix block diagonal')  # , kde=False)
         sns.distplot(val_nondiag, ax=ax2, label='Corr.Matrix non-diagonal')  # , kde=False)
+        # bins = np.arange(min(val_diag), max(val_diag)+(max(val_diag)-min(val_diag))/4, (max(val_diag)-min(val_diag))/4)
+        sns.distplot(val_diag, bins=[-0.004, 0.004], ax=ax2, label='Corr.Matrix diagonal')  # , kde=False)
 
         # sns.distplot(val2[1], ax=ax2)
         ax2.set_title(val2[0], weight='semibold')
-        #ax2.set_ylim(0, 5)
+        ax2.set_ylim(0, 13)
 
         # add mean line to histogram
         kdeline_diag = ax2.lines[0]
-        mean = val_diag.mean()
+        mean = val_blockdiag.mean()
         height = np.interp(mean, kdeline_diag.get_xdata(), kdeline_diag.get_ydata())
         ax2.vlines(mean, 0, height, color='blue', ls=':')
 
@@ -182,7 +216,7 @@ def multi_plot_histo(corr_dict, labels):
         # total = int(np.sum(val2[1]))
         # ax2.text(0.85, 0.05, join('sum: ' + str(total) + ' (' + str(int(total/(500*500*2)*100)) + '% of total)'))
 
-    plt.legend()
+    plt.legend(frameon=True, fancybox=True, facecolor='white')
     plt.show()
 
 
@@ -243,9 +277,12 @@ def plotter(corr_dict, labels, dataset_trained, dataset_extracted,
 def load_calc_corr(dataset_trained, dataset_extracted, sorted, seed, layer=4):
     # load
     root_path = os.getcwd()
-    models_dir = join(root_path, 'models', dataset_trained, 'models_' + str(seed))
-    if not os.path.exists(models_dir):
-        models_dir = join(root_path, 'models', dataset_trained)  # case of no seeds
+    if dataset_extracted == 'custom3D':
+        models_dir = join(root_path, 'models', 'vgg16', dataset_trained)
+    else:
+        models_dir = join(root_path, 'models', dataset_trained, 'models_' + str(seed))
+        if not os.path.exists(models_dir):
+            models_dir = join(root_path, 'models', dataset_trained)  # case of no seeds
 
     load_extracted = join(models_dir, dataset_extracted + '_extracted.pt')
     models = torch.load(load_extracted)
@@ -330,17 +367,28 @@ def get_rdm_metric_vgg(source, target):
     layer_deltas = []
     total_deltas = []
 
-    for layer in range(9):
-        corr_dict,_ = load_calc_corr(source, target, sorted, seed=1, layer=layer)
+    if source == 'cifar10':  # since extract not possible for cifar10 data dim
+        nr_layers = 6
+    else: nr_layers = 9
+
+    for layer in range(nr_layers):
+
+        # corr_dict,_ = load_calc_corr(source, target, sorted, seed=1, layer=layer)
+
+        models_dir = join(os.getcwd(), 'models', 'vgg16', source)
+        path = join(models_dir, f'{target}_sorted_corr_dict_layer{layer}.pik')
+        with open(str(path), 'rb') as f:
+            corr_dict = dill.load(f)
+
         delta = []
 
         for model in corr_dict.items():  # corr_dict is sorted
-            ## model[1] ndarray 500x500
+            ## model[1] ndarray 1200x1200
             block_view = view_as_blocks(model[1], block_shape=(30, 30))  # 30 samples per class
             val_diag = np.array([])
             val_nondiag = np.array([])
-            for i in range(10):
-                for j in range(10):
+            for i in range(40):  # 40 labels
+                for j in range(40):
                     if i == j:
                         val_diag = np.append(val_diag, block_view[i, j])
                     else:
@@ -409,24 +457,36 @@ def all_layer_plot(dataset_trained, dataset_extracted, sorted, seed=1):
 
 
 def all_delta_plot(dataset_extracted, sorted, seed=1):
-    checkpts = ['0', '0_1', '0_3', '0_10', '0_30', '0_100', '0_300', '1', '3', '10', '30', '100']
-    datasets = ['mnist_noise', 'mnist_noise_struct', 'mnist_split1', 'mnist', 'fashionmnist']
+
 
     plt.style.use('seaborn')
     plt.figure(figsize=(10, 10))
     layer = 4
+
+    if dataset_extracted == 'custom3D':
+        layer_names = ['in', 'pool1', 'pool2', 'pool3', 'pool4', 'pool5', 'fc1', 'fc2', 'out']
+        block_size = 30
+        nr_lables = 40
+        checkpts = ['0', '0_1', '0_3', '0_10', '0_30', '1', '3', '10', '30', '100']
+        datasets = ['imagenet', 'places365', 'cars', 'vggface', 'segnet', 'cifar10', 'random_init', 'custom3D']
+    else:
+        layer_names = ['in', 'conv1', 'pool1', 'conv2', 'pool2', 'fc1', 'output']
+        block_size = 50
+        nr_lables = 10
+        checkpts = ['0', '0_1', '0_3', '0_10', '0_30', '0_100', '0_300', '1', '3', '10', '30', '100']
+        datasets = ['mnist_noise', 'mnist_noise_struct', 'mnist_split1', 'mnist', 'fashionmnist']
+
 
     for pre_set in datasets:
         corr_dict,_ = load_calc_corr(pre_set, dataset_extracted, sorted, seed=seed, layer=layer)
         diag_mean = []
         nondiag_mean = []
         for model in corr_dict.items():
-            ## model[1] ndarray 500x500
-            block_view = view_as_blocks(model[1], block_shape=(50, 50))
+            block_view = view_as_blocks(model[1], block_shape=(block_size, block_size))
             val_diag = np.array([])
             val_nondiag = np.array([])
-            for i in range(10):
-                for j in range(10):
+            for i in range(nr_lables):
+                for j in range(nr_lables):
                     if i == j:
                         val_diag = np.append(val_diag, block_view[i, j])
                     else:
@@ -462,11 +522,13 @@ if __name__ == '__main__':
         device = torch.device("cpu")
         print("Devise used = ", device)
 
+    #device = torch.device("cpu")
+
     # specify layer to analyze on
-    layer = 5  # 4
+    layer = 5  # 4  # 5 for vgg
 
     # set source(trained) and target(extracted) datasets
-    dataset_trained = 'vgg16/cars'
+    dataset_trained = 'cifar10'  # vgg16/cifar10
     # corr_dict_source = main(dataset_trained, dataset_trained, sorted=True, seed=1, layer=layer)  # only plot for seed 1
 
     dataset_extracted = 'custom3D'

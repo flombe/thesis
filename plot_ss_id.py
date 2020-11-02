@@ -108,7 +108,7 @@ if __name__ == '__main__':
     ###
 
     root_dir = os.getcwd()
-    models_dir = join(root_dir, 'models', dataset_trained)
+    models_dir = join(root_dir, 'models/vgg16', dataset_trained)
 
     if model_folder == 'all':
         # load df

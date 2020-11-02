@@ -353,13 +353,39 @@ def get_vgg19_cifar10():
             print('-------')
             newer_state_dict[key2] = new_state_dict[key1]
 
-
     model.load_state_dict(newer_state_dict)
     print("=> loaded checkpoint (epoch {})".format(checkpoint['epoch']))
 
     # test model on cifar10 sample
     model = model.to(device)
     cifar10_test(model)
+
+    return model
+
+def get_vgg16bn_segnet():
+    # from
+
+    model = vgg_arch.vgg16_bn(pretrained=False, num_classes=10)
+    print(model)
+
+    checkpoint = torch.load('/mnt/antares_raid/home/bemmerl/segnet_models/mtan_segnet_without_attention_equal_adam_single_task_0_run_1/model_checkpoints/checkpoint.chk')
+
+    print('--- Layers with key name difference ---')
+    for key1, key2 in zip(checkpoint['model_state_dict'].keys(), model.state_dict().keys()):
+        if key1 != key2:
+            print(key1, checkpoint['model_state_dict'][key1].shape)
+            print(key2, model.state_dict()[key2].shape)
+            print('-------')
+
+    new_state_dict = dict()
+    for key, key2 in zip(checkpoint['model_state_dict'].keys(), model.state_dict().keys()):
+        if str(key).startswith('encoder.'):
+            new_state_dict[key2] = checkpoint['model_state_dict'][key]  # compared before, change layer names
+        else:
+            new_state_dict[key2] = model.state_dict()[key2]  # since no classifer in SegNet, append untrained layers
+
+    model.load_state_dict(new_state_dict)
+    print("=> loaded checkpoint (epoch {})".format(checkpoint['epoch']))
 
     return model
 
@@ -386,6 +412,7 @@ if __name__=='__main__':
     init_vggface = False
     init_cars = False
     init_cifar10 = False
+    init_segnet = False
 
     ## places365
     if init_places365:
@@ -463,6 +490,25 @@ if __name__=='__main__':
         df = create_df_pre(net='vgg19', pre_dataset='cifar10', ep='233', top1=0.9243, top5='')
 
         # run finetune_vgg16.sh to ft on custom3D
+
+    ## SegNet
+    if init_segnet:
+        # http://mi.eng.cam.ac.uk/projects/segnet/
+        # Bachelor Thesis at NI
+
+        pretrain_dataset = 'vgg16/segnet'
+        source_dir = join(os.getcwd(), 'models', pretrain_dataset)
+
+        model = get_vgg16bn_segnet()
+        torch.save(model, join(source_dir, 'model_vgg16bn_pre_segnet.pt'))
+
+        # model test not useful, since classifier not trained (since not loaded from pre)
+
+        # create and save df with online available pre-train data
+        df = create_df_pre(net='vgg16bn', pre_dataset='camvid', ep='99', top1=0.9857, top5='')
+
+
+
 
 
 
