@@ -6,20 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import pandas as pd
 from natsort import natsorted
-
-
-###########
-pre_dataset = 'segnet'  # 'imagenet'
-ft_dataset = 'custom3D'
-
-plot_acc = False
-
-# general plots over all datasets
-plot_acc_all = False
-plot_acc_all_delta = False
-
-plot_ss_id_all = True
-###########
+from rsa import get_rdm_metric_vgg
 
 
 root_dir = os.getcwd()
@@ -31,7 +18,7 @@ xticks = [0.0, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 100]
 total = np.array(xticks)
 
 # Plot Acc on VGG16 custom3D for different ft or pre cases
-if plot_acc:
+def plot_acc():
     plt.rcParams['axes.prop_cycle'] = plt.cycler(color=plt.cm.Paired.colors)  # set color scheme
     pre_datasets = ['random_init', pre_dataset, 'custom3D']
 
@@ -80,7 +67,7 @@ if plot_acc:
     plt.show()
 
 # Plot ft Acc on VGG16 custom3D for different pre_datasets
-if plot_acc_all:
+def plot_acc_all():
     pre_datasets = ['imagenet', 'places365', 'cars', 'vggface', 'segnet', 'cifar10', 'random_init', 'custom3D']
 
     fig1, ax1 = plt.subplots(figsize=(6, 7), dpi=150)
@@ -117,7 +104,7 @@ if plot_acc_all:
     plt.show()
 
 # Plot Acc Delta: post-ft vs. base-case  +std
-if plot_acc_all_delta:
+def plot_acc_all_delta():
     pre_datasets = ['imagenet', 'places365', 'cars', 'vggface', 'segnet', 'cifar10', 'random_init']
     baseline = 'custom3D'
 
@@ -161,8 +148,8 @@ if plot_acc_all_delta:
     plt.tight_layout()
     plt.show()
 
-
-if plot_ss_id_all:
+# Plot ID and SS from df for all pre-datasets
+def plot_ss_id_all():
     pre_datasets = ['imagenet', 'places365', 'cars', 'vggface', 'segnet', 'cifar10']
 
     xticks = ['in', 'pool1', 'pool2', 'pool3', 'pool4', 'pool5', 'fc1', 'fc2', 'out']
@@ -200,3 +187,117 @@ if plot_ss_id_all:
     plt.legend(loc="lower left", frameon=True, fancybox=True, facecolor='white', title='diff. pre datasets')
     plt.show()
 
+# Plot RSA metric = delta diagonal corr. mean, from df for all pre-datasets
+def plot_rsa_delta_all():
+    pre_datasets = ['imagenet', 'places365', 'cars', 'vggface', 'segnet', 'cifar10']
+
+    xticks = ['in', 'pool1', 'pool2', 'pool3', 'pool4', 'pool5', 'fc1', 'fc2', 'out']
+    plt.style.use('seaborn')
+    #plt.rcParams['axes.prop_cycle'] = plt.cycler(color=plt.cm.tab20c.colors)  # set color scheme
+
+    fig, ax = plt.subplots(figsize=(6, 7), dpi=150)
+    ax.set_title(f'RSA (abs. corr. delta) over VGG model layers \n [extract: custom3D]', weight='semibold')
+
+    for dataset in pre_datasets:
+        df_path = join(models_dir, dataset, 'df_pre_' + dataset + '+metrics')
+        df = pd.read_pickle(df_path)
+
+        # load from df
+        rsa = df['RSA_custom3D'][0]
+
+        # since on cifar10 no extract possible on fc layers and for segnet no fc pre layers
+        if dataset == 'segnet': rsa = rsa[:6]
+        if dataset in ['segnet', 'cifar10']: x_range = range(6)
+        else: x_range = range(len(xticks))
+
+        print(dataset, x_range, rsa)
+        ax.plot(x_range, abs(np.array(rsa)), '.-', label=df['model_name'][0])
+
+    plt.ylabel("Corr. mean delta", weight='semibold')
+    plt.xlabel("Layers", weight='semibold')
+    plt.xticks(range(len(xticks)), labels=xticks)
+
+    plt.legend(loc="upper left", frameon=True, fancybox=True, facecolor='white', title='diff. pre datasets')
+    plt.show()
+
+# Plot UPDATED RSA metric = delta diagonal corr. mean for all pre-datasets
+def plot_rsa_delta_all_UPDATE():
+    pre_datasets = ['places365', 'cars', 'vggface', 'segnet', 'cifar10']
+
+    xticks = ['in', 'pool1', 'pool2', 'pool3', 'pool4', 'pool5', 'fc1', 'fc2', 'out']
+    plt.style.use('seaborn')
+    #plt.rcParams['axes.prop_cycle'] = plt.cycler(color=plt.cm.tab20c.colors)  # set color scheme
+
+    fig, ax = plt.subplots(figsize=(6, 7), dpi=150)
+    ax.set_title(f'RSA (abs. corr. delta) over VGG model layers \n [extract: custom3D]', weight='semibold')
+
+    for dataset in pre_datasets:
+        df = pd.read_pickle(join(models_dir, dataset, 'df_pre_' + dataset + '+metrics'))
+
+        rsa = get_rdm_metric_vgg(dataset, 'custom3D')
+
+        # since on cifar10 no extract possible on fc layers and for segnet no fc pre layers
+        if dataset in ['segnet', 'cifar10']: x_range = range(6)
+        else: x_range = range(len(xticks))
+
+        print(dataset, x_range, rsa)
+        ax.plot(x_range, abs(np.array(rsa)), '.-', label=df['model_name'][0])
+
+        # print('RSA diff: ', abs(np.array(df['RSA_custom3D'][0])) - abs(np.array(rsa)))
+
+    plt.ylabel("Corr. mean delta", weight='semibold')
+    plt.xlabel("Layers", weight='semibold')
+    plt.xticks(range(len(xticks)), labels=xticks)
+
+    plt.legend(loc="upper left", frameon=True, fancybox=True, facecolor='white', title='diff. pre datasets')
+    plt.show()
+
+
+def plot_fc2_acc_id():
+    pre_datasets = ['imagenet', 'places365', 'cars']  # 'vggface' only top1 # 'segnet', 'cifar10' no fc2
+
+    plt.style.use('seaborn')
+    fig, ax = plt.subplots(figsize=(6, 6), dpi=150)
+    ax.set_title(f'Last hidden layer ID pred. Acc - VGG \n [extract: custom3D]', weight='semibold')
+
+    for dataset in pre_datasets:
+        df_path = join(models_dir, dataset, 'df_pre_' + dataset + '+metrics')
+        df = pd.read_pickle(df_path)
+
+        # load from df
+        id = df['ID_custom3D'][0][7]  # for fc2
+        # if dataset == 'vggface':
+        #     acc = df['pre_top1'][0]
+        acc = df['pre_top5'][0]
+        if acc > 1: acc = acc/100
+
+        print(dataset, id, acc)
+        ax.plot((1-acc), id, 'o', label=df['model_name'][0])
+
+    ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls='--')
+
+    plt.ylabel("ID of fc2", weight='semibold')
+    plt.xlabel("top-1 Error", weight='semibold')
+
+    plt.ylim((4, 10))
+    plt.xlim((0, 0.2))
+    ax.xaxis.set_major_formatter(matplotlib.ticker.FormatStrFormatter('%.2f'))
+    plt.legend(loc="upper left", frameon=True, fancybox=True, facecolor='white', title='diff. pre datasets')
+    plt.show()
+
+
+if __name__ == '__main__':
+
+    pre_dataset = 'segnet'
+    ft_dataset = 'custom3D'
+
+    # plot_acc()
+
+    ## general plots over all datasets
+    plot_acc_all()
+    # plot_acc_all_delta()
+    # plot_ss_id_all()
+    # plot_rsa_delta_all()
+    # plot_rsa_delta_all_UPDATE()
+
+    # plot_fc2_acc_id()

@@ -18,7 +18,8 @@ import caffemodel2pytorch
 
 
 # safety fix seed
-train_utils.set_seed(1)
+seed = 1
+train_utils.set_seed(seed)
 
 # set device to gpu using cuda
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -310,6 +311,13 @@ def cifar10_test(model):
     _, predicted = torch.max(out.data, 1)
     print('Model prediction: ', predicted)
 
+    ## on complete cifar10 test-set
+    import train_utils
+    import torch.nn as nn
+    criterion = nn.CrossEntropyLoss()
+    loss, acc = train_utils.evaluate(model, test_loader, device, criterion)
+    print('cifar10 pretrained model test-acc total: ', acc)
+
 def get_vgg19_cifar10():
     # from  https://github.com/chengyangfu/pytorch-vgg-cifar10
 
@@ -413,6 +421,7 @@ if __name__=='__main__':
     init_cars = False
     init_cifar10 = False
     init_segnet = False
+    init_random = False
 
     ## places365
     if init_places365:
@@ -507,8 +516,14 @@ if __name__=='__main__':
         # create and save df with online available pre-train data
         df = create_df_pre(net='vgg16bn', pre_dataset='camvid', ep='99', top1=0.9857, top5='')
 
+    ## random initialized
+    if init_random:
+        pretrain_dataset = 'vgg16/random_init'
+        source_dir = join(os.getcwd(), 'models', pretrain_dataset, 'models_' + str(seed))
 
-
+        model = vgg_arch.vgg16(pretrained=False, num_classes=40)
+        torch.save(model, join(source_dir, 'model_vgg16_random_init.pt'))
+        df = create_df_pre(net='vgg16', pre_dataset='random_init', ep=0, top1='', top5='')
 
 
 

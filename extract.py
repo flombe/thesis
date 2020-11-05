@@ -25,7 +25,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--trained_on', default='mnist',
                     choices=['mnist', 'mnist2class', 'fashionmnist', 'mnist_noise_struct', 'mnist_noise', 'cifar10',
                              'mnist_split1', 'mnist_split2', 'vgg16/imagenet', 'vgg16/custom3D', 'vgg16/places365',
-                             'vgg16/vggface', 'vgg16/cars', 'vgg16/cifar10', 'vgg16/segnet'])
+                             'vgg16/vggface', 'vgg16/cars', 'vgg16/cifar10', 'vgg16/segnet', 'vgg16/random_init'])
 parser.add_argument('--dataset', default='mnist',
                     choices=['mnist', 'mnist2class', 'fashionmnist', 'mnist_noise_struct', 'mnist_noise', 'cifar10',
                              'mnist_split1', 'mnist_split2', 'imagenet', 'custom3D'])
@@ -90,7 +90,7 @@ def extract(models_dir, test_loader, samples=samples, batch_size=batch_size, bal
                         if class_counts[c] <= k:
                             if dataset_name == 'custom3D':
                                 # vgg_arch.py extract_all already includes the input
-                                all_layers = list(model.extract_all_vgg16bn(batch[0].to(device)))
+                                all_layers = list(model.extract_all(batch[0].to(device)))   #####
                             else:
                                 all_layers = [batch[0]] + list(model.extract_all(batch[0].to(device), verbose=False))
 

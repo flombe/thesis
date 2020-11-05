@@ -46,7 +46,7 @@ print(' >> Run {run_name} on dataset {dataset} on pre-trained {pre} models. <<'.
 root_dir = os.getcwd()
 print(root_dir)
 dataset_dir = join(root_dir, 'data', dataset_name)  # target data for ft
-source_dir = join(root_dir, 'models', 'vgg16', pretrain_dataset)
+source_dir = join(root_dir, 'models', 'vgg16', pretrain_dataset, 'models_3')
 output_dir = join(source_dir, 'ft_' + dataset_name)  ## + '_3conv'  # new folder for fine-tuned models
 
 if dataset_name == 'custom3D':
@@ -67,7 +67,7 @@ model_ft = model_pre
 for param in model_ft.parameters():
     param.requires_grad = False
 
-if pretrain_dataset in ['imagenet', 'cifar10', 'segnet']:
+if pretrain_dataset in ['imagenet', 'cifar10', 'segnet', 'random_init']:
     ## additional layers newly init
     # model_ft.features._modules['24'] = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
     # model_ft.features._modules['26'] = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
@@ -101,7 +101,7 @@ j = 0
 for param in model_ft.parameters():
     if param.requires_grad == True:
         j +=1
-print(f'Layers with param=True: {j} / {len(model_ft.parameters())}')
+print(f'Layers with param=True: {j} / {len(list(model_ft.parameters()))}')
 
 model_ft = model_ft.to(device)  # on cuda
 
@@ -120,7 +120,7 @@ optimizer_ft = torch.optim.SGD([
 exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=20, gamma=0.1)
 
 
-seed = '1'
+seed = '3'
 
 train_acc, train_loss, test_acc, test_loss, df = train_utils.train(model=model_ft, train_loader=train_loader,
                                                                    test_loader=test_loader, optimizer=optimizer_ft,

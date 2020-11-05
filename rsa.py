@@ -80,6 +80,7 @@ def calc_rdm(dist_fun, corr_distances_dict):
     return rdm
 
 
+#######
 def calc_compare_rdm(dist_fun, corr_dist_dict_source, corr_dist_dict_target):
     t_rdm = time.time()
     n = len(corr_dist_dict_source)
@@ -92,7 +93,6 @@ def calc_compare_rdm(dist_fun, corr_dist_dict_source, corr_dist_dict_target):
     print(f'>> Calculate {n} RDM diagonal elements' + '(in {:.2f} s)'.format(time.time()-t_rdm))
 
     return compare_rdm_diagonal
-
 
 def plot_rdm_compare(compare_rdm_euclid, compare_rdm_spearman, model_names, acc):
     fig, ax1 = plt.subplots(figsize=(8, 8), dpi=150)
@@ -122,7 +122,7 @@ def plot_rdm_compare(compare_rdm_euclid, compare_rdm_spearman, model_names, acc)
 
     # fig.legend()
     fig.tight_layout()
-
+#######
 
 def plot_rdm(rdm, model_names):
     fig = plt.figure(figsize=(16, 14), dpi=150)
@@ -284,7 +284,11 @@ def load_calc_corr(dataset_trained, dataset_extracted, sorted, seed, layer=4):
         if not os.path.exists(models_dir):
             models_dir = join(root_path, 'models', dataset_trained)  # case of no seeds
 
-    load_extracted = join(models_dir, dataset_extracted + '_extracted.pt')
+    ######
+    models_dir = root_path
+
+
+    load_extracted = join(models_dir, 'outsorced_calculation2', dataset_extracted + '_extracted.pt')
     models = torch.load(load_extracted)
     print(f'loaded {len(models)} models from - {load_extracted}')
 
@@ -367,18 +371,22 @@ def get_rdm_metric_vgg(source, target):
     layer_deltas = []
     total_deltas = []
 
-    if source == 'cifar10':  # since extract not possible for cifar10 data dim
+    if source in ['segnet', 'cifar10']:  # since extract not possible for cifar10 data dim, segnet no fc layers
         nr_layers = 6
     else: nr_layers = 9
 
     for layer in range(nr_layers):
 
         # corr_dict,_ = load_calc_corr(source, target, sorted, seed=1, layer=layer)
-
+        #####
         models_dir = join(os.getcwd(), 'models', 'vgg16', source)
-        path = join(models_dir, f'{target}_sorted_corr_dict_layer{layer}.pik')
+        if source == 'imagenet':
+            path = join(models_dir, f'{target}_corr_dict_layer{layer}.pik')
+        else:
+            path = join(models_dir, f'{target}_sorted_corr_dict_layer{layer}.pik')
         with open(str(path), 'rb') as f:
             corr_dict = dill.load(f)
+        #####
 
         delta = []
 
@@ -386,24 +394,29 @@ def get_rdm_metric_vgg(source, target):
             ## model[1] ndarray 1200x1200
             block_view = view_as_blocks(model[1], block_shape=(30, 30))  # 30 samples per class
             val_diag = np.array([])
+            val_blockdiag = np.array([])
             val_nondiag = np.array([])
             for i in range(40):  # 40 labels
                 for j in range(40):
                     if i == j:
-                        val_diag = np.append(val_diag, block_view[i, j])
+                        B = block_view[i, j]
+                        val_diag = np.append(val_diag, B.diagonal())
+                        B = B[~np.eye(B.shape[0], dtype=bool)].reshape(B.shape[0], -1)  # drop diagonal elements
+                        val_blockdiag = np.append(val_blockdiag, B)
                     else:
                         val_nondiag = np.append(val_nondiag, block_view[i, j])
-            delta.append(val_diag.mean() - val_nondiag.mean())
+            delta.append(val_blockdiag.mean() - val_nondiag.mean())
 
         layer_deltas.append(delta)  # list of lists [[1], ..9]
 
-    print(layer_deltas)
+    # print(layer_deltas)
     for i in range(0, 1):
-        print([item[i] for item in layer_deltas])
+        # print([item[i] for item in layer_deltas])
         total_deltas.append([item[i] for item in layer_deltas])  # resort to [[9], ..1]
-    print(len(total_deltas))  # 1
+    # print(len(total_deltas))  # 1
+    #print(total_deltas[0])
 
-    return total_deltas
+    return total_deltas[0]
 
 
 def all_layer_plot(dataset_trained, dataset_extracted, sorted, seed=1):
@@ -528,11 +541,11 @@ if __name__ == '__main__':
     layer = 5  # 4  # 5 for vgg
 
     # set source(trained) and target(extracted) datasets
-    dataset_trained = 'cifar10'  # vgg16/cifar10
+    dataset_trained = 'random_init'  # vgg16/cifar10
     # corr_dict_source = main(dataset_trained, dataset_trained, sorted=True, seed=1, layer=layer)  # only plot for seed 1
 
     dataset_extracted = 'custom3D'
-    corr_dict_target = main(dataset_trained, dataset_extracted, sorted=True, seed=1, layer=layer)
+    # corr_dict_target = main(dataset_trained, dataset_extracted, sorted=True, seed=1, layer=layer)
 
     # plot to compare corr means of all layers for all models
     all_layer_plot(dataset_trained, dataset_extracted, sorted=True, seed=1)
