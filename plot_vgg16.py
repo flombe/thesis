@@ -77,21 +77,36 @@ def plot_acc_all():
 
     for dataset in pre_datasets:
 
-        if dataset == ft_dataset:
-            load_dir = join(models_dir, dataset, 'models_1')
-            label = f'pre_{dataset}'
-            # load Acc from json file
-            with open(join(load_dir, label + '_train_stats.json'), 'r') as myfile:
-                data = myfile.read()
-            test_acc = json.loads(data)['pre_test_acc']
+        if dataset in ['random_init', ft_dataset]:
+            load_dir = join(models_dir, dataset, 'ft_' + ft_dataset)
+            label = f"ft_{dataset}_{ft_dataset}"
+            case = 'ft'
+            if dataset == ft_dataset:
+                load_dir = join(models_dir, dataset)
+                label = f'pre_{dataset}'
+                case = 'pre'
+
+            # load Acc from df
+            df = pd.read_pickle(join(load_dir, "df_" + label))
+            # get mean and std 'pre_test_acc' over model_names for 10 (3) seeds
+            base_means = df.groupby('model_name')[f'{case}_test_acc'].apply(lambda g: np.mean(g.values.tolist(), axis=0))
+            base_stds = df.groupby('model_name')[f'{case}_test_acc'].apply(lambda g: np.std(g.values.tolist(), axis=0))
+            base_means = base_means.reindex(index=natsorted(base_means.index))
+            base_stds = base_stds.reindex(index=natsorted(base_stds.index))
+
+            # print(base_means, base_stds)
+            base = ax1.plot(total, base_means, label=str(label))
+            ax1.fill_between(total, base_means + 2 * np.array(base_stds), base_means - 2 * np.array(base_stds),
+                             color=base[0].get_color(), alpha=0.2)
         else:
             load_dir = join(models_dir, dataset, 'ft_' + ft_dataset)
             label = f"ft_{dataset}_{ft_dataset}"
             # load Acc from df
             df = pd.read_pickle(join(load_dir, "df_" + label))
             test_acc = df['ft_test_acc']
-        print(test_acc)
-        ax1.plot(total, test_acc, label=str(label))
+
+            print(label, test_acc)
+            ax1.plot(total, test_acc, label=str(label))
 
     plt.ylim((0, 100))
     plt.xscale("log")
@@ -113,17 +128,20 @@ def plot_acc_all_delta():
     plt.xlabel("Fine-Tuning/training Epochs (batch1 to epoch100)")
     plt.ylabel("Test Accuracy Delta")
 
-    #####  - run multiple pre on custom3D --> take mean of Accs. and also plot std
-
     # baseline = pre_custom3D - get mean
-    load_dir = join(models_dir, baseline, 'models_1')
+    load_dir = join(models_dir, baseline)
     label = f'pre_{baseline}'
-    # load Acc from json file
-    with open(join(load_dir, label + '_train_stats.json'), 'r') as myfile:
-        data = myfile.read()
-    base_acc = json.loads(data)['pre_test_acc']
+    # load Acc from df
+    df = pd.read_pickle(join(load_dir, "df_" + label))
+    # get mean and std 'pre_test_acc' over model_names for 10 seeds
+    base_means = df.groupby('model_name')['pre_test_acc'].apply(lambda g: np.mean(g.values.tolist(), axis=0))
+    base_stds = df.groupby('model_name')['pre_test_acc'].apply(lambda g: np.std(g.values.tolist(), axis=0))
+    base_means = base_means.reindex(index=natsorted(base_means.index))
+    base_stds = base_stds.reindex(index=natsorted(base_stds.index))
 
-    #####
+    base = ax.axhline(linewidth=1.5, color='grey')
+    ax.fill_between(total, 2 * np.array(base_stds), - 2 * np.array(base_stds), color=base.get_color(), alpha=0.2,
+                    label='std_base')
 
     for dataset in pre_datasets:
         load_dir = join(models_dir, dataset, 'ft_' + ft_dataset)
@@ -131,15 +149,14 @@ def plot_acc_all_delta():
         # load Acc from df
         df = pd.read_pickle(join(load_dir, "df_" + label))
         test_acc = df['ft_test_acc']
-        print(test_acc)
-        ax.plot(total, test_acc - base_acc, label=str(label))
+        if dataset == 'random_init':
+            rand_means = df.groupby('model_name')['ft_test_acc'].apply(lambda g: np.mean(g.values.tolist(), axis=0))
+            test_acc = rand_means.reindex(index=natsorted(rand_means.index))
+        print(test_acc - base_means.values)   # both pd.series elements
+        diff = test_acc - base_means.values
+        ax.plot(total, diff, label=str(label))
 
-    base = ax.axhline(linewidth=0.5, color='k')
-
-    # std
-    # ax.fill_between(total[1:], 2 * target_stds, -2 * target_stds, color=base.get_color(), alpha=0.05, label='std_base')
-
-    plt.ylim((-25, 90))
+    plt.ylim((-20, 80))
     plt.xscale("log")
     plt.xlim((0, 100))
     ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda y, _: '{:.16g}'.format(y)))
@@ -149,43 +166,44 @@ def plot_acc_all_delta():
     plt.show()
 
 # Plot ID and SS from df for all pre-datasets
-def plot_ss_id_all():
-    pre_datasets = ['imagenet', 'places365', 'cars', 'vggface', 'segnet', 'cifar10']
+def plot_metric_all(metrics=['SS', 'ID', 'RSA']):
+    pre_datasets = ['imagenet', 'places365', 'cars', 'vggface', 'segnet', 'cifar10', 'random_init']
 
     xticks = ['in', 'pool1', 'pool2', 'pool3', 'pool4', 'pool5', 'fc1', 'fc2', 'out']
-    plt.style.use('seaborn')
-    #plt.rcParams['axes.prop_cycle'] = plt.cycler(color=plt.cm.tab20c.colors)  # set color scheme
 
-    fig, axs = plt.subplots(2, sharex=True, figsize=(7, 9), dpi=150)
-    axs[0].set_title(f'ID and SumSqr over VGG model layers \n [extract: custom3D]', weight='semibold')
+    for metric in metrics:
+        fig, ax = plt.subplots(figsize=(6, 7), dpi=150)
+        ax.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.08)
+        ax.set_title(f'{metric} over VGG model layers [extract: custom3D]', weight='semibold')
 
-    for dataset in pre_datasets:
-        df_path = join(models_dir, dataset, 'df_pre_' + dataset + '+metrics')
-        df = pd.read_pickle(df_path)
+        for dataset in pre_datasets:
+            df_path = join(models_dir, dataset, 'df_pre_' + dataset + '+metrics')
+            df = pd.read_pickle(df_path)
+            if metric == 'RSA': df = df.abs()
 
-        # load from df
-        id = df['ID_custom3D'][0]
-        ss = df['SS_custom3D'][0]
+            # load from df
+            val = df[f'{metric}_custom3D'][0]
 
-        # since on cifar10 no extract possible on fc layers and for segnet no fc pre layers
-        if dataset == 'segnet':
-            id = id[:6]
-            ss = ss[:6]
-        if dataset in ['segnet', 'cifar10']: x_range = range(6)
-        else: x_range = range(len(xticks))
+            # since on cifar10 no extract possible on fc layers and for segnet no fc pre layers
+            if dataset == 'random_init':
+                val = df.groupby('model_name')[f'{metric}_custom3D'].apply(lambda g: np.mean(g.values.tolist(), axis=0))[0]
+                val_std = df.groupby('model_name')[f'{metric}_custom3D'].apply(lambda g: np.std(g.values.tolist(), axis=0))[0]
+                ax.fill_between(range(len(xticks)), np.array(val + 2 * val_std), np.array(val - 2 * val_std), alpha=0.2)
+            if dataset == 'segnet': val = val[:6]
+            if dataset in ['segnet', 'cifar10']: x_range = range(6)
+            else: x_range = range(len(xticks))
 
-        print(dataset, x_range, id)
-        axs[0].plot(x_range, id, '.-')
-        axs[1].plot(x_range, ss, '.-', label=df['model_name'][0])
+            print(dataset, x_range, val)
+            ax.plot(x_range, val, '.-', label=df['model_name'][0])
 
-    axs[0].set_ylabel("Intrinsic Dimension", weight='semibold')
-    plt.ylabel("SSW/TSS", weight='semibold')
+        ax.set_ylabel("Intrinsic Dimension", weight='semibold')
+        plt.ylabel("SSW/TSS", weight='semibold')
 
-    plt.xlabel("Layers", weight='semibold')
-    plt.xticks(range(len(xticks)), labels=xticks)
+        plt.xlabel("Layers", weight='semibold')
+        plt.xticks(range(len(xticks)), labels=xticks)
 
-    plt.legend(loc="lower left", frameon=True, fancybox=True, facecolor='white', title='diff. pre datasets')
-    plt.show()
+        plt.legend(frameon=True, fancybox=True, facecolor='white', title='diff. pre datasets') # loc="lower left",
+        plt.show()
 
 # Plot RSA metric = delta diagonal corr. mean, from df for all pre-datasets
 def plot_rsa_delta_all():
@@ -222,7 +240,7 @@ def plot_rsa_delta_all():
 
 # Plot UPDATED RSA metric = delta diagonal corr. mean for all pre-datasets
 def plot_rsa_delta_all_UPDATE():
-    pre_datasets = ['places365', 'cars', 'vggface', 'segnet', 'cifar10']
+    pre_datasets = ['imagenet', 'places365', 'cars', 'vggface', 'segnet', 'cifar10']
 
     xticks = ['in', 'pool1', 'pool2', 'pool3', 'pool4', 'pool5', 'fc1', 'fc2', 'out']
     plt.style.use('seaborn')
@@ -244,6 +262,19 @@ def plot_rsa_delta_all_UPDATE():
         ax.plot(x_range, abs(np.array(rsa)), '.-', label=df['model_name'][0])
 
         # print('RSA diff: ', abs(np.array(df['RSA_custom3D'][0])) - abs(np.array(rsa)))
+
+    df = pd.read_pickle(join(models_dir, 'random_init', 'df_pre_random_init' + '+metrics'))
+    base_means = df.groupby('model_name')['RSA_custom3D'].apply(lambda g: np.mean(g.values.tolist(), axis=0))
+    base_stds = df.groupby('model_name')['RSA_custom3D'].apply(lambda g: np.std(g.values.tolist(), axis=0))
+    base_means = abs(np.array(base_means[0]))
+    base_stds = abs(np.array(base_stds[0]))
+    # base_means = base_means.reindex(index=natsorted(base_means.index))
+    # base_stds = base_stds.reindex(index=natsorted(base_stds.index))
+
+    # print(base_means, base_stds)
+    base = ax.plot(range(len(xticks)), base_means, label='random_init mean')
+    ax.fill_between(range(len(xticks)), base_means + 2 * np.array(base_stds), base_means - 2 * np.array(base_stds),
+                     color=base[0].get_color(), alpha=0.2)
 
     plt.ylabel("Corr. mean delta", weight='semibold')
     plt.xlabel("Layers", weight='semibold')
@@ -294,9 +325,9 @@ if __name__ == '__main__':
     # plot_acc()
 
     ## general plots over all datasets
-    plot_acc_all()
+    # plot_acc_all()
     # plot_acc_all_delta()
-    # plot_ss_id_all()
+    plot_metric_all(['SS', 'ID', 'RSA'])
     # plot_rsa_delta_all()
     # plot_rsa_delta_all_UPDATE()
 

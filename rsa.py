@@ -285,10 +285,10 @@ def load_calc_corr(dataset_trained, dataset_extracted, sorted, seed, layer=4):
             models_dir = join(root_path, 'models', dataset_trained)  # case of no seeds
 
     ######
-    models_dir = root_path
+    models_dir = join(root_path, 'outsorced_calculation')
 
 
-    load_extracted = join(models_dir, 'outsorced_calculation2', dataset_extracted + '_extracted.pt')
+    load_extracted = join(models_dir, dataset_extracted + '_extracted.pt')
     models = torch.load(load_extracted)
     print(f'loaded {len(models)} models from - {load_extracted}')
 
@@ -538,14 +538,14 @@ if __name__ == '__main__':
     #device = torch.device("cpu")
 
     # specify layer to analyze on
-    layer = 5  # 4  # 5 for vgg
+    layer = 2  # 4  # 5 for vgg
 
     # set source(trained) and target(extracted) datasets
     dataset_trained = 'random_init'  # vgg16/cifar10
     # corr_dict_source = main(dataset_trained, dataset_trained, sorted=True, seed=1, layer=layer)  # only plot for seed 1
 
     dataset_extracted = 'custom3D'
-    # corr_dict_target = main(dataset_trained, dataset_extracted, sorted=True, seed=1, layer=layer)
+    corr_dict_target = main(dataset_trained, dataset_extracted, sorted=True, seed=1, layer=layer)
 
     # plot to compare corr means of all layers for all models
     all_layer_plot(dataset_trained, dataset_extracted, sorted=True, seed=1)

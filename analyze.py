@@ -72,7 +72,7 @@ if __name__ == '__main__':
         print("Devise used = ", device)
 
     #######
-    pre_dataset = 'cifar10'
+    pre_dataset = 'random_init'
     target_dataset = 'custom3D'  # extracted on
     #######
 
@@ -103,6 +103,6 @@ if __name__ == '__main__':
         rdm_metric = rsa.get_rdm_metric_vgg(pre_dataset, target_dataset)
     else:
         rdm_metric = rsa.get_rdm_metric(pre_dataset, target_dataset)  # diag-nondiag corr delta
-    df[f'RSA_{target_dataset}'] = rdm_metric
+    df[f'RSA_{target_dataset}'] = [rdm_metric]
 
     df.to_pickle(join(df_path + '+metrics'))  # just to check - Later save as same name
