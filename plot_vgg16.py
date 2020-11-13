@@ -172,14 +172,13 @@ def plot_metric_all(metrics=['SS', 'ID', 'RSA']):
     xticks = ['in', 'pool1', 'pool2', 'pool3', 'pool4', 'pool5', 'fc1', 'fc2', 'out']
 
     for metric in metrics:
-        fig, ax = plt.subplots(figsize=(6, 7), dpi=150)
+        fig, ax = plt.subplots(figsize=(7, 6), dpi=150)
         ax.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.08)
         ax.set_title(f'{metric} over VGG model layers [extract: custom3D]', weight='semibold')
 
         for dataset in pre_datasets:
             df_path = join(models_dir, dataset, 'df_pre_' + dataset + '+metrics')
             df = pd.read_pickle(df_path)
-            if metric == 'RSA': df = df.abs()
 
             # load from df
             val = df[f'{metric}_custom3D'][0]
@@ -188,100 +187,20 @@ def plot_metric_all(metrics=['SS', 'ID', 'RSA']):
             if dataset == 'random_init':
                 val = df.groupby('model_name')[f'{metric}_custom3D'].apply(lambda g: np.mean(g.values.tolist(), axis=0))[0]
                 val_std = df.groupby('model_name')[f'{metric}_custom3D'].apply(lambda g: np.std(g.values.tolist(), axis=0))[0]
-                ax.fill_between(range(len(xticks)), np.array(val + 2 * val_std), np.array(val - 2 * val_std), alpha=0.2)
+                ax.fill_between(range(len(xticks)), np.array(val + 2 * val_std), np.array(val - 2 * val_std), color='pink', alpha=0.2)
             if dataset == 'segnet': val = val[:6]
             if dataset in ['segnet', 'cifar10']: x_range = range(6)
             else: x_range = range(len(xticks))
 
             print(dataset, x_range, val)
-            ax.plot(x_range, val, '.-', label=df['model_name'][0])
+            ax.plot(x_range, np.array(val), '.-', label=df['model_name'][0])
 
-        ax.set_ylabel("Intrinsic Dimension", weight='semibold')
-        plt.ylabel("SSW/TSS", weight='semibold')
-
+        plt.ylabel(f"{metric}", weight='semibold')
         plt.xlabel("Layers", weight='semibold')
         plt.xticks(range(len(xticks)), labels=xticks)
 
         plt.legend(frameon=True, fancybox=True, facecolor='white', title='diff. pre datasets') # loc="lower left",
         plt.show()
-
-# Plot RSA metric = delta diagonal corr. mean, from df for all pre-datasets
-def plot_rsa_delta_all():
-    pre_datasets = ['imagenet', 'places365', 'cars', 'vggface', 'segnet', 'cifar10']
-
-    xticks = ['in', 'pool1', 'pool2', 'pool3', 'pool4', 'pool5', 'fc1', 'fc2', 'out']
-    plt.style.use('seaborn')
-    #plt.rcParams['axes.prop_cycle'] = plt.cycler(color=plt.cm.tab20c.colors)  # set color scheme
-
-    fig, ax = plt.subplots(figsize=(6, 7), dpi=150)
-    ax.set_title(f'RSA (abs. corr. delta) over VGG model layers \n [extract: custom3D]', weight='semibold')
-
-    for dataset in pre_datasets:
-        df_path = join(models_dir, dataset, 'df_pre_' + dataset + '+metrics')
-        df = pd.read_pickle(df_path)
-
-        # load from df
-        rsa = df['RSA_custom3D'][0]
-
-        # since on cifar10 no extract possible on fc layers and for segnet no fc pre layers
-        if dataset == 'segnet': rsa = rsa[:6]
-        if dataset in ['segnet', 'cifar10']: x_range = range(6)
-        else: x_range = range(len(xticks))
-
-        print(dataset, x_range, rsa)
-        ax.plot(x_range, abs(np.array(rsa)), '.-', label=df['model_name'][0])
-
-    plt.ylabel("Corr. mean delta", weight='semibold')
-    plt.xlabel("Layers", weight='semibold')
-    plt.xticks(range(len(xticks)), labels=xticks)
-
-    plt.legend(loc="upper left", frameon=True, fancybox=True, facecolor='white', title='diff. pre datasets')
-    plt.show()
-
-# Plot UPDATED RSA metric = delta diagonal corr. mean for all pre-datasets
-def plot_rsa_delta_all_UPDATE():
-    pre_datasets = ['imagenet', 'places365', 'cars', 'vggface', 'segnet', 'cifar10']
-
-    xticks = ['in', 'pool1', 'pool2', 'pool3', 'pool4', 'pool5', 'fc1', 'fc2', 'out']
-    plt.style.use('seaborn')
-    #plt.rcParams['axes.prop_cycle'] = plt.cycler(color=plt.cm.tab20c.colors)  # set color scheme
-
-    fig, ax = plt.subplots(figsize=(6, 7), dpi=150)
-    ax.set_title(f'RSA (abs. corr. delta) over VGG model layers \n [extract: custom3D]', weight='semibold')
-
-    for dataset in pre_datasets:
-        df = pd.read_pickle(join(models_dir, dataset, 'df_pre_' + dataset + '+metrics'))
-
-        rsa = get_rdm_metric_vgg(dataset, 'custom3D')
-
-        # since on cifar10 no extract possible on fc layers and for segnet no fc pre layers
-        if dataset in ['segnet', 'cifar10']: x_range = range(6)
-        else: x_range = range(len(xticks))
-
-        print(dataset, x_range, rsa)
-        ax.plot(x_range, abs(np.array(rsa)), '.-', label=df['model_name'][0])
-
-        # print('RSA diff: ', abs(np.array(df['RSA_custom3D'][0])) - abs(np.array(rsa)))
-
-    df = pd.read_pickle(join(models_dir, 'random_init', 'df_pre_random_init' + '+metrics'))
-    base_means = df.groupby('model_name')['RSA_custom3D'].apply(lambda g: np.mean(g.values.tolist(), axis=0))
-    base_stds = df.groupby('model_name')['RSA_custom3D'].apply(lambda g: np.std(g.values.tolist(), axis=0))
-    base_means = abs(np.array(base_means[0]))
-    base_stds = abs(np.array(base_stds[0]))
-    # base_means = base_means.reindex(index=natsorted(base_means.index))
-    # base_stds = base_stds.reindex(index=natsorted(base_stds.index))
-
-    # print(base_means, base_stds)
-    base = ax.plot(range(len(xticks)), base_means, label='random_init mean')
-    ax.fill_between(range(len(xticks)), base_means + 2 * np.array(base_stds), base_means - 2 * np.array(base_stds),
-                     color=base[0].get_color(), alpha=0.2)
-
-    plt.ylabel("Corr. mean delta", weight='semibold')
-    plt.xlabel("Layers", weight='semibold')
-    plt.xticks(range(len(xticks)), labels=xticks)
-
-    plt.legend(loc="upper left", frameon=True, fancybox=True, facecolor='white', title='diff. pre datasets')
-    plt.show()
 
 
 def plot_fc2_acc_id():
@@ -319,16 +238,17 @@ def plot_fc2_acc_id():
 
 if __name__ == '__main__':
 
+    # for single plot
     pre_dataset = 'segnet'
     ft_dataset = 'custom3D'
-
     # plot_acc()
 
     ## general plots over all datasets
+
     # plot_acc_all()
     # plot_acc_all_delta()
+
+    # plot all metrics
     plot_metric_all(['SS', 'ID', 'RSA'])
-    # plot_rsa_delta_all()
-    # plot_rsa_delta_all_UPDATE()
 
     # plot_fc2_acc_id()

@@ -18,13 +18,23 @@ else:
     device = torch.device("cpu")
     print("Devise used = ", device)
 
-dataset_name = 'mnist'
+dataset_name = 'mnist_noise_struct'
 
 root_dir = os.getcwd()
 dataset_dir = join(root_dir, 'data', dataset_name)
 model_dir = join(root_dir, 'models', dataset_name)
 
-df = pd.read_pickle(join(model_dir, 'df_pre_mnist+metrics'))
+df = pd.read_pickle(join(model_dir, f'df_pre_{dataset_name}+metrics'))
+
+
+# df = pd.read_pickle(join(model_dir, f'df_pre_{dataset_name}+metrics'))
+# print(df.columns)
+# df.columns = ['model_name', 'seed', 'pre_net', 'pre_dataset', 'pre_param', 'pre_epochs',
+#        'pre_train_acc', 'pre_train_loss', 'pre_test_acc', 'pre_test_loss',
+#        'ID_mnist', 'SS_mnist', 'RSA_mnist']
+# print(df.columns)
+# df.to_pickle(join(model_dir, f'df_pre_{dataset_name}+metrics'))
+
 
 run_name = 'pre_mnist'
 dataset = 'mnist'

@@ -18,7 +18,8 @@ def train_args_parser():
     parser.add_argument('--dataset', default='mnist', choices=['mnist', 'mnist2class', 'mnist_noise',
                                                                'mnist_noise_struct', 'mnist_split1', 'mnist_split2',
                                                                'fashionmnist', 'cifar10', 'imagenet', 'custom3D',
-                                                               'random_init', 'places365', 'vggface', 'segnet'],
+                                                               'random_init', 'places365', 'vggface', 'segnet',
+                                                               'malaria'],
                         type=str , metavar='D', help='trainings dataset name')
     parser.add_argument('--epochs', default=100, type=int, metavar='E',
                         help='number of total epochs to run')
@@ -123,19 +124,21 @@ def evaluate(model, loader, device, criterion=F.nll_loss):
     return loss, acc
 
 
-# set checkpoints (for later log-plots choose log ticks)
-first_batches_chkpts = np.array([0, 1, 3, 10, 30, 100, 300])
-epoch_chkpts = np.array([1, 3, 10, 30, 100])
-bs_factor = 0.001
-
 def train(model, train_loader, test_loader, optimizer, device, epochs, run_name, seed,
           criterion=F.nll_loss, save=True, ft=False, output_dir=None, verbose=True, scheduler=False):
 
     # for custom3D - bs=12 --> different batch epoch split
     if model.__class__.__name__ == 'VGG':
         print('Using lr scheduler for training.')
-        first_batches_chkpts = np.array([0, 1, 3, 10, 30])
+        if run_name[-7:] == 'malaria': first_batches_chkpts = np.array([0, 1, 3, 10, 30, 100, 300])
+        else: first_batches_chkpts = np.array([0, 1, 3, 10, 30])
         bs_factor = 0.01
+    else:
+        # set checkpoints (for later log-plots choose log ticks)
+        first_batches_chkpts = np.array([0, 1, 3, 10, 30, 100, 300])
+        epoch_chkpts = np.array([1, 3, 10, 30, 100])
+        bs_factor = 0.001
+
 
     model_dir = None
     if output_dir is not None:

@@ -210,6 +210,61 @@ class Custom3D(Dataset):
         return 'custom3D'
 
 
+class Malaria(Dataset):
+    def __init__(self, dataset_dir, device):
+        self.dataset_dir = dataset_dir
+        self.loader_args = {'num_workers': 10, 'pin_memory': True} if device.type == 'cuda' else {}
+
+        self.train_data = datasets.ImageFolder(os.path.join(dataset_dir, 'train'), self.get_train_transform())
+        self.test_data = datasets.ImageFolder(os.path.join(dataset_dir, 'test'), self.get_test_transform())
+        self.class_names = self.train_data.classes
+
+    def __len__(self):
+        return len(self.train_data)+len(self.test_data)
+
+    def __getitem__(self, idx):
+        if idx < len(self.train_data):
+            image, label = self.train_data[idx]
+        else:
+            image, label = self.test_data[idx - len(self.train_data)]
+        return image, self.class_names[label]
+
+    def get_train_transform(self):
+        transform = transforms.Compose([
+            transforms.RandomResizedCrop(224),  # with crop, cause sample dims are varying
+            transforms.ColorJitter(0.05),  # how much to jitter brightness (first arg)
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomVerticalFlip(),
+            transforms.RandomRotation(20),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])  # since values between -1, 1
+        ])
+        return transform
+
+    def get_test_transform(self):
+        transform = transforms.Compose([
+            transforms.RandomResizedCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+        ])
+        return transform
+
+    def get_train_loader(self, batch_size=32, shuffle=True):
+        train_loader = torch.utils.data.DataLoader(self.train_data, batch_size=batch_size, shuffle=shuffle, **self.loader_args)
+        return train_loader
+
+    def get_test_loader(self, batch_size=32, shuffle=True):
+        test_loader = torch.utils.data.DataLoader(self.test_data, batch_size=batch_size, shuffle=shuffle, **self.loader_args)
+        return test_loader
+
+    def get_dataset_cls(self):
+        return datasets.Malaria
+
+    def name(self):
+        return 'malaria'
+
+
+
 class BalancedBatchSampler(BatchSampler):
     """
     BatchSampler - from a MNIST-like dataset, samples n_classes and within these classes samples n_samples.

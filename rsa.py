@@ -11,12 +11,10 @@ from os.path import join
 import scipy.stats
 from scipy.spatial import distance
 from scipy.stats import spearmanr
-from sklearn.metrics.pairwise import manhattan_distances
 from tqdm import tqdm
 from natsort import natsorted
 from skimage.util import view_as_blocks
 import sklearn.manifold
-import pandas as pd
 
 
 def correlationd_matrix(activations):
@@ -284,10 +282,6 @@ def load_calc_corr(dataset_trained, dataset_extracted, sorted, seed, layer=4):
         if not os.path.exists(models_dir):
             models_dir = join(root_path, 'models', dataset_trained)  # case of no seeds
 
-    ######
-    models_dir = join(root_path, 'outsorced_calculation')
-
-
     load_extracted = join(models_dir, dataset_extracted + '_extracted.pt')
     models = torch.load(load_extracted)
     print(f'loaded {len(models)} models from - {load_extracted}')
@@ -345,20 +339,25 @@ def get_rdm_metric(source, target):
 
             for model in corr_dict.items():  # corr_dict is sorted
                 ## model[1] ndarray 500x500
-                block_view = view_as_blocks(model[1], block_shape=(50, 50))
+                block_view = view_as_blocks(model[1], block_shape=(50, 50))  ## only for 10 classes x 50 samples
                 val_diag = np.array([])
+                val_blockdiag = np.array([])
                 val_nondiag = np.array([])
                 for i in range(10):
                     for j in range(10):
                         if i == j:
-                            val_diag = np.append(val_diag, block_view[i, j])
+                            B = block_view[i, j]
+                            val_diag = np.append(val_diag, B.diagonal())
+                            B = B[~np.eye(B.shape[0], dtype=bool)].reshape(B.shape[0], -1)  # drop diagonal elements
+                            val_blockdiag = np.append(val_blockdiag, B)
                         else:
                             val_nondiag = np.append(val_nondiag, block_view[i, j])
-                delta.append(val_diag.mean() - val_nondiag.mean())
+
+                delta.append(abs(val_blockdiag.mean() - val_nondiag.mean()))  # take absolut value for metric !!
 
             layer_deltas.append(delta)  # list of lists [[12], ..7]
 
-        for i in range(0, 12):
+        for i in range(0, 12):  # nr of checkpts
             print([item[i] for item in layer_deltas])
             total_deltas.append([item[i] for item in layer_deltas])  # resort to [[7], ..12]
         print(len(total_deltas))  # 12
@@ -371,27 +370,17 @@ def get_rdm_metric_vgg(source, target):
     layer_deltas = []
     total_deltas = []
 
-    if source in ['segnet', 'cifar10']:  # since extract not possible for cifar10 data dim, segnet no fc layers
-        nr_layers = 6
+    if source in ['segnet', 'cifar10']: nr_layers = 6   # since extract not possible for cifar10 data dim, segnet no fc layers
     else: nr_layers = 9
 
     for layer in range(nr_layers):
-
-        # corr_dict,_ = load_calc_corr(source, target, sorted, seed=1, layer=layer)
-        #####
         models_dir = join(os.getcwd(), 'models', 'vgg16', source)
-        if source == 'imagenet':
-            path = join(models_dir, f'{target}_corr_dict_layer{layer}.pik')
-        else:
-            path = join(models_dir, f'{target}_sorted_corr_dict_layer{layer}.pik')
-        with open(str(path), 'rb') as f:
-            corr_dict = dill.load(f)
-        #####
+        if source == 'imagenet': path = join(models_dir, f'{target}_corr_dict_layer{layer}.pik')
+        else:                    path = join(models_dir, f'{target}_sorted_corr_dict_layer{layer}.pik')
+        with open(str(path), 'rb') as f: corr_dict = dill.load(f)
 
         delta = []
-
         for model in corr_dict.items():  # corr_dict is sorted
-            ## model[1] ndarray 1200x1200
             block_view = view_as_blocks(model[1], block_shape=(30, 30))  # 30 samples per class
             val_diag = np.array([])
             val_blockdiag = np.array([])
@@ -405,16 +394,12 @@ def get_rdm_metric_vgg(source, target):
                         val_blockdiag = np.append(val_blockdiag, B)
                     else:
                         val_nondiag = np.append(val_nondiag, block_view[i, j])
-            delta.append(val_blockdiag.mean() - val_nondiag.mean())
+            delta.append(abs(val_blockdiag.mean() - val_nondiag.mean()))  # take absolut value for metric !!
 
         layer_deltas.append(delta)  # list of lists [[1], ..9]
 
-    # print(layer_deltas)
     for i in range(0, 1):
-        # print([item[i] for item in layer_deltas])
         total_deltas.append([item[i] for item in layer_deltas])  # resort to [[9], ..1]
-    # print(len(total_deltas))  # 1
-    #print(total_deltas[0])
 
     return total_deltas[0]
 
@@ -534,8 +519,6 @@ if __name__ == '__main__':
     else:
         device = torch.device("cpu")
         print("Devise used = ", device)
-
-    #device = torch.device("cpu")
 
     # specify layer to analyze on
     layer = 2  # 4  # 5 for vgg

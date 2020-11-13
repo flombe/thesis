@@ -37,12 +37,12 @@ output_dir = join(source_dir, 'ft_' + dataset_name)  # new folder for fine-tuned
 # save training stats in df
 dff = pd.DataFrame()
 
-for seed in range(1, 11):
+for seed in range(3, 11):
     model_dir = join(source_dir, 'models_' + str(seed))
     print(model_dir)
 
     for file in natsorted(os.listdir(model_dir)):
-        if file.startswith("model_") and file.endswith(".pt"):
+        if file.startswith("model_") and file.endswith("_0.pt"):
             print(file)
             # Load model
             model = torch.load(join(model_dir, file))
@@ -103,6 +103,13 @@ param = {'train_samples': len(train_loader)*batch_size,
          'batch_size': batch_size,
          'lr': lr}
 dff.insert(4, 'ft_param', [param] * len(dff))
-dff.to_pickle(join(output_dir, 'df_' + run_name))
+# dff.to_pickle(join(output_dir, 'df_' + run_name))
+
+
+previous_df = pd.read_pickle(join(output_dir, 'df_' + run_name))
+new_df = previous_df.append(dff, ignore_index=True)
+new_df = new_df.sort_values(by=['seed', 'model_name'], ignore_index=True)
+# new_df.to_pickle(join(output_dir, 'df_' + run_name))
+
 
 print('Done fine-tuning all models for all seeds.')

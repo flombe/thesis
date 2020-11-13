@@ -72,8 +72,8 @@ if __name__ == '__main__':
         print("Devise used = ", device)
 
     #######
-    pre_dataset = 'random_init'
-    target_dataset = 'custom3D'  # extracted on
+    pre_dataset = 'mnist'
+    target_dataset = 'mnist'  # extracted on
     #######
 
     root_dir = os.getcwd()
@@ -83,26 +83,27 @@ if __name__ == '__main__':
         models_dir = join(root_dir, 'models', pre_dataset)
 
     # load df
-    df_path = join(models_dir, 'df_pre_' + pre_dataset)  # + '+metrics')
+    df_path = join(models_dir, 'df_pre_' + pre_dataset +'added')  # + '+metrics')
     df = pd.read_pickle(df_path)
 
     # calc ID, SS and add to df
     print(f'>>> Calculate ID, SS for models pre-trained on {pre_dataset}, on target {target_dataset} <<<')
 
-    if target_dataset == 'custom3D':
-        extract = torch.load(join(models_dir, target_dataset + '_extracted.pt'))
-        id, ss = calc_ID_SS(extract)
-    else:
-        id, ss = calc_ID_SS_seeds(target_dataset)
-    print(id, ss)
-    df[f'ID_{target_dataset}'] = pd.Series(id)
-    df[f'SS_{target_dataset}'] = pd.Series(ss)
+    # if target_dataset == 'custom3D':
+    #     extract = torch.load(join(models_dir, target_dataset + '_extracted.pt'))
+    #     id, ss = calc_ID_SS(extract)
+    # else:
+    #     id, ss = calc_ID_SS_seeds(target_dataset)
+    # print(id, ss)
+    # df[f'ID_{target_dataset}'] = pd.Series(id)
+    # df[f'SS_{target_dataset}'] = pd.Series(ss)
 
     # RSA
     if target_dataset == 'custom3D':
         rdm_metric = rsa.get_rdm_metric_vgg(pre_dataset, target_dataset)
     else:
         rdm_metric = rsa.get_rdm_metric(pre_dataset, target_dataset)  # diag-nondiag corr delta
-    df[f'RSA_{target_dataset}'] = [rdm_metric]
+    #df[f'RSA_{target_dataset}'] = [rdm_metric]
+    df.insert(13, 'RSA_mnist', [rdm_metric])
 
     df.to_pickle(join(df_path + '+metrics'))  # just to check - Later save as same name

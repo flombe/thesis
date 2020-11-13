@@ -4,6 +4,8 @@ import os
 from os.path import join
 import pandas as pd
 import json
+from rsa import get_rdm_metric
+from rsa import get_rdm_metric_vgg
 
 # set device
 if torch.cuda.is_available():
@@ -14,18 +16,32 @@ else:
     print("Devise used = ", device)
 
 
+dataset = 'vggface'
 root_dir = os.getcwd()
-model_dir = join(root_dir, 'models', 'vgg16/random_init')
-df = pd.DataFrame()
+model_dir = join(root_dir, 'models', 'vgg16', dataset)
 
-for seed in range(1, 4):
-	df_path = join(model_dir, f'models_{seed}/df_pre_random_init+metrics')
-	df_pre = pd.read_pickle(df_path)
-	df = df.append(df_pre, ignore_index=True)
+path = join(model_dir, f'df_pre_{dataset}+metrics')
+if os.path.exists(path):
+    df = pd.read_pickle(path)
+    print(df['RSA_custom3D'][0])
+    rsa = get_rdm_metric_vgg(dataset, 'custom3D')
+    print(rsa)
+    df.at[0, 'RSA_custom3D'] = rsa
+    df.to_pickle(path)
+else:
+    df = pd.DataFrame()
+    for seed in range(1, 4):
+        path = join(model_dir, f'models_{seed}/df_pre_{dataset}+metrics')
+        df_pre = pd.read_pickle(path)
+        print(df_pre['RSA_custom3D'][0])
+        rsa = get_rdm_metric_vgg(join(dataset, f'models_{seed}'), 'custom3D')
+        print(rsa)
+        df_pre.at[0, 'RSA_custom3D'] = rsa
+        print(df_pre['RSA_custom3D'][0])
+        df = df.append(df_pre, ignore_index=True)
+    df.to_pickle(join(model_dir, 'df_pre_random_init+metrics'))
 
-df.insert(2, 'seed', [1,2,3])
-# group by name and get mean and std over the 3 seeds
-df.to_pickle(join(model_dir, 'df_pre_random_init'))
+print(f' > Done. df with new RSA metric saved for {dataset}')
 
 
 

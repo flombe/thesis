@@ -46,7 +46,7 @@ print(' >> Run {run_name} on dataset {dataset} on pre-trained {pre} models. <<'.
 root_dir = os.getcwd()
 print(root_dir)
 dataset_dir = join(root_dir, 'data', dataset_name)  # target data for ft
-source_dir = join(root_dir, 'models', 'vgg16', pretrain_dataset, 'models_3')
+source_dir = join(root_dir, 'models', 'vgg16', pretrain_dataset)
 output_dir = join(source_dir, 'ft_' + dataset_name)  ## + '_3conv'  # new folder for fine-tuned models
 
 if dataset_name == 'custom3D':
@@ -55,7 +55,12 @@ if dataset_name == 'custom3D':
     train_loader = dataset.get_train_loader(batch_size=bs)
     test_loader = dataset.get_test_loader(batch_size=bs)
     class_names = dataset.class_names
-
+if dataset_name == 'malaria':
+    n_out_classes = 2
+    dataset = datasets.Malaria(dataset_dir=dataset_dir, device=device)
+    train_loader = dataset.get_train_loader(batch_size=bs)
+    test_loader = dataset.get_test_loader(batch_size=bs)
+    class_names = dataset.class_names
 
 # load model
 model_path = join(source_dir, f'model_vgg16_pre_{pretrain_dataset}.pt')
@@ -120,7 +125,7 @@ optimizer_ft = torch.optim.SGD([
 exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=20, gamma=0.1)
 
 
-seed = '3'
+seed = '1'
 
 train_acc, train_loss, test_acc, test_loss, df = train_utils.train(model=model_ft, train_loader=train_loader,
                                                                    test_loader=test_loader, optimizer=optimizer_ft,

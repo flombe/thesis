@@ -14,7 +14,7 @@ else:
     print("Devise used = ", device)
 
 
-trained_dataset = 'vgg16/custom3D'
+trained_dataset = 'mnist_noise_struct'
 target_dataset = 'custom3D'
 
 root_dir = os.getcwd()
@@ -22,7 +22,7 @@ models_dir = join(root_dir, 'models', trained_dataset)
 
 # load df
 # df_path = join(models_dir, f'df_pre_{trained_dataset}+metrics')
-df_path = join(models_dir, 'df_pre_custom3D')
+df_path = join(models_dir, f'df_pre_{trained_dataset}+metrics')
 df = pd.read_pickle(df_path)
 
 
