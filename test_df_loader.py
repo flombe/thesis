@@ -14,7 +14,7 @@ else:
     print("Devise used = ", device)
 
 
-trained_dataset = 'mnist_noise_struct'
+trained_dataset = 'mnist'
 target_dataset = 'custom3D'
 
 root_dir = os.getcwd()
@@ -22,7 +22,7 @@ models_dir = join(root_dir, 'models', trained_dataset)
 
 # load df
 # df_path = join(models_dir, f'df_pre_{trained_dataset}+metrics')
-df_path = join(models_dir, f'df_pre_{trained_dataset}+metrics')
+df_path = join(models_dir, f'ft_fashionmnist/df_ft_{trained_dataset}_fashion')
 df = pd.read_pickle(df_path)
 
 

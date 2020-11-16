@@ -8,9 +8,6 @@ from datasets import Custom3D, Malaria
 import pandas as pd
 import numpy as np
 
-custom3D_compare_plot = False
-get_malaria = True
-
 # set device
 if torch.cuda.is_available():
     device = torch.device("cuda:0")
@@ -19,13 +16,25 @@ else:
     device = torch.device("cpu")
     print("Devise used = ", device)
 
+# visualize images
+def imshow(img):
+    img = img / 2 + 0.5  # unnormalize
+    npimg = img.numpy()
+    plt.imshow(np.transpose(npimg, (1, 2, 0)))
+
+# refactor in get and plot functions()
+######
+custom3D_compare_plot = False
+get_malaria = True
+######
+
 
 if custom3D_compare_plot:
 
     # parse args from sh script
     pretrain_dataset = 'imagenet'
     dataset_name = 'custom3D'
-    bs = 1
+    bs = 6
 
     # set dir
     root_dir = os.getcwd()
@@ -37,15 +46,16 @@ if custom3D_compare_plot:
 
     dataset = Custom3D(dataset_dir=dataset_dir, device=device)
     class_names = dataset.class_names
-    train_loader = dataset.get_train_loader(batch_size=bs, shuffle=False)
+    train_loader = dataset.get_train_loader(batch_size=bs, shuffle=True)
     test_loader = dataset.get_test_loader(batch_size=bs)
 
-    for i in range(1):
-        image, label = next(iter(train_loader))
-        print(label, class_names[label])
-        plt.imshow(image.squeeze().permute(1, 2, 0))
-        plt.title(class_names[label])
-        plt.show()
+    images, labels = next(iter(train_loader))
+
+    fig = plt.figure(figsize=(9, 7))
+    for i in range(6):
+        ax = fig.add_subplot(2, 3, i + 1, xticks=[], yticks=[], title=class_names[labels[i]])
+        imshow(images[i])
+    plt.show()
 
     # transform: resize and to tensor
     data_transforms = transforms.Compose([transforms.Resize((224, 224), interpolation=2), transforms.ToTensor()])
@@ -59,9 +69,11 @@ if custom3D_compare_plot:
 
 
 if get_malaria:
+    ## https://lhncbc.nlm.nih.gov/publication/pub9932
+
     pretrain_dataset = 'imagenet'
     dataset_name = 'malaria'
-    bs = 10
+    bs = 6
 
     # set dirs
     root_dir = os.getcwd()
@@ -90,21 +102,13 @@ if get_malaria:
 
     dataset = Malaria(dataset_dir=dataset_dir, device=device)
     class_names = dataset.class_names
-    print(class_names)
     train_loader = dataset.get_train_loader(batch_size=bs, shuffle=True)
     test_loader = dataset.get_test_loader(batch_size=bs)
 
-    # visualize some malaria images
-    def imshow(img):
-        img = img / 2 + 0.5  # unnormalize
-        npimg = img.numpy()
-        plt.imshow(np.transpose(npimg, (1, 2, 0)))
-
     images, labels = next(iter(train_loader))
 
-    fig = plt.figure(figsize=(25, 15))
-    for i in range(10):
-        print(images, labels)
-        ax = fig.add_subplot(2, 5, i + 1, xticks=[], yticks=[], title=class_names[labels[i]])
+    fig = plt.figure(figsize=(9, 7))
+    for i in range(6):
+        ax = fig.add_subplot(2, 3, i + 1, xticks=[], yticks=[], title=class_names[labels[i]])
         imshow(images[i])
     plt.show()

@@ -240,7 +240,7 @@ if __name__ == '__main__':
 
     # for single plot
     pre_dataset = 'segnet'
-    ft_dataset = 'custom3D'
+    ft_dataset = 'malaria'
     # plot_acc()
 
     ## general plots over all datasets
@@ -249,6 +249,52 @@ if __name__ == '__main__':
     # plot_acc_all_delta()
 
     # plot all metrics
-    plot_metric_all(['SS', 'ID', 'RSA'])
+    # plot_metric_all(['SS', 'ID', 'RSA'])
 
     # plot_fc2_acc_id()
+
+
+
+
+
+
+    ## quick check plot fting on malaria
+    checkpts = ['0', '0_1', '0_3', '0_10', '0_30','0_100', '0_300', '1', '3', '10', '30', '100']
+    xticks = [0.0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 100]
+    total = np.array(xticks)
+
+    pre_datasets = ['imagenet', 'places365', 'cars', 'vggface', 'segnet', 'random_init', 'cifar10', 'malaria']
+
+    fig1, ax1 = plt.subplots(figsize=(6, 7), dpi=150)
+    plt.title(f"Accuracies of VGG-16 models on {ft_dataset}")
+    plt.xlabel("Fine-Tuning/training Epochs (batch1 to epoch100)")
+    plt.ylabel("Test Accuracy")
+
+    for dataset in pre_datasets:
+
+        if dataset in [ft_dataset]:
+
+            df = pd.read_json('/mnt/antares_raid/home/bemmerl/thesis/models/malaria/models_1/pre_malaria_train_stats.json')
+            test_acc = df['pre_test_acc']
+            label = 'pre_malaria'
+            ax1.plot(total, test_acc, label=str(label))
+
+        else:
+            load_dir = join(models_dir, dataset, 'ft_' + ft_dataset)
+            label = f"ft_{dataset}_{ft_dataset}"
+            # load Acc from df
+            df = pd.read_pickle(join(load_dir, "df_" + label))
+            test_acc = df['ft_test_acc']
+
+            print(label, test_acc)
+            ax1.plot(total, test_acc, label=str(label))
+
+    # plt.ylim((0, 100))
+    plt.xscale("log")
+    plt.xlim((0, 100))
+    #ax1.axis([0, 100, 0, 100])
+    ax1.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda y, _: '{:.16g}'.format(y)))
+
+    plt.legend(loc=2)
+    plt.tight_layout()
+    plt.show()

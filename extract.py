@@ -12,9 +12,9 @@ import numpy as np
 train_utils.set_seed(1)
 
 # extract activations on all layers for 500 fixed samples
-samples = 500   # 1200
+samples = 100   # 1200
 batch_size = 1
-unique_labels = 10  # 10 for mnist like datasets, 40 for custom3D
+unique_labels = 2  # 10 for mnist like datasets, 40 for custom3D, 2 for malaria
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # device = torch.device("cpu")
@@ -25,10 +25,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--trained_on', default='mnist',
                     choices=['mnist', 'mnist2class', 'fashionmnist', 'mnist_noise_struct', 'mnist_noise', 'cifar10',
                              'mnist_split1', 'mnist_split2', 'vgg16/imagenet', 'vgg16/custom3D', 'vgg16/places365',
-                             'vgg16/vggface', 'vgg16/cars', 'vgg16/cifar10', 'vgg16/segnet', 'vgg16/random_init'])
+                             'vgg16/vggface', 'vgg16/cars', 'vgg16/cifar10', 'vgg16/segnet', 'vgg16/random_init',
+                             'malaria'])
 parser.add_argument('--dataset', default='mnist',
                     choices=['mnist', 'mnist2class', 'fashionmnist', 'mnist_noise_struct', 'mnist_noise', 'cifar10',
-                             'mnist_split1', 'mnist_split2', 'imagenet', 'custom3D'])
+                             'mnist_split1', 'mnist_split2', 'imagenet', 'custom3D', 'malaria'])
 parser.add_argument('--model_folder', default='all', help='select specific model folder number or all')
 args = parser.parse_args()
 print(f' > > > Extract pre_{args.trained_on} on {args.dataset} < < <')
@@ -54,6 +55,8 @@ def get_loader(dataset_name):
         dataset = datasets.Custom3D(dataset_dir=dataset_dir, device=device)
         train_loader = dataset.get_train_loader(batch_size, shuffle=False)  # using same samples
         return train_loader
+    elif dataset_name == 'malaria':
+        dataset = datasets.Malaria(dataset_dir=dataset_dir, device=device)
     else:
         # dataset_dir = join(os.getcwd(), 'data', 'cifar-10-batches-py')  ###
         dataset = datasets.CIFAR10(dataset_dir=dataset_dir, device=device)
@@ -88,9 +91,14 @@ def extract(models_dir, test_loader, samples=samples, batch_size=batch_size, bal
                         class_counts[c] = class_counts.get(c, 0) + 1  # class count dict
 
                         if class_counts[c] <= k:
-                            if dataset_name == 'custom3D':
-                                # vgg_arch.py extract_all already includes the input
-                                all_layers = list(model.extract_all(batch[0].to(device)))   #####
+                            if dataset_name in ['custom3D', 'malaria']:
+                                if args.trained_on == 'vgg16/cifar10':
+                                    all_layers = list(model.extract_all_vgg19(batch[0].to(device)))
+                                elif args.trained_on == 'vgg16/segnet':
+                                    all_layers = list(model.extract_all_vgg16bn(batch[0].to(device)))
+                                else:
+                                    # vgg_arch.py extract_all already includes the input
+                                    all_layers = list(model.extract_all(batch[0].to(device)))
                             else:
                                 all_layers = [batch[0]] + list(model.extract_all(batch[0].to(device), verbose=False))
 

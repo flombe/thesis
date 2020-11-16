@@ -76,10 +76,14 @@ for seed_run in range(1, seeds+1):
         model = vgg_arch.vgg16(pretrained=False, num_classes=40)
         dataset = datasets.Custom3D(dataset_dir=dataset_dir, device=device)
 
+    elif dataset_name == 'malaria':
+        model = vgg_arch.vgg16(pretrained=False, num_classes=2)
+        dataset = datasets.Malaria(dataset_dir=dataset_dir, device=device)
+
     model.to(device)
     criterion = F.nll_loss  # with F.log_softmax on output = CrossEntropyLoss
     if dataset_name == 'cifar10': criterion = F.cross_entropy
-    if dataset_name == 'custom3D': criterion = F.cross_entropy
+    if dataset_name in ['custom3D', 'malaria']: criterion = F.cross_entropy
     print(model)
 
     # loaders
@@ -90,7 +94,7 @@ for seed_run in range(1, seeds+1):
     optimizer = optim.Adam(model.parameters(), lr=lr)  ## Adam instead of SGD
     if dataset_name == 'cifar10':
         optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9)
-    if dataset_name == 'custom3D':
+    if dataset_name in ['custom3D', 'malaria']:
         optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9)
         exp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
 

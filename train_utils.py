@@ -130,9 +130,14 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
     # for custom3D - bs=12 --> different batch epoch split
     if model.__class__.__name__ == 'VGG':
         print('Using lr scheduler for training.')
-        if run_name[-7:] == 'malaria': first_batches_chkpts = np.array([0, 1, 3, 10, 30, 100, 300])
-        else: first_batches_chkpts = np.array([0, 1, 3, 10, 30])
-        bs_factor = 0.01
+        if run_name[-7:] == 'malaria':
+            first_batches_chkpts = np.array([0, 1, 3, 10, 30, 100, 300])   ####
+            epoch_chkpts = np.array([1, 3, 10, 30, 100])
+            bs_factor = 0.001
+        else:
+            first_batches_chkpts = np.array([0, 1, 3, 10, 30])
+            epoch_chkpts = np.array([1, 3, 10, 30, 100])
+            bs_factor = 0.01
     else:
         # set checkpoints (for later log-plots choose log ticks)
         first_batches_chkpts = np.array([0, 1, 3, 10, 30, 100, 300])
