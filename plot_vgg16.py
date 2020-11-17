@@ -12,11 +12,6 @@ from rsa import get_rdm_metric_vgg
 root_dir = os.getcwd()
 models_dir = join(root_dir, 'models', 'vgg16')
 
-# ticks for plot - batches and epochs with bs=12 and 1200 samples
-checkpts = ['0', '0_1', '0_3', '0_10', '0_30', '1', '3', '10', '30', '100']
-xticks = [0.0, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 100]
-total = np.array(xticks)
-
 # Plot Acc on VGG16 custom3D for different ft or pre cases
 def plot_acc():
     plt.rcParams['axes.prop_cycle'] = plt.cycler(color=plt.cm.Paired.colors)  # set color scheme
@@ -68,7 +63,7 @@ def plot_acc():
 
 # Plot ft Acc on VGG16 custom3D for different pre_datasets
 def plot_acc_all():
-    pre_datasets = ['imagenet', 'places365', 'cars', 'vggface', 'segnet', 'cifar10', 'random_init', 'custom3D']
+    pre_datasets = ['imagenet', 'places365', 'cars', 'vggface', 'segnet', 'cifar10', 'random_init', ft_dataset]
 
     fig1, ax1 = plt.subplots(figsize=(6, 7), dpi=150)
     plt.title(f"Accuracies of VGG-16 models on {ft_dataset}")
@@ -174,19 +169,19 @@ def plot_metric_all(metrics=['SS', 'ID', 'RSA']):
     for metric in metrics:
         fig, ax = plt.subplots(figsize=(7, 6), dpi=150)
         ax.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.08)
-        ax.set_title(f'{metric} over VGG model layers [extract: custom3D]', weight='semibold')
+        ax.set_title(f'{metric} over VGG model layers [extract: {ft_dataset}]', weight='semibold')
 
         for dataset in pre_datasets:
             df_path = join(models_dir, dataset, 'df_pre_' + dataset + '+metrics')
             df = pd.read_pickle(df_path)
 
             # load from df
-            val = df[f'{metric}_custom3D'][0]
+            val = df[f'{metric}_{ft_dataset}'][0]
 
             # since on cifar10 no extract possible on fc layers and for segnet no fc pre layers
             if dataset == 'random_init':
-                val = df.groupby('model_name')[f'{metric}_custom3D'].apply(lambda g: np.mean(g.values.tolist(), axis=0))[0]
-                val_std = df.groupby('model_name')[f'{metric}_custom3D'].apply(lambda g: np.std(g.values.tolist(), axis=0))[0]
+                val = df.groupby('model_name')[f'{metric}_{ft_dataset}'].apply(lambda g: np.mean(g.values.tolist(), axis=0))[0]
+                val_std = df.groupby('model_name')[f'{metric}_{ft_dataset}'].apply(lambda g: np.std(g.values.tolist(), axis=0))[0]
                 ax.fill_between(range(len(xticks)), np.array(val + 2 * val_std), np.array(val - 2 * val_std), color='pink', alpha=0.2)
             if dataset == 'segnet': val = val[:6]
             if dataset in ['segnet', 'cifar10']: x_range = range(6)
@@ -199,7 +194,7 @@ def plot_metric_all(metrics=['SS', 'ID', 'RSA']):
         plt.xlabel("Layers", weight='semibold')
         plt.xticks(range(len(xticks)), labels=xticks)
 
-        plt.legend(frameon=True, fancybox=True, facecolor='white', title='diff. pre datasets') # loc="lower left",
+        plt.legend(frameon=True, fancybox=True, facecolor='white', title='diff. pre datasets')  # loc="lower left",
         plt.show()
 
 
@@ -208,14 +203,14 @@ def plot_fc2_acc_id():
 
     plt.style.use('seaborn')
     fig, ax = plt.subplots(figsize=(6, 6), dpi=150)
-    ax.set_title(f'Last hidden layer ID pred. Acc - VGG \n [extract: custom3D]', weight='semibold')
+    ax.set_title(f'Last hidden layer ID pred. Acc - VGG \n [extract: {ft_dataset}]', weight='semibold')
 
     for dataset in pre_datasets:
         df_path = join(models_dir, dataset, 'df_pre_' + dataset + '+metrics')
         df = pd.read_pickle(df_path)
 
         # load from df
-        id = df['ID_custom3D'][0][7]  # for fc2
+        id = df[f'ID_{ft_dataset}'][0][7]  # for fc2
         # if dataset == 'vggface':
         #     acc = df['pre_top1'][0]
         acc = df['pre_top5'][0]
@@ -238,9 +233,21 @@ def plot_fc2_acc_id():
 
 if __name__ == '__main__':
 
-    # for single plot
+    #######
     pre_dataset = 'segnet'
     ft_dataset = 'malaria'
+    #######
+
+    if ft_dataset == 'custom3D':
+        # ticks for plot - batches and epochs with bs=12 and 1200 samples
+        checkpts = ['0', '0_1', '0_3', '0_10', '0_30', '1', '3', '10', '30', '100']
+        xticks = [0.0, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 100]
+    elif ft_dataset == 'malaria':
+        # Malaria: additional _100 und _300 batches with bs=22 and 22000 samples
+        checkpts = ['0', '0_1', '0_3', '0_10', '0_30', '1', '3', '10', '30', '100']
+        xticks = [0.0, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 100]
+    total = np.array(xticks)
+
     # plot_acc()
 
     ## general plots over all datasets
@@ -249,11 +256,18 @@ if __name__ == '__main__':
     # plot_acc_all_delta()
 
     # plot all metrics
-    # plot_metric_all(['SS', 'ID', 'RSA'])
+    plot_metric_all(['SS', 'ID', 'RSA'])
 
     # plot_fc2_acc_id()
 
 
+    ## to add random_init dfs of multiple folders
+    # dff = pd.DataFrame()
+    # for seed in range(1,4):
+    #     df_path = f'/mnt/antares_raid/home/bemmerl/thesis/models/vgg16/random_init/models_{seed}/df_pre_random_init+metrics'
+    #     dff = dff.append(pd.read_pickle(df_path), ignore_index=True)
+    # dff.to_pickle('/mnt/antares_raid/home/bemmerl/thesis/models/vgg16/random_init/df_pre_random_init+metrics')
+    # print('random_init dfs added')
 
 
 

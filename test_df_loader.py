@@ -14,7 +14,7 @@ else:
     print("Devise used = ", device)
 
 
-trained_dataset = 'mnist'
+trained_dataset = 'vgg16/random_init'
 target_dataset = 'custom3D'
 
 root_dir = os.getcwd()
@@ -22,7 +22,7 @@ models_dir = join(root_dir, 'models', trained_dataset)
 
 # load df
 # df_path = join(models_dir, f'df_pre_{trained_dataset}+metrics')
-df_path = join(models_dir, f'ft_fashionmnist/df_ft_{trained_dataset}_fashion')
+df_path = join(models_dir, f'df_pre_random_init+metrics')
 df = pd.read_pickle(df_path)
 
 

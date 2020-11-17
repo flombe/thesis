@@ -275,7 +275,7 @@ def plotter(corr_dict, labels, dataset_trained, dataset_extracted,
 def load_calc_corr(dataset_trained, dataset_extracted, sorted, seed, layer=4):
     # load
     root_path = os.getcwd()
-    if dataset_extracted == 'custom3D':
+    if dataset_extracted in ['custom3D', 'malaria']:
         models_dir = join(root_path, 'models', 'vgg16', dataset_trained)
     else:
         models_dir = join(root_path, 'models', dataset_trained, 'models_' + str(seed))
@@ -367,6 +367,13 @@ def get_rdm_metric(source, target):
 
 # for vgg16 architecture
 def get_rdm_metric_vgg(source, target):
+    if target == 'custom3D':
+        block_size = 30
+        class_count = 40
+    else:
+        block_size = 50
+        class_count = 2
+
     layer_deltas = []
     total_deltas = []
 
@@ -374,19 +381,21 @@ def get_rdm_metric_vgg(source, target):
     else: nr_layers = 9
 
     for layer in range(nr_layers):
-        models_dir = join(os.getcwd(), 'models', 'vgg16', source)
-        if source == 'imagenet': path = join(models_dir, f'{target}_corr_dict_layer{layer}.pik')
-        else:                    path = join(models_dir, f'{target}_sorted_corr_dict_layer{layer}.pik')
-        with open(str(path), 'rb') as f: corr_dict = dill.load(f)
+        # models_dir = join(os.getcwd(), 'models', 'vgg16', source)
+        # if source == 'imagenet': path = join(models_dir, f'{target}_corr_dict_layer{layer}.pik')
+        # else:                    path = join(models_dir, f'{target}_sorted_corr_dict_layer{layer}.pik')
+        # with open(str(path), 'rb') as f: corr_dict = dill.load(f)
+
+        corr_dict, _ = load_calc_corr(source, target, sorted, seed=1, layer=layer)  ## seed
 
         delta = []
         for model in corr_dict.items():  # corr_dict is sorted
-            block_view = view_as_blocks(model[1], block_shape=(30, 30))  # 30 samples per class
+            block_view = view_as_blocks(model[1], block_shape=(block_size, block_size))  # 30 samples per class
             val_diag = np.array([])
             val_blockdiag = np.array([])
             val_nondiag = np.array([])
-            for i in range(40):  # 40 labels
-                for j in range(40):
+            for i in range(class_count):  # 40 labels
+                for j in range(class_count):
                     if i == j:
                         B = block_view[i, j]
                         val_diag = np.append(val_diag, B.diagonal())

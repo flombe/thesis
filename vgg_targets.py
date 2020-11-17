@@ -25,7 +25,8 @@ def imshow(img):
 # refactor in get and plot functions()
 ######
 custom3D_compare_plot = False
-get_malaria = True
+get_malaria = False
+get_pets = True
 ######
 
 
@@ -112,3 +113,53 @@ if get_malaria:
         ax = fig.add_subplot(2, 3, i + 1, xticks=[], yticks=[], title=class_names[labels[i]])
         imshow(images[i])
     plt.show()
+
+
+if get_pets:
+    ## https://github.com/Skuldur/Oxford-IIIT-Pets-Pytorch/archive/master.zip
+    ## https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz
+
+    pretrain_dataset = 'imagenet'
+    dataset_name = 'pets'
+    bs = 6
+
+    # set dirs
+    root_dir = os.getcwd()
+    dataset_dir = join(root_dir, 'data', dataset_name)  # target data for ft
+    source_dir = join(root_dir, 'models', pretrain_dataset, 'vgg16')
+    output_dir = join(source_dir, 'ft_' + dataset_name)  # new folder for fine-tuned models
+
+    ## download from 'ftp://lhcftp.nlm.nih.gov/Open-Access-Datasets/Malaria/malaria_cell_classification_code.zip'
+    # import requests
+    #
+    # print('Download Starting...')
+    # url = 'https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz'
+    # r = requests.get(url)
+    # with open(join(dataset_dir, 'pets.zip'), 'wb') as output_file:
+    #     output_file.write(r.content)
+    # print('Download Completed!!!')
+
+    import zipfile
+    with zipfile.ZipFile(join(dataset_dir, 'pets.zip'), "r") as zip_ref:
+        zip_ref.extractall("target")
+
+    ## split into 80% train and 20% test folders
+    # import splitfolders  # or import split_folders
+    # # To only split into training and validation set, set a tuple to `ratio`, i.e, `(.8, .2)`.
+    # splitfolders.ratio(join(dataset_dir, 'cell_images'), output=dataset_dir, seed=1, ratio=(.8, .2), group_prefix=None)
+
+    # dataset = Malaria(dataset_dir=dataset_dir, device=device)
+    # class_names = dataset.class_names
+    # train_loader = dataset.get_train_loader(batch_size=bs, shuffle=True)
+    # test_loader = dataset.get_test_loader(batch_size=bs)
+    #
+    # images, labels = next(iter(train_loader))
+    #
+    # fig = plt.figure(figsize=(9, 7))
+    # for i in range(6):
+    #     ax = fig.add_subplot(2, 3, i + 1, xticks=[], yticks=[], title=class_names[labels[i]])
+    #     imshow(images[i])
+    # plt.show()
+
+
+

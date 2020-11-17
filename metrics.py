@@ -159,6 +159,7 @@ def rankcorr_and_plot_vgg(dataset_trained, target, metr):
     metrics_T, accs_T = get_values_from_df_vgg(dataset_trained, target, metr)
 
     checkpts = ['0', '0_1', '0_3', '0_10', '0_30', '1', '3', '10', '30', '100']
+    if target == 'malaria':  checkpts = ['0', '0_1', '0_3', '0_10', '0_30','0_100', '0_300', '1', '3', '10', '30', '100']
     xticks = ['pool1', 'pool2', 'pool3', 'pool4', 'pool5']
 
     # just for readability of df to check values
@@ -166,7 +167,7 @@ def rankcorr_and_plot_vgg(dataset_trained, target, metr):
                               4: f'{metr}_pool4', 5: f'{metr}_pool5'}, inplace=True)
 
     fig, ax = plt.subplots(figsize=(6, 7), dpi=150)
-    ax.set_title(f'Spearman rank-corr. of {metr} metric to post-ft Acc \n [extract: custom3D]', weight='semibold')
+    ax.set_title(f'Spearman rank-corr. of {metr} metric to post-ft Acc \n [extract: {target}]', weight='semibold')
     ax.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.08)
 
     # for all different checkpoints
@@ -180,8 +181,8 @@ def rankcorr_and_plot_vgg(dataset_trained, target, metr):
         rank_corr = df_sorted.corr(method='spearman')  # just to see check whole corr matrix
 
         corr = df_sorted.corr(method="spearman").iloc[-1]
-        if i < 5: a = 0.2
-        else: a=1
+        if i <= int(len(checkpts)/2): a = 0.2
+        else: a = 1
         ax.plot(range(len(xticks)), corr[1:6], '.-', label=checkpts[i], alpha=a)  # 'in' layer not useful
 
     plt.ylabel("Rank-Corr Rho", weight='semibold')
@@ -198,18 +199,18 @@ def rankcorr_and_plot_vgg(dataset_trained, target, metr):
 
 if __name__ == '__main__':
 
-    vgg = False
+    vgg = True
 
     if vgg:
         dataset_trained = ['imagenet', 'places365', 'cars', 'vggface', 'segnet', 'cifar10', 'random_init']
-        target = 'custom3D'
+        target = 'malaria'  # 'custom3D'
     else:
         # dataset_trained = ['mnist', 'fashionmnist', 'mnist_split1', 'mnist_split2', 'mnist_noise_struct', 'mnist_noise']  # 'cifar10'
         # target = 'mnist'
         dataset_trained = ['mnist_split1', 'mnist_split2', 'mnist_noise_struct']
         target = 'mnist'
 
-    metrics = ['ID'] # , 'SS', 'RSA']  # set ID, SS, RSA
+    metrics = ['ID', 'SS', 'RSA']  # , 'SS', 'RSA']  # set ID, SS, RSA
 
     for metr in metrics:
         # gets metrics and accs from dfs, calculates rank-corr to accs and plots correlation for all models
@@ -217,3 +218,33 @@ if __name__ == '__main__':
             rankcorr_and_plot_vgg(dataset_trained, target, metr)
         else:
             rankcorr_and_plot(dataset_trained, target, metr)
+
+
+
+
+
+    from sympy.utilities.iterables import multiset_permutations
+    import numpy as np
+    from scipy import stats
+
+    x = np.array([1,2,3,4,5,6,7])
+
+    correlations = []
+
+    for y in multiset_permutations(x):
+        corr, p_value = stats.spearmanr(x, y)
+        # print(corr, p_value)
+        correlations.append(corr)
+
+    print(np.percentile(correlations, 5), np.percentile(correlations, 95))
+    # -0.6785714285714287, 0.6785714285714287
+    print(np.percentile(correlations, 2.5), np.percentile(correlations, 97.5))
+    # -0.7500000000000002, 0.7500000000000002
+    print(np.percentile(correlations, 1), np.percentile(correlations, 99))
+    # -0.8571428571428573, 0.8571428571428574
+    print(np.percentile(correlations, 0.5), np.percentile(correlations, 99.5))
+    # -0.8928571428571429, 0.8928571428571429
+
+
+
+
