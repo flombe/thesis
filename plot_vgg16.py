@@ -89,6 +89,7 @@ def plot_acc_all():
             base_means = base_means.reindex(index=natsorted(base_means.index))
             base_stds = base_stds.reindex(index=natsorted(base_stds.index))
 
+            print(dataset, base_stds)
             # print(base_means, base_stds)
             base = ax1.plot(total, base_means, label=str(label))
             ax1.fill_between(total, base_means + 2 * np.array(base_stds), base_means - 2 * np.array(base_stds),
@@ -103,7 +104,7 @@ def plot_acc_all():
             print(label, test_acc)
             ax1.plot(total, test_acc, label=str(label))
 
-    plt.ylim((0, 100))
+    #plt.ylim((40, 100))
     plt.xscale("log")
 
     ax1.axis([0, 100, 0, 100])
@@ -235,80 +236,26 @@ if __name__ == '__main__':
 
     #######
     pre_dataset = 'segnet'
-    ft_dataset = 'malaria'
+    ft_dataset = 'pets'
     #######
 
-    if ft_dataset == 'custom3D':
+    if ft_dataset in ['custom3D', 'pets']:
         # ticks for plot - batches and epochs with bs=12 and 1200 samples
         checkpts = ['0', '0_1', '0_3', '0_10', '0_30', '1', '3', '10', '30', '100']
         xticks = [0.0, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 100]
     elif ft_dataset == 'malaria':
         # Malaria: additional _100 und _300 batches with bs=22 and 22000 samples
-        checkpts = ['0', '0_1', '0_3', '0_10', '0_30', '1', '3', '10', '30', '100']
-        xticks = [0.0, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 100]
+        checkpts = ['0', '0_1', '0_3', '0_10', '0_30', '0_100', '0_300', '1', '3', '10', '30', '100']
+        xticks = [0.0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 100]
     total = np.array(xticks)
 
     # plot_acc()
 
-    ## general plots over all datasets
-
-    # plot_acc_all()
+    # general plots over all datasets
+    plot_acc_all()
     # plot_acc_all_delta()
 
     # plot all metrics
-    plot_metric_all(['SS', 'ID', 'RSA'])
+    # plot_metric_all(['SS', 'ID', 'RSA'])
 
     # plot_fc2_acc_id()
-
-
-    ## to add random_init dfs of multiple folders
-    # dff = pd.DataFrame()
-    # for seed in range(1,4):
-    #     df_path = f'/mnt/antares_raid/home/bemmerl/thesis/models/vgg16/random_init/models_{seed}/df_pre_random_init+metrics'
-    #     dff = dff.append(pd.read_pickle(df_path), ignore_index=True)
-    # dff.to_pickle('/mnt/antares_raid/home/bemmerl/thesis/models/vgg16/random_init/df_pre_random_init+metrics')
-    # print('random_init dfs added')
-
-
-
-
-    ## quick check plot fting on malaria
-    checkpts = ['0', '0_1', '0_3', '0_10', '0_30','0_100', '0_300', '1', '3', '10', '30', '100']
-    xticks = [0.0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 100]
-    total = np.array(xticks)
-
-    pre_datasets = ['imagenet', 'places365', 'cars', 'vggface', 'segnet', 'random_init', 'cifar10', 'malaria']
-
-    fig1, ax1 = plt.subplots(figsize=(6, 7), dpi=150)
-    plt.title(f"Accuracies of VGG-16 models on {ft_dataset}")
-    plt.xlabel("Fine-Tuning/training Epochs (batch1 to epoch100)")
-    plt.ylabel("Test Accuracy")
-
-    for dataset in pre_datasets:
-
-        if dataset in [ft_dataset]:
-
-            df = pd.read_json('/mnt/antares_raid/home/bemmerl/thesis/models/malaria/models_1/pre_malaria_train_stats.json')
-            test_acc = df['pre_test_acc']
-            label = 'pre_malaria'
-            ax1.plot(total, test_acc, label=str(label))
-
-        else:
-            load_dir = join(models_dir, dataset, 'ft_' + ft_dataset)
-            label = f"ft_{dataset}_{ft_dataset}"
-            # load Acc from df
-            df = pd.read_pickle(join(load_dir, "df_" + label))
-            test_acc = df['ft_test_acc']
-
-            print(label, test_acc)
-            ax1.plot(total, test_acc, label=str(label))
-
-    # plt.ylim((0, 100))
-    plt.xscale("log")
-    plt.xlim((0, 100))
-    #ax1.axis([0, 100, 0, 100])
-    ax1.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda y, _: '{:.16g}'.format(y)))
-
-    plt.legend(loc=2)
-    plt.tight_layout()
-    plt.show()

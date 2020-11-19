@@ -1,11 +1,11 @@
 #!/bin/bash
-export CUDA_VISIBLE_DEVICES=0;  #####
+export CUDA_VISIBLE_DEVICES=1;  #####
 
-dataset='malaria'  # 'custom3D'  # fine-tune dataset
+dataset='pets'  # 'custom3D', 'malaria'  # fine-tune dataset
 epochs=100
-bs=22  # 12
+bs=58  # 12 # 22
 lr=0.0001  # set in optimizer
-run_name='ft_random_init_malaria'
-pre_dataset='random_init'  # 'imagenet'  # pre_trained models
+run_name='ft_cifar10_pets'
+pre_dataset='cifar10' # 'imagenet'  # pre_trained models
 
 python finetune_vgg16.py --dataset $dataset --epochs $epochs --bs $bs --lr $lr --run_name $run_name --pre_dataset $pre_dataset

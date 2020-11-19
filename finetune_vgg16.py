@@ -61,6 +61,12 @@ if dataset_name == 'malaria':
     train_loader = dataset.get_train_loader(batch_size=bs)
     test_loader = dataset.get_test_loader(batch_size=bs)
     class_names = dataset.class_names
+if dataset_name == 'pets':
+    n_out_classes = 37
+    dataset = datasets.Pets(dataset_dir=dataset_dir, device=device)
+    train_loader = dataset.get_train_loader(batch_size=bs)
+    test_loader = dataset.get_test_loader(batch_size=bs)
+    class_names = dataset.class_names
 
 # load model
 if pretrain_dataset == 'segnet':    model_path = join(source_dir, f'model_vgg16bn_pre_{pretrain_dataset}.pt')

@@ -4,9 +4,11 @@ import matplotlib.pyplot as plt
 import os
 from os.path import join
 from torchvision import datasets, models, transforms
-from datasets import Custom3D, Malaria
-import pandas as pd
+from datasets import Custom3D, Malaria, Pets
 import numpy as np
+from glob import glob
+import pickle
+from train_utils import set_seed
 
 # set device
 if torch.cuda.is_available():
@@ -22,11 +24,13 @@ def imshow(img):
     npimg = img.numpy()
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
 
-# refactor in get and plot functions()
+# to-do: refactor in get and plot functions()
 ######
 custom3D_compare_plot = False
 get_malaria = False
-get_pets = True
+get_pets = False
+get_pets2 = False
+print_pets = True
 ######
 
 
@@ -119,6 +123,8 @@ if get_pets:
     ## https://github.com/Skuldur/Oxford-IIIT-Pets-Pytorch/archive/master.zip
     ## https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz
 
+    set_seed(1)
+
     pretrain_dataset = 'imagenet'
     dataset_name = 'pets'
     bs = 6
@@ -129,7 +135,6 @@ if get_pets:
     source_dir = join(root_dir, 'models', pretrain_dataset, 'vgg16')
     output_dir = join(source_dir, 'ft_' + dataset_name)  # new folder for fine-tuned models
 
-    ## download from 'ftp://lhcftp.nlm.nih.gov/Open-Access-Datasets/Malaria/malaria_cell_classification_code.zip'
     # import requests
     #
     # print('Download Starting...')
@@ -139,27 +144,41 @@ if get_pets:
     #     output_file.write(r.content)
     # print('Download Completed!!!')
 
-    import zipfile
-    with zipfile.ZipFile(join(dataset_dir, 'pets.zip'), "r") as zip_ref:
-        zip_ref.extractall("target")
 
-    ## split into 80% train and 20% test folders
+    # # split into 80% train and 20% test folders
     # import splitfolders  # or import split_folders
     # # To only split into training and validation set, set a tuple to `ratio`, i.e, `(.8, .2)`.
     # splitfolders.ratio(join(dataset_dir, 'cell_images'), output=dataset_dir, seed=1, ratio=(.8, .2), group_prefix=None)
 
-    # dataset = Malaria(dataset_dir=dataset_dir, device=device)
-    # class_names = dataset.class_names
-    # train_loader = dataset.get_train_loader(batch_size=bs, shuffle=True)
-    # test_loader = dataset.get_test_loader(batch_size=bs)
-    #
-    # images, labels = next(iter(train_loader))
-    #
-    # fig = plt.figure(figsize=(9, 7))
-    # for i in range(6):
-    #     ax = fig.add_subplot(2, 3, i + 1, xticks=[], yticks=[], title=class_names[labels[i]])
-    #     imshow(images[i])
-    # plt.show()
 
 
+    ## class labels for pets dataset
+    # {'Sphynx': 0, 'Russian_Blue': 1, 'keeshond': 2, 'Maine_Coon': 3, 'Bombay': 4, 'wheaten_terrier': 5,
+    #  'Egyptian_Mau': 6, 'havanese': 7, 'yorkshire_terrier': 8, 'pomeranian': 9, 'shiba_inu': 10, 'Persian': 11,
+    #  'japanese_chin': 12, 'beagle': 13, 'Abyssinian': 14, 'Siamese': 15, 'chihuahua': 16, 'basset_hound': 17,
+    #  'american_pit_bull_terrier': 18, 'staffordshire_bull_terrier': 19, 'english_setter': 20, 'samoyed': 21,
+    #  'american_bulldog': 22, 'Bengal': 23, 'Ragdoll': 24, 'British_Shorthair': 25, 'newfoundland': 26, 'boxer': 27,
+    #  'Birman': 28, 'german_shorthaired': 29, 'scottish_terrier': 30, 'english_cocker_spaniel': 31, 'leonberger': 32,
+    #  'miniature_pinscher': 33, 'pug': 34, 'saint_bernard': 35, 'great_pyrenees': 36}
 
+
+if print_pets:
+
+    dataset_name = 'pets'
+    dataset_dir = join(os.getcwd(), 'data', dataset_name)
+    bs = 6
+
+    dataset = Pets(dataset_dir=dataset_dir, device=device)
+    class_names = dataset.class_names
+    print(class_names)
+    train_loader = dataset.get_train_loader(batch_size=bs, shuffle=True)
+    test_loader = dataset.get_test_loader(batch_size=bs)
+
+    images, labels = next(iter(train_loader))
+    print(images, labels)
+
+    fig = plt.figure(figsize=(9, 7))
+    for i in range(6):
+        ax = fig.add_subplot(2, 3, i + 1, xticks=[], yticks=[], title=class_names[labels[i]])
+        imshow(images[i])
+    plt.show()

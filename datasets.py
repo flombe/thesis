@@ -5,6 +5,8 @@ from torch.utils.data.sampler import BatchSampler
 from torchvision import datasets, transforms
 import numpy as np
 import os
+import pickle
+from glob import glob
 
 
 class Dataset:
@@ -263,6 +265,108 @@ class Malaria(Dataset):
     def name(self):
         return 'malaria'
 
+
+class Pets(Dataset):  # pretty hacky mess - but works
+    # https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz
+    def __init__(self, dataset_dir=None, device=None, transform=None):
+        self.dataset_dir = dataset_dir
+        self.transforms = transform
+        self.data = []
+
+        if dataset_dir and device:
+            self.loader_args = {'num_workers': 10, 'pin_memory': True} if device.type == 'cuda' else {}
+            self.data, self.class_names = self.get_data()
+
+            self.train_data, self.test_data = self.data_split(test_split=0.2)
+
+
+    def __getitem__(self, index):
+        img, label = self.data[index]
+
+        if self.transforms:
+            img = self.transforms(img)
+
+        return img, label
+
+    def __len__(self):
+        return len(self.data)
+
+    def get_train_loader(self, batch_size=32, shuffle=True):
+        train_loader = torch.utils.data.DataLoader(self.train_data, batch_size=batch_size, shuffle=shuffle,
+                                                   **self.loader_args)
+        return train_loader
+
+    def get_test_loader(self, batch_size=32, shuffle=True):
+        test_loader = torch.utils.data.DataLoader(self.test_data, batch_size=batch_size, shuffle=shuffle,
+                                                  **self.loader_args)
+        return test_loader
+
+    def get_train_transform(self):
+        transform = transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+        return transform
+
+    def get_test_transform(self):
+        transform = transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+        return transform
+
+    def get_data(self):
+        filenames = glob(os.path.join(self.dataset_dir, 'images/*.jpg'))
+
+        classes = set()
+        data = []
+        labels = []
+
+        # Load the images and get the classnames from the image path
+        from PIL import Image
+        for image in filenames:
+            class_name = image.rsplit("/", 1)[1].rsplit('_', 1)[0]
+            classes.add(class_name)
+            img = Image.open(image).convert('RGB')
+
+            data.append(img)
+            labels.append(class_name)
+
+        # convert classnames to indices
+        class2idx = {cl: idx for idx, cl in enumerate(classes)}
+        labels = torch.Tensor(list(map(lambda x: class2idx[x], labels))).long()
+        data = list(zip(data, labels))
+        return data, list(classes)
+
+    def data_split(self, test_split):
+        class_values = [[] for x in range(len(self.class_names))]
+
+        # create arrays for each class type
+        for d in self.data:
+            class_values[d[1].item()].append(d)
+
+        train_data = Pets(transform=self.get_train_transform())
+        test_data = Pets(transform=self.get_test_transform())
+
+        # put (1-test_split) of the images of each class into the train dataset
+        # and test_split of the images into the test dataset
+        for class_dp in class_values:
+            split_idx = int(len(class_dp) * (1 - test_split))
+            train_data.data += class_dp[:split_idx]
+            test_data.data += class_dp[split_idx:]
+
+        return train_data, test_data
+
+    def get_dataset_cls(self):
+        return datasets.Pets
+
+    def name(self):
+        return 'pets'
 
 
 class BalancedBatchSampler(BatchSampler):
