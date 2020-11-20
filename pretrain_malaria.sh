@@ -1,5 +1,5 @@
 #!/bin/bash
-export CUDA_VISIBLE_DEVICES=1;
+export CUDA_VISIBLE_DEVICES=0;
 
 dataset='malaria'
 epochs=100

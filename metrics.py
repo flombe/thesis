@@ -194,6 +194,28 @@ def rankcorr_and_plot_vgg(dataset_trained, target, metr):
     plt.show()
 
 
+def significance():
+    from sympy.utilities.iterables import multiset_permutations
+    import numpy as np
+    from scipy import stats
+
+    x = np.array([1, 2, 3, 4, 5, 6, 7])
+
+    correlations = []
+
+    for y in multiset_permutations(x):
+        corr, p_value = stats.spearmanr(x, y)
+        # print(corr, p_value)
+        correlations.append(corr)
+
+    print(np.percentile(correlations, 5), np.percentile(correlations, 95))
+    # -0.6785714285714287, 0.6785714285714287
+    print(np.percentile(correlations, 2.5), np.percentile(correlations, 97.5))
+    # -0.7500000000000002, 0.7500000000000002
+    print(np.percentile(correlations, 1), np.percentile(correlations, 99))
+    # -0.8571428571428573, 0.8571428571428574
+    print(np.percentile(correlations, 0.5), np.percentile(correlations, 99.5))
+    # -0.8928571428571429, 0.8928571428571429
 
 
 
@@ -218,32 +240,6 @@ if __name__ == '__main__':
             rankcorr_and_plot_vgg(dataset_trained, target, metr)
         else:
             rankcorr_and_plot(dataset_trained, target, metr)
-
-
-
-
-
-    from sympy.utilities.iterables import multiset_permutations
-    import numpy as np
-    from scipy import stats
-
-    x = np.array([1,2,3,4,5,6,7])
-
-    correlations = []
-
-    for y in multiset_permutations(x):
-        corr, p_value = stats.spearmanr(x, y)
-        # print(corr, p_value)
-        correlations.append(corr)
-
-    print(np.percentile(correlations, 5), np.percentile(correlations, 95))
-    # -0.6785714285714287, 0.6785714285714287
-    print(np.percentile(correlations, 2.5), np.percentile(correlations, 97.5))
-    # -0.7500000000000002, 0.7500000000000002
-    print(np.percentile(correlations, 1), np.percentile(correlations, 99))
-    # -0.8571428571428573, 0.8571428571428574
-    print(np.percentile(correlations, 0.5), np.percentile(correlations, 99.5))
-    # -0.8928571428571429, 0.8928571428571429
 
 
 

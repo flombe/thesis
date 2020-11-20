@@ -19,7 +19,7 @@ else:
     print("Devise used = ", device)
 
 
-dataset_name = 'vgg16/random_init'
+dataset_name = 'vgg16/malaria'
 
 root_dir = os.getcwd()
 dataset_dir = join(root_dir, 'data', dataset_name)
@@ -27,10 +27,10 @@ model_dir = join(root_dir, 'models', dataset_name)
 
 # to add multiple seed runs (e.g. on random_init) into one df
 df = pd.DataFrame()
-for seed in range(1, 4):
-    dff = pd.read_json(f'/mnt/antares_raid/home/bemmerl/thesis/models/pets/models_{seed}/pre_pets_train_stats.json')
+for seed in range(1, 10):
+    dff = pd.read_json(f'/mnt/antares_raid/home/bemmerl/thesis/models/vgg16/malaria/models_{seed}/pre_malaria_train_stats.json')
     dff['seed'] = seed
     df = df.append(dff, ignore_index=True)
-df.to_pickle(join(model_dir, f'ft_pets/df_ft_random_init_pets'))
+df.to_pickle(join(model_dir, f'df_pre_malaria'))
 
 

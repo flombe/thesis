@@ -275,8 +275,10 @@ def plotter(corr_dict, labels, dataset_trained, dataset_extracted,
 def load_calc_corr(dataset_trained, dataset_extracted, sorted, seed, layer=4):
     # load
     root_path = os.getcwd()
-    if dataset_extracted in ['custom3D', 'malaria']:
+    if dataset_extracted in ['custom3D', 'malaria', 'pets']:
         models_dir = join(root_path, 'models', 'vgg16', dataset_trained)
+        if dataset_trained == 'places365':
+            models_dir = join(root_path, 'outsorced_places365')
     else:
         models_dir = join(root_path, 'models', dataset_trained, 'models_' + str(seed))
         if not os.path.exists(models_dir):
@@ -370,9 +372,12 @@ def get_rdm_metric_vgg(source, target):
     if target == 'custom3D':
         block_size = 30
         class_count = 40
-    else:
+    elif target == 'malaria':
         block_size = 50
         class_count = 2
+    elif target == 'pets':
+        block_size = 30
+        class_count = 37
 
     layer_deltas = []
     total_deltas = []

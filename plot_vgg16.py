@@ -93,7 +93,7 @@ def plot_acc_all():
             # print(base_means, base_stds)
             base = ax1.plot(total, base_means, label=str(label))
             ax1.fill_between(total, base_means + 2 * np.array(base_stds), base_means - 2 * np.array(base_stds),
-                             color=base[0].get_color(), alpha=0.2)
+                             color=base[0].get_color(), alpha=0.1)
         else:
             load_dir = join(models_dir, dataset, 'ft_' + ft_dataset)
             label = f"ft_{dataset}_{ft_dataset}"
@@ -236,7 +236,7 @@ if __name__ == '__main__':
 
     #######
     pre_dataset = 'segnet'
-    ft_dataset = 'pets'
+    ft_dataset = 'malaria'
     #######
 
     if ft_dataset in ['custom3D', 'pets']:
@@ -252,7 +252,7 @@ if __name__ == '__main__':
     # plot_acc()
 
     # general plots over all datasets
-    plot_acc_all()
+    # plot_acc_all()
     # plot_acc_all_delta()
 
     # plot all metrics
