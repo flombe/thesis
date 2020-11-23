@@ -277,8 +277,8 @@ def load_calc_corr(dataset_trained, dataset_extracted, sorted, seed, layer=4):
     root_path = os.getcwd()
     if dataset_extracted in ['custom3D', 'malaria', 'pets']:
         models_dir = join(root_path, 'models', 'vgg16', dataset_trained)
-        if dataset_trained == 'places365':
-            models_dir = join(root_path, 'outsorced_places365')
+        # if dataset_trained == 'random_init':
+        #     models_dir = join(root_path, 'models', 'vgg16', dataset_trained, 'models_1')
     else:
         models_dir = join(root_path, 'models', dataset_trained, 'models_' + str(seed))
         if not os.path.exists(models_dir):

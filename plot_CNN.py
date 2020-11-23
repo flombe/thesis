@@ -10,78 +10,25 @@ from rsa import get_rdm_metric_vgg
 
 
 root_dir = os.getcwd()
-models_dir = join(root_dir, 'models', 'vgg16')
+models_dir = join(root_dir, 'models')
 
-# Plot Acc on VGG16 custom3D for different ft or pre cases
-def plot_acc():
-    plt.rcParams['axes.prop_cycle'] = plt.cycler(color=plt.cm.Paired.colors)  # set color scheme
-    pre_datasets = ['random_init', pre_dataset, 'custom3D']
+
+# Plot ft Acc on VGG16 custom3D for different pre_datasets
+def plot_acc_all():
+    pre_datasets = ['mnist', 'fashionmnist', 'mnist_split1', 'mnist_split2', 'mnist_noise_struct', 'mnist_noise', ft_dataset]
 
     fig1, ax1 = plt.subplots(figsize=(6, 7), dpi=150)
     ax1.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.1)
-    plt.title(f"Accuracies of VGG models on {ft_dataset} dataset")
+    plt.title(f"Accuracies of CNN models on {ft_dataset} dataset")
     plt.xlabel("Fine-tuning/training Epochs (batch1 to epoch100)")
     plt.ylabel("Test Accuracy")
 
     for dataset in pre_datasets:
 
         if dataset == ft_dataset:
-            load_dir = join(models_dir, dataset, 'models_1')
+            load_dir = join(models_dir, dataset)
             label = f'pre_{dataset}'
-            # load Acc from json file
-            with open(join(load_dir, label + '_train_stats.json'), 'r') as myfile:
-                data = myfile.read()
-            test_acc = json.loads(data)['pre_test_acc']
-        else:
-            load_dir = join(models_dir, dataset, 'ft_' + ft_dataset)
-            label = f"ft_{dataset}_{ft_dataset}"
-            # load Acc from df
-            df = pd.read_pickle(join(load_dir, "df_" + label))
-            test_acc = df['ft_test_acc']
-        print(test_acc)
-        ax1.plot(total, test_acc, label=str(label))
-
-    # additional
-    for add_case in ['_lastlayer', '_3conv', '_onlyfc']:
-        load_dir = join(models_dir, pre_dataset, 'ft_' + ft_dataset + add_case)
-        label = f"ft_{pre_dataset}_{ft_dataset}{add_case}"
-        # load Acc from df
-        df = pd.read_pickle(join(load_dir, "df_" + label))
-        test_acc = df['ft_test_acc']
-
-        ax1.plot(total, test_acc, label=str(label))
-
-
-    plt.ylim((0, 100))
-    plt.xscale("log")
-
-    ax1.axis([0, 100, 0, 100])
-    ax1.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda y, _: '{:.16g}'.format(y)))
-
-    plt.legend(loc=2)
-    plt.tight_layout()
-    plt.show()
-
-# Plot ft Acc on VGG16 custom3D for different pre_datasets
-def plot_acc_all():
-    pre_datasets = ['imagenet', 'places365', 'cars', 'vggface', 'segnet', 'cifar10', 'random_init', ft_dataset]
-
-    fig1, ax1 = plt.subplots(figsize=(6, 7), dpi=150)
-    ax1.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.1)
-    plt.title(f"Accuracies of VGG models on {ft_dataset} dataset")
-    plt.xlabel("Fine-tuning/training Epochs (batch1 to epoch100)")
-    plt.ylabel("Test Accuracy")
-
-    for dataset in pre_datasets:
-
-        if dataset in ['random_init', ft_dataset]:
-            load_dir = join(models_dir, dataset, 'ft_' + ft_dataset)
-            label = f"ft_{dataset}_{ft_dataset}"
-            case = 'ft'
-            if dataset == ft_dataset:
-                load_dir = join(models_dir, dataset)
-                label = f'pre_{dataset}'
-                case = 'pre'
+            case = 'pre'
 
             # load Acc from df
             df = pd.read_pickle(join(load_dir, "df_" + label))
@@ -252,13 +199,11 @@ if __name__ == '__main__':
         xticks = [0.0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 100]
     total = np.array(xticks)
 
-    # plot_acc()
-
     # general plots over all datasets
-    # plot_acc_all()
+    plot_acc_all()
     # plot_acc_all_delta()
 
     # plot all metrics
-    plot_metric_all(['SS', 'ID', 'RSA'])
+    # plot_metric_all(['SS', 'ID', 'RSA'])
 
     # plot_fc2_acc_id()

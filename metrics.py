@@ -82,7 +82,7 @@ def rankcorr_and_plot(dataset_trained, target, metr):
         print(dataset)
 
         fig, ax = plt.subplots(figsize=(6, 7), dpi=150)
-        ax.set_title(f'Spearman rank-corr. of {metr} metric to post-ft Acc \n [extract: {target}]', weight='semibold')
+        ax.set_title(f'Spearman Corr. of {metr} metric to ft-Acc. on {target} dataset')
         ax.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.08)
 
         # for all different checkpoints
@@ -110,8 +110,8 @@ def rankcorr_and_plot(dataset_trained, target, metr):
             else: a = 1
             ax.plot(range(len(xticks)), corr[1:], '.-', label=checkpts[i], alpha=a)  # 'in' layer not useful
 
-        plt.ylabel("Rank-Corr Rho", weight='semibold')
-        plt.xlabel("Layers", weight='semibold')
+        plt.ylabel("Rank Correlation Coefficient")
+        plt.xlabel("Model Layers")
         plt.xticks(range(len(xticks)), labels=xticks)
         plt.ylim((-1, 1))
 
@@ -159,7 +159,8 @@ def rankcorr_and_plot_vgg(dataset_trained, target, metr):
     metrics_T, accs_T = get_values_from_df_vgg(dataset_trained, target, metr)
 
     checkpts = ['0', '0_1', '0_3', '0_10', '0_30', '1', '3', '10', '30', '100']
-    if target == 'malaria':  checkpts = ['0', '0_1', '0_3', '0_10', '0_30','0_100', '0_300', '1', '3', '10', '30', '100']
+    if target == 'malaria':
+        checkpts = ['0', '0_1', '0_3', '0_10', '0_30', '0_100', '0_300', '1', '3', '10', '30', '100']
     xticks = ['pool1', 'pool2', 'pool3', 'pool4', 'pool5']
 
     # just for readability of df to check values
@@ -167,7 +168,7 @@ def rankcorr_and_plot_vgg(dataset_trained, target, metr):
                               4: f'{metr}_pool4', 5: f'{metr}_pool5'}, inplace=True)
 
     fig, ax = plt.subplots(figsize=(6, 7), dpi=150)
-    ax.set_title(f'Spearman rank-corr. of {metr} metric to post-ft Acc \n [extract: {target}]', weight='semibold')
+    ax.set_title(f'Spearman Corr. of {metr} metric to ft-Acc. on {target} dataset')
     ax.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.08)
 
     # for all different checkpoints
@@ -185,8 +186,8 @@ def rankcorr_and_plot_vgg(dataset_trained, target, metr):
         else: a = 1
         ax.plot(range(len(xticks)), corr[1:6], '.-', label=checkpts[i], alpha=a)  # 'in' layer not useful
 
-    plt.ylabel("Rank-Corr Rho", weight='semibold')
-    plt.xlabel("Layers", weight='semibold')
+    plt.ylabel("Rank Correlation Coefficient")
+    plt.xlabel("Model Layers")
     plt.xticks(range(len(xticks)), labels=xticks)
     plt.ylim((-1, 1))
 
@@ -195,6 +196,7 @@ def rankcorr_and_plot_vgg(dataset_trained, target, metr):
 
 
 def significance():
+    # permutation
     from sympy.utilities.iterables import multiset_permutations
     import numpy as np
     from scipy import stats
@@ -208,6 +210,7 @@ def significance():
         # print(corr, p_value)
         correlations.append(corr)
 
+    print(correlations)
     print(np.percentile(correlations, 5), np.percentile(correlations, 95))
     # -0.6785714285714287, 0.6785714285714287
     print(np.percentile(correlations, 2.5), np.percentile(correlations, 97.5))
@@ -218,6 +221,20 @@ def significance():
     # -0.8928571428571429, 0.8928571428571429
 
 
+    # Fisher
+    r = 0.9
+    n = 7
+    F = np.arctanh(r)
+    # z-score
+    z = np.sqrt((n-3)/1.06) * F
+    print(z)
+
+    # t-distribution
+    t = np.sqrt((n-2)/(1-np.square(r)))
+    import scipy
+    print(t, scipy.stats.t(t))
+
+
 
 if __name__ == '__main__':
 
@@ -225,7 +242,7 @@ if __name__ == '__main__':
 
     if vgg:
         dataset_trained = ['imagenet', 'places365', 'cars', 'vggface', 'segnet', 'cifar10', 'random_init']
-        target = 'malaria'  # 'custom3D'
+        target = 'pets'  # 'custom3D'
     else:
         # dataset_trained = ['mnist', 'fashionmnist', 'mnist_split1', 'mnist_split2', 'mnist_noise_struct', 'mnist_noise']  # 'cifar10'
         # target = 'mnist'
@@ -242,5 +259,5 @@ if __name__ == '__main__':
             rankcorr_and_plot(dataset_trained, target, metr)
 
 
-
+    significance()
 

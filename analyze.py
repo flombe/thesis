@@ -6,7 +6,7 @@ import os
 from os.path import join
 import pandas as pd
 
-from IDNN.intrinsic_dimension import estimate, block_analysis
+from IDNN.intrinsic_dimension import estimate
 import sum_of_squares
 import rsa
 
@@ -72,42 +72,44 @@ if __name__ == '__main__':
         print("Devise used = ", device)
 
     #######
-    pre_dataset = 'places365'
+    pre_dataset = 'imagenet'
     target_dataset = 'pets'  # extracted on
     #######
 
     root_dir = os.getcwd()
     if target_dataset in ['custom3D', 'malaria', 'pets']:
         models_dir = join(root_dir, 'models', 'vgg16', pre_dataset)
+        # if pre_dataset == 'random_init':
+        #     models_dir = join(root_dir, 'models', 'vgg16', pre_dataset, 'models_1')
     else:
         models_dir = join(root_dir, 'models', pre_dataset)
 
-    # # load df
-    # df_path = join(models_dir, 'df_pre_' + pre_dataset + '+metrics')  # + '+metrics')
-    # df = pd.read_pickle(df_path)
-    #
-    # # calc ID, SS and add to df
-    # print(f'>>> Calculate ID, SS for models pre-trained on {pre_dataset}, on target {target_dataset} <<<')
+    # load df
+    df_path = join(models_dir, 'df_pre_' + pre_dataset + '+metrics')  # + '+metrics')
+    df = pd.read_pickle(df_path)
 
-    # if target_dataset in ['custom3D', 'malaria', 'pets']:
-    #     extract = torch.load(join(models_dir, target_dataset + '_extracted.pt'))
-    #     id, ss = calc_ID_SS(extract)
-    # else:
-    #     id, ss = calc_ID_SS_seeds(target_dataset)
-    # print(id, ss)
-    # df[f'ID_{target_dataset}'] = pd.Series(id)
-    # df[f'SS_{target_dataset}'] = pd.Series(ss)
-    #
-    # df.to_pickle(df_path)  # safty save if prob with RSA calc
+    # calc ID, SS and add to df
+    print(f'>>> Calculate ID, SS for models pre-trained on {pre_dataset}, on target {target_dataset} <<<')
+
+    if target_dataset in ['custom3D', 'malaria', 'pets']:
+        extract = torch.load(join(models_dir, target_dataset + '_extracted.pt'))
+        id, ss = calc_ID_SS(extract)
+    else:
+        id, ss = calc_ID_SS_seeds(target_dataset)
+    print(id, ss)
+    df[f'ID_{target_dataset}'] = pd.Series(id)
+    df[f'SS_{target_dataset}'] = pd.Series(ss)
+
+    df.to_pickle(df_path)  # safty save if prob with RSA calc
 
     # RSA
     if target_dataset in ['custom3D', 'malaria', 'pets']:
         rdm_metric = rsa.get_rdm_metric_vgg(pre_dataset, target_dataset)
     else:
         rdm_metric = rsa.get_rdm_metric(pre_dataset, target_dataset)  # diag-nondiag corr delta
-    # df[f'RSA_{target_dataset}'] = [rdm_metric]
-    # # df.insert(13, 'RSA_mnist', [rdm_metric])
-    #
-    # df.to_pickle(df_path)
-    #
-    # print(' ---- \n>>> df saved with metrics at ', df_path)
+    df[f'RSA_{target_dataset}'] = [rdm_metric]
+    # df.insert(13, 'RSA_mnist', [rdm_metric])
+
+    df.to_pickle(df_path)
+
+    print(' ---- \n>>> df saved with metrics at ', df_path)
