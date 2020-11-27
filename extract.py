@@ -12,9 +12,9 @@ import numpy as np
 train_utils.set_seed(1)
 
 # extract activations on all layers for 500 fixed samples
-samples = 1110   # 1200  # 100
+samples = 500   # 1200  # 100  #1110
 batch_size = 1
-unique_labels = 37  # 10 for mnist like datasets, 40 for custom3D, 2 for malaria, 37 for pets
+unique_labels = 10  # 10 for mnist like datasets, 40 for custom3D, 2 for malaria, 37 for pets
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 

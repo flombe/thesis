@@ -72,8 +72,8 @@ if __name__ == '__main__':
         print("Devise used = ", device)
 
     #######
-    pre_dataset = 'imagenet'
-    target_dataset = 'pets'  # extracted on
+    pre_dataset = 'fashionmnist'
+    target_dataset = 'fashionmnist'  # extracted on
     #######
 
     root_dir = os.getcwd()
@@ -91,6 +91,11 @@ if __name__ == '__main__':
     # calc ID, SS and add to df
     print(f'>>> Calculate ID, SS for models pre-trained on {pre_dataset}, on target {target_dataset} <<<')
 
+    if f'ID_{target_dataset}' in df.columns:
+        print(df['ID_{target_dataset}'])
+    if f'SS_{target_dataset}' in df.columns:
+        print(df['SS_{target_dataset}'])
+
     if target_dataset in ['custom3D', 'malaria', 'pets']:
         extract = torch.load(join(models_dir, target_dataset + '_extracted.pt'))
         id, ss = calc_ID_SS(extract)
@@ -102,13 +107,16 @@ if __name__ == '__main__':
 
     df.to_pickle(df_path)  # safty save if prob with RSA calc
 
+    if f'RSA_{target_dataset}' in df.columns:
+        print(df['RSA_{target_dataset}'])
+
     # RSA
     if target_dataset in ['custom3D', 'malaria', 'pets']:
         rdm_metric = rsa.get_rdm_metric_vgg(pre_dataset, target_dataset)
     else:
         rdm_metric = rsa.get_rdm_metric(pre_dataset, target_dataset)  # diag-nondiag corr delta
-    df[f'RSA_{target_dataset}'] = [rdm_metric]
-    # df.insert(13, 'RSA_mnist', [rdm_metric])
+    # df[f'RSA_{target_dataset}'] = [rdm_metric]  # for VGG
+    df[f'RSA_{target_dataset}'] = pd.Series(rdm_metric)
 
     df.to_pickle(df_path)
 

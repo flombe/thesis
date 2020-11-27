@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from natsort import natsorted
+import sklearn.metrics
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -21,14 +22,14 @@ def unnesting(df, explode, axis):
 
 def get_values_from_df(dataset_trained, target, metr):
     metrics = pd.DataFrame()
-    accs = pd.DataFrame()
+    accs = pd.DataFrame(columns=['model', 'AUC'])
 
     for dataset in dataset_trained:
         root_dir = os.getcwd()
         models_dir = join(root_dir, 'models', dataset)
 
         # load df
-        df_pre = pd.read_pickle(join(models_dir, 'df_pre_' + dataset + '+metrics'))  # df 12x10 rows
+        df_pre = pd.read_pickle(join(models_dir, 'df_pre_' + dataset + '+metrics'))  # df 120 rows
 
         metric_mean = df_pre.groupby('model_name', sort=False)[f'{metr}_{target}'].apply(lambda g: np.mean(g.values.tolist(), axis=0))
         # print('metric mean of 10 seeds: ', metric_mean)  # 12 x [7]
@@ -38,18 +39,25 @@ def get_values_from_df(dataset_trained, target, metr):
         # print('metric std: ', metric_std.values.tolist())
 
         # collect all ids in one df
-        metrics[dataset] = metric_mean.values  # metric_mean[:5] if leave out fc layers
+        metric_mean = pd.DataFrame(metric_mean)
+        metrics = metrics.append(metric_mean)  # 72 x [7]
 
-        # collect all acc in one df
+        # collect all Acc in one df
         df_ft = join(models_dir, f'ft_{target}', f'df_ft_{dataset}_{target}')  # 144x10
         df_ft = pd.read_pickle(df_ft)
-        test_acc_mean = df_ft.groupby('model_name', sort=False)['ft_test_acc'].apply(lambda g: np.mean(g.values.tolist(), axis=0))
-        # print('ft-test Acc mean of 10 seeds: ', test_acc_mean)  # 144
-        accs[dataset] = test_acc_mean.values
+        # df_ft = df_ft.loc[df_ft['ft_epochs'] == 100]  # only get values for 100 epoch trained (like on VGG)
+        test_acc_mean = df_ft.groupby(['model_name', 'ft_epochs'], sort=False)['ft_test_acc'].apply(lambda g: np.mean(g.values.tolist(), axis=0))
+        test_acc_mean = pd.DataFrame(test_acc_mean)
+        print(test_acc_mean.head())
 
-    print('Accuracys: ', accs)  # [144 rows x 3 columns]
-    print('----- Metrics: ------ ')  # [12 rows x 3 columns] with [7] lists
-    print(metrics)
+        checkpts = [0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 100]
+        for i in range(len(checkpts)):
+            sub_df = test_acc_mean.iloc[(i*12):((i + 1) * 12)]
+            sub_name = sub_df.index[0][0]
+            accs.loc[len(accs)] = [sub_name[:-5], sklearn.metrics.auc(checkpts, sub_df['ft_test_acc'])]
+
+    print('--- Accuracys --- ', accs)  # 72 rows x 2 (model, AUC)
+    print('--- Metrics: --- ', metrics)  # 72 rows, 1 column with [7] list
 
     return metrics, accs
     # return metrics.transpose(), accs.transpose()
@@ -238,18 +246,18 @@ def significance():
 
 if __name__ == '__main__':
 
-    vgg = True
+    vgg = False
 
     if vgg:
         dataset_trained = ['imagenet', 'places365', 'cars', 'vggface', 'segnet', 'cifar10', 'random_init']
-        target = 'pets'  # 'custom3D'
+        target = 'pets'  # 'custom3D' 'malaria'
     else:
-        # dataset_trained = ['mnist', 'fashionmnist', 'mnist_split1', 'mnist_split2', 'mnist_noise_struct', 'mnist_noise']  # 'cifar10'
-        # target = 'mnist'
-        dataset_trained = ['mnist_split1', 'mnist_split2', 'mnist_noise_struct']
-        target = 'mnist'
+        dataset_trained = ['mnist', 'fashionmnist', 'mnist_split1', 'mnist_split2', 'mnist_noise_struct', 'mnist_noise']
+        target = 'mnist'  # 'fashionmnist'
 
     metrics = ['ID', 'SS', 'RSA']  # , 'SS', 'RSA']  # set ID, SS, RSA
+
+    metrics, accs = get_values_from_df(dataset_trained, target, 'ID')
 
     for metr in metrics:
         # gets metrics and accs from dfs, calculates rank-corr to accs and plots correlation for all models
@@ -259,5 +267,5 @@ if __name__ == '__main__':
             rankcorr_and_plot(dataset_trained, target, metr)
 
 
-    significance()
+    # significance()
 

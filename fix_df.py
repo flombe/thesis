@@ -69,7 +69,7 @@ model_dir = join(root_dir, 'models', dataset_name)
 
 
 # df = pd.DataFrame()
-# source_dir = join(root_dir, 'models/mnist/ft_mnist')
+# source_dir = join(root_dir, 'models/mnist_noise_struct/ft_fashionmnist')
 # for seed in range(1, 11):
 #     print(seed)
 #     model_dir = join(source_dir, 'models_' + str(seed))
@@ -88,11 +88,11 @@ model_dir = join(root_dir, 'models', dataset_name)
 #          'batch_size': 64,
 #          'lr': 0.0001}
 # df.insert(4, 'ft_param', [param] * len(df))
-# df.to_pickle(join(source_dir, f'df_ft_mnist_mnist2'))
+# df.to_pickle(join(source_dir, f'df_ft_mnist_noise_struct_fashionmnist'))
 
 
 # ## rename the model_names (error while ft, not changed name)
-# df = pd.read_pickle('/mnt/antares_raid/home/bemmerl/thesis/models/mnist_noise_struct/ft_fashionmnist/df_ft_mnist_noise_struct_mnist')
+# df = pd.read_pickle('/mnt/antares_raid/home/bemmerl/thesis/models/mnist_noise_struct/ft_fashionmnist/df_ft_mnist_noise_struct_fashionmnist')
 # for i in range(len(df)):
 #     # print(df['model_name'][i])
 #     check = df['model_name'][i].split('model_ft_mnist_noise_struct_mnist', 1)[1]

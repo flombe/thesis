@@ -49,11 +49,11 @@ def plot_acc_all():
                 m.append(means['model_' + label + '_' + pre + '_' + ft + '.pt'])
                 s.append(stds['model_' + label + '_' + pre + '_' + ft + '.pt'])
             if pre == '100':
-                ax1.plot(total, m, label=str(label), color=color, alpha=alpha, linewidth=0.5)  # linewidth=0.7
-                ax1.fill_between(total, m + 2 * np.array(s), m - 2 * np.array(s), color=color, alpha=0.1)
+                ax1.plot(total, m, label=str(label), color=color, alpha=alpha, linewidth=1)  # linewidth=0.7
+                ax1.fill_between(total, m + 2 * np.array(s), m - 2 * np.array(s), color=color, alpha=0.07)
             ax1.plot(total, m, color=color, alpha=alpha, linewidth=0.5)
 
-    plt.xscale("log")
+    #plt.xscale("log")
     ax1.axis([0, 100, 10, 100])
     ax1.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda y, _: '{:.16g}'.format(y)))
     ax1.xaxis.set_tick_params(which='minor', bottom=False)
@@ -76,6 +76,56 @@ def plot_acc_all():
 
     plt.tight_layout()
     plt.show()
+
+def plot_acc_all_detail(checkpt='100'):
+    pre_datasets = ['mnist', 'fashionmnist', 'mnist_split1', 'mnist_split2', 'mnist_noise_struct', 'mnist_noise']
+
+    fig1, ax1 = plt.subplots(figsize=(6, 7), dpi=200, constrained_layout=True)
+    ax1.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.1)
+    plt.title(f"Fine-tune Accuracies of CNN models on {ft_dataset} dataset")
+    plt.xlabel("Fine-tuning Epochs (batch1 to epoch100)")
+    plt.ylabel("Test Accuracy")
+
+    colors = plt.cm.rainbow(np.linspace(0, 1, len(pre_datasets)))
+    for dataset, color in zip(pre_datasets, colors):
+        load_dir = join(models_dir, dataset, f'ft_{ft_dataset}')
+        label = f'ft_{dataset}_{ft_dataset}'
+        case = 'ft'
+
+        # load Acc from df
+        df = pd.read_pickle(join(load_dir, "df_" + label))
+        # get mean and std 'ft_test_acc' over model_names for 10 seeds
+        means = df.groupby('model_name')[f'{case}_test_acc'].apply(lambda g: np.mean(g.values.tolist(), axis=0))
+        stds = df.groupby('model_name')[f'{case}_test_acc'].apply(lambda g: np.std(g.values.tolist(), axis=0))
+        means = means.reindex(index=natsorted(means.index))
+        stds = stds.reindex(index=natsorted(stds.index))
+        # print(dataset)
+        # print(means, stds)
+        if ft_dataset == 'fashionmnist' and dataset == 'mnist': label = label[:-5]  # naming in mnist ft is only 'fashion'
+
+        alphas = np.linspace(0.1, 1, len(checkpts))
+        for pre, alpha in zip(checkpts, alphas):
+            print(pre, color, alpha)
+            m = []
+            s = []
+            for ft in checkpts:
+                m.append(means['model_' + label + '_' + pre + '_' + ft + '.pt'])
+                s.append(stds['model_' + label + '_' + pre + '_' + ft + '.pt'])
+            if pre == checkpt:
+                ax1.plot(total[5:], m[5:], label=str(label), color=color, alpha=alpha, linewidth=1)  # linewidth=0.7
+                ax1.fill_between(total[5:], (m + 2 * np.array(s))[5:], (m - 2 * np.array(s))[5:], color=color, alpha=0.07)
+            # ax1.plot(total, m, color=color, alpha=alpha, linewidth=0.5)
+
+    plt.xscale("log")
+    # ax1.axis([0.1, 100, 85, 100])
+    plt.xlim([0.1, 100])
+    ax1.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda y, _: '{:.16g}'.format(y)))
+    ax1.xaxis.set_tick_params(which='minor', bottom=False)
+
+    plt.legend() # loc='lower right')
+    plt.tight_layout()
+    plt.show()
+
 
 # Plot Acc Delta: post-ft vs. base-case  +std
 def plot_acc_all_delta():
@@ -226,7 +276,7 @@ if __name__ == '__main__':
 
     #######
     pre_dataset = 'mnist'
-    ft_dataset = 'fashionmnist'
+    ft_dataset = 'mnist'
     #######
 
     checkpts = ['0', '0_1', '0_3', '0_10', '0_30', '0_100', '0_300', '1', '3', '10', '30', '100']
@@ -234,7 +284,8 @@ if __name__ == '__main__':
     total = np.array(xticks)
 
     ## general plots over all datasets
-    # plot_acc_all()
+    plot_acc_all()
+    # plot_acc_all_detail('100')
     # plot_acc_all_delta()
 
     ## plot all metrics

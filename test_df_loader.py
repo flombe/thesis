@@ -23,7 +23,7 @@ models_dir = join(root_dir, 'models', trained_dataset)
 # load df
 # df_path = join(models_dir, f'df_pre_{trained_dataset}+metrics')
 #df_path = join(models_dir, f'ft_malaria/df_ft_random_init_malaria')
-df_path = '/mnt/antares_raid/home/bemmerl/thesis/models/mnist/ft_fashionmnist/df_ft_mnist_fashionmnist'
+df_path = '/mnt/antares_raid/home/bemmerl/thesis/models/mnist_noise_struct/ft_fashionmnist/df_ft_mnist_noise_struct_fashionmnist'
 df = pd.read_pickle(df_path)
 
 

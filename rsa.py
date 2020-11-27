@@ -296,6 +296,14 @@ def load_calc_corr(dataset_trained, dataset_extracted, sorted, seed, layer=4):
     path = join(models_dir, dataset_extracted + f'_corr_dict_layer{layer}.pik')
     if sorted==True: path = join(models_dir, dataset_extracted + f'_sorted_corr_dict_layer{layer}.pik')
 
+
+    # a = time.time()
+    # corr_dict_layer = calculate_activations_correlations(models, layer=layer, sorted=sorted)
+    # print('time for corr_dict calculation: ', time.time() - a)
+    # with open(str(path), 'wb') as f:
+    #     dill.dump(corr_dict_layer, f)
+    # print(f'{path} saved.')
+
     if not os.path.exists(path):
         # on out of encoder, so layer=4, or otherwise specified
         a = time.time()
@@ -365,7 +373,9 @@ def get_rdm_metric(source, target):
         print(len(total_deltas))  # 12
 
     print(len(total_deltas))  # 120
-    return total_deltas
+    print(total_deltas)
+    return total_deltas  ### fix output
+
 
 # for vgg16 architecture
 def get_rdm_metric_vgg(source, target):
