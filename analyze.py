@@ -72,7 +72,7 @@ if __name__ == '__main__':
         print("Devise used = ", device)
 
     #######
-    pre_dataset = 'fashionmnist'
+    pre_dataset = 'mnist_noise_struct'
     target_dataset = 'fashionmnist'  # extracted on
     #######
 
@@ -92,9 +92,9 @@ if __name__ == '__main__':
     print(f'>>> Calculate ID, SS for models pre-trained on {pre_dataset}, on target {target_dataset} <<<')
 
     if f'ID_{target_dataset}' in df.columns:
-        print(df['ID_{target_dataset}'])
+        print(df[f'ID_{target_dataset}'])
     if f'SS_{target_dataset}' in df.columns:
-        print(df['SS_{target_dataset}'])
+        print(df[f'SS_{target_dataset}'])
 
     if target_dataset in ['custom3D', 'malaria', 'pets']:
         extract = torch.load(join(models_dir, target_dataset + '_extracted.pt'))
@@ -108,7 +108,7 @@ if __name__ == '__main__':
     df.to_pickle(df_path)  # safty save if prob with RSA calc
 
     if f'RSA_{target_dataset}' in df.columns:
-        print(df['RSA_{target_dataset}'])
+        print(df[f'RSA_{target_dataset}'])
 
     # RSA
     if target_dataset in ['custom3D', 'malaria', 'pets']:

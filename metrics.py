@@ -48,7 +48,6 @@ def get_values_from_df(dataset_trained, target, metr):
         # df_ft = df_ft.loc[df_ft['ft_epochs'] == 100]  # only get values for 100 epoch trained (like on VGG)
         test_acc_mean = df_ft.groupby(['model_name', 'ft_epochs'], sort=False)['ft_test_acc'].apply(lambda g: np.mean(g.values.tolist(), axis=0))
         test_acc_mean = pd.DataFrame(test_acc_mean)
-        print(test_acc_mean.head())
 
         checkpts = [0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 100]
         for i in range(len(checkpts)):
@@ -63,68 +62,79 @@ def get_values_from_df(dataset_trained, target, metr):
     # return metrics.transpose(), accs.transpose()
 
 def rankcorr_and_plot(dataset_trained, target, metr):
-
+    # load metrics and accs from dfs
     metrics, accs = get_values_from_df(dataset_trained, target, metr)
 
-    # print(metrics_T)
-    # print(metrics_T[0])
-
-    # print('transponse trial')
-    dff = pd.DataFrame(metrics)
-    # dfff = dfff.explode('mnist_split1')
-    # dfff = dfff.explode('mnist_split2')
-    # dfff = dfff.explode('mnist_noise_struct')
-    # print(dfff)
-    # print(dfff.transpose())
-    #print(dfff.iloc[0, :].apply(pd.Series.explode))
-    # print(metrics.iloc[0, :])
-    # print(metrics.iloc[0,:].transpose())
+    dff = unnesting(metrics, metrics.columns, axis=0)  # explode list in column into multiple columns
+    dff = dff.drop(f'{metr}_{target}0', axis=1)
+    dff['AUC'] = accs['AUC'].values  # append AUC ft-Acc values on df (same sorting for both)
 
     checkpts = ['0', '0_1', '0_3', '0_10', '0_30', '0_100', '0_300', '1', '3', '10', '30', '100']
     xticks = ['conv1', 'pool1', 'conv2', 'pool2', 'fc1', 'out']
-    # metrics_T.rename(columns={0: f'{metr}_in', 1: f'{metr}_conv1', 2: f'{metr}_pool1', 3: f'{metr}_conv2',
-    #                           4: f'{metr}_pool2', 5: f'{metr}_fc1'}, inplace=True)
+
+    fig, ax = plt.subplots(figsize=(6, 7), dpi=150)
+    ax.set_title(f'Spearman Corr. of {metr} metric to ft-Acc. on {target} dataset')
+    ax.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.08)
+
+    corr = dff.corr(method="spearman").iloc[-1]
+    ax.plot(range(len(xticks)), corr[:-1], '.-', label='all')  # last value is corr with itself
+
+    plt.ylabel("Rank Correlation Coefficient")
+    plt.xlabel("Model Layers")
+    plt.xticks(range(len(xticks)), labels=xticks)
+    plt.ylim((-1, 1))
+    plt.legend(frameon=True, fancybox=True, facecolor='white', title='ft duration')  # loc="lower left",
+    plt.show()
+
+    # split data and plot for every pre-trained dataset the rank-corr on only 12 models
+
+    fig, ax = plt.subplots(figsize=(6, 7), dpi=150)
+    ax.set_title(f'Spearman Corr. of {metr} metric to ft-Acc. on {target} dataset')
+    ax.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.08)
+
+    # for all different checkpoints
+    for i in range(len(dataset_trained)):
+        sub_df = dff.iloc[i*12:(i+1)*12, :]  # ever dataset with 12 rows
+        print(sub_df)
+        rank_corr = sub_df.corr(method='spearman')  # just to see check whole corr matrix
+
+        corr = sub_df.corr(method="spearman").iloc[-1]
+        ax.plot(range(len(xticks)), corr[:-1], '.-', label=dataset_trained[i])  # 'in' layer not useful
+
+    plt.ylabel("Rank Correlation Coefficient")
+    plt.xlabel("Model Layers")
+    plt.xticks(range(len(xticks)), labels=xticks)
+    plt.ylim((-1, 1))
+    plt.legend(frameon=True, fancybox=True, facecolor='white', title='ft duration')  # loc="lower left",
+    plt.show()
 
 
-    for dataset in metrics.columns:
-        print(dataset)
 
-        fig, ax = plt.subplots(figsize=(6, 7), dpi=150)
-        ax.set_title(f'Spearman Corr. of {metr} metric to ft-Acc. on {target} dataset')
-        ax.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.08)
-
-        # for all different checkpoints
-        for i in range(len(checkpts)):  # 12 checkpts each with 12 values
-            # append Acc's of checkpoint i
-            print(dff)
-            metrics_model = dff.iloc[0,:]
-            print(metrics_model)
-            me = pd.DataFrame(metrics_model)
-            met = unnesting(me, me.columns, axis=0)
-            print(met)
-            accs_model = accs[dataset][i:i+len(met)]
-            print(accs_model)
-
-            df = pd.concat(met, accs_model, axis=1)
-            print(df)
-
-            ## readability
-            df.rename(columns={df.columns[-1]: f'Acc{checkpts[i]}'}, inplace=True)
-            df_sorted = df.sort_values(by=df.columns[-1], ascending=False)  # for rank-corr not necessary
-            rank_corr = df_sorted.corr(method='spearman')  # just to see check whole corr matrix
-
-            corr = df_sorted.corr(method="spearman").iloc[-1]
-            if i < 7: a = 0.2
-            else: a = 1
-            ax.plot(range(len(xticks)), corr[1:], '.-', label=checkpts[i], alpha=a)  # 'in' layer not useful
-
-        plt.ylabel("Rank Correlation Coefficient")
-        plt.xlabel("Model Layers")
-        plt.xticks(range(len(xticks)), labels=xticks)
-        plt.ylim((-1, 1))
-
-        plt.legend(frameon=True, fancybox=True, facecolor='white', title='ft duration')  # loc="lower left",
-        plt.show()
+    # # split data and plot for every pre-trained dataset the rank-corr on only 12 models
+    # for dataset in dataset_trained:
+    #     print(dataset)
+    #
+    #     fig, ax = plt.subplots(figsize=(6, 7), dpi=150)
+    #     ax.set_title(f'Spearman Corr. of {metr} metric to ft-Acc. on {target} dataset')
+    #     ax.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.08)
+    #
+    #     # for all different checkpoints
+    #     for i in range(len(dataset_trained)):
+    #         sub_df = dff.iloc[i*12:(i+1)*12, :]  # ever dataset with 12 rows
+    #         print(sub_df)
+    #         rank_corr = sub_df.corr(method='spearman')  # just to see check whole corr matrix
+    #
+    #         corr = sub_df.corr(method="spearman").iloc[-1]
+    #         if i < 7: a = 0.2
+    #         else: a = 1
+    #         ax.plot(range(len(xticks)), corr[:-1], '.-', label=checkpts[i], alpha=a)  # 'in' layer not useful
+    #
+    #     plt.ylabel("Rank Correlation Coefficient")
+    #     plt.xlabel("Model Layers")
+    #     plt.xticks(range(len(xticks)), labels=xticks)
+    #     plt.ylim((-1, 1))
+    #     plt.legend(frameon=True, fancybox=True, facecolor='white', title='ft duration')  # loc="lower left",
+    #     plt.show()
 
 
 
@@ -206,10 +216,11 @@ def rankcorr_and_plot_vgg(dataset_trained, target, metr):
 def significance():
     # permutation
     from sympy.utilities.iterables import multiset_permutations
-    import numpy as np
     from scipy import stats
 
-    x = np.array([1, 2, 3, 4, 5, 6, 7])
+    # x = np.array([1, 2, 3, 4, 5, 6, 7])
+    x = np.array(range(0, 12))
+    print(x)
 
     correlations = []
 
@@ -257,7 +268,8 @@ if __name__ == '__main__':
 
     metrics = ['ID', 'SS', 'RSA']  # , 'SS', 'RSA']  # set ID, SS, RSA
 
-    metrics, accs = get_values_from_df(dataset_trained, target, 'ID')
+    significance()
+    # metrics, accs = get_values_from_df(dataset_trained, target, 'ID')
 
     for metr in metrics:
         # gets metrics and accs from dfs, calculates rank-corr to accs and plots correlation for all models
