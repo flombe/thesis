@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from natsort import natsorted
 import sklearn.metrics
+import scipy.stats
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -19,6 +20,8 @@ def unnesting(df, explode, axis):
         df1 = pd.concat([pd.DataFrame(df[x].tolist(), index=df.index).add_prefix(x) for x in explode], axis=1)
         return df1.join(df.drop(explode, 1), how='left')
 
+def spearmanr_pval(x, y):
+    return scipy.stats.spearmanr(x, y)[1]
 
 def get_values_from_df(dataset_trained, target, metr):
     metrics = pd.DataFrame()
@@ -79,6 +82,13 @@ def rankcorr_and_plot(dataset_trained, target, metr):
     corr = dff.corr(method="spearman").iloc[-1]
     ax.plot(range(len(xticks)), corr[:-1], '.-', label='all')  # last value is corr with itself
 
+    # print(fisher_95int(corr[:-1].values, num=72))  # check 95 significance interval
+    low, up = fisher_95int(corr[:-1].values, num=72)
+    ax.fill_between(range(len(xticks)), low, up, alpha=0.07)
+
+    p_vals = dff.corr(method=spearmanr_pval).iloc[-1]
+    print(f'-- {metr} on all {target} P-values --\n', p_vals[:-1])
+
     plt.ylabel("Rank Correlation Coefficient")
     plt.xlabel("Model Layers")
     plt.xticks(range(len(xticks)), labels=xticks)
@@ -86,8 +96,8 @@ def rankcorr_and_plot(dataset_trained, target, metr):
     plt.legend(frameon=True, fancybox=True, facecolor='white', title='ft duration')  # loc="lower left",
     plt.show()
 
-    # split data and plot for every pre-trained dataset the rank-corr on only 12 models
 
+    # split data and plot for every pre-trained dataset the rank-corr on only 12 models
     fig, ax = plt.subplots(figsize=(6, 7), dpi=150)
     ax.set_title(f'Spearman Corr. of {metr} metric to ft-Acc. on {target} dataset')
     ax.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.08)
@@ -95,11 +105,17 @@ def rankcorr_and_plot(dataset_trained, target, metr):
     # for all different checkpoints
     for i in range(len(dataset_trained)):
         sub_df = dff.iloc[i*12:(i+1)*12, :]  # ever dataset with 12 rows
-        print(sub_df)
+        # print(sub_df)
         rank_corr = sub_df.corr(method='spearman')  # just to see check whole corr matrix
 
+        p_vals = sub_df.corr(method=spearmanr_pval).iloc[-1]
+        print(f'-- {metr} on {target} of {dataset_trained[i]} P-values --\n', p_vals[:-1])
+
         corr = sub_df.corr(method="spearman").iloc[-1]
+        # print(fisher_95int(corr[:-1].values, num=12))  # check 95 significance interval
         ax.plot(range(len(xticks)), corr[:-1], '.-', label=dataset_trained[i])  # 'in' layer not useful
+        low, up = fisher_95int(corr[:-1].values, num=12)
+        ax.fill_between(range(len(xticks)), low, up, alpha=0.07)
 
     plt.ylabel("Rank Correlation Coefficient")
     plt.xlabel("Model Layers")
@@ -240,7 +256,7 @@ def significance():
     # -0.8928571428571429, 0.8928571428571429
 
 
-    # Fisher
+    # Fisher Wikipedia
     r = 0.9
     n = 7
     F = np.arctanh(r)
@@ -254,6 +270,23 @@ def significance():
     print(t, scipy.stats.t(t))
 
 
+# Fisher intervall
+def fisher_95int(corr, num):
+    import math
+    low = []
+    up = []
+    for i in range(len(corr)):
+        r = corr[i]
+        stderr = 1.0 / math.sqrt(num - 3)
+        delta = 1.96 * stderr
+        lower = math.tanh(math.atanh(r) - delta)
+        upper = math.tanh(math.atanh(r) + delta)
+        print("lower %.6f upper %.6f" % (lower, upper))
+        low.append(lower)
+        up.append(upper)
+    return low, up
+
+
 
 if __name__ == '__main__':
 
@@ -264,11 +297,10 @@ if __name__ == '__main__':
         target = 'pets'  # 'custom3D' 'malaria'
     else:
         dataset_trained = ['mnist', 'fashionmnist', 'mnist_split1', 'mnist_split2', 'mnist_noise_struct', 'mnist_noise']
-        target = 'mnist'  # 'fashionmnist'
+        target = 'fashionmnist'  # 'fashionmnist'
 
     metrics = ['ID', 'SS', 'RSA']  # , 'SS', 'RSA']  # set ID, SS, RSA
 
-    significance()
     # metrics, accs = get_values_from_df(dataset_trained, target, 'ID')
 
     for metr in metrics:
