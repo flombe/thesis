@@ -79,6 +79,7 @@ def rankcorr_and_plot(dataset_trained, target, metr):
     ax.set_title(f'Spearman Corr. of {metr} metric to ft-Acc. on {target} dataset')
     ax.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.08)
 
+    rank_corr = dff.corr(method="spearman")
     corr = dff.corr(method="spearman").iloc[-1]
     ax.plot(range(len(xticks)), corr[:-1], '.-', label='all')  # last value is corr with itself
 
@@ -115,7 +116,7 @@ def rankcorr_and_plot(dataset_trained, target, metr):
         # print(fisher_95int(corr[:-1].values, num=12))  # check 95 significance interval
         ax.plot(range(len(xticks)), corr[:-1], '.-', label=dataset_trained[i])  # 'in' layer not useful
         low, up = fisher_95int(corr[:-1].values, num=12)
-        ax.fill_between(range(len(xticks)), low, up, alpha=0.07)
+        #ax.fill_between(range(len(xticks)), low, up, alpha=0.07)
 
     plt.ylabel("Rank Correlation Coefficient")
     plt.xlabel("Model Layers")
@@ -123,6 +124,49 @@ def rankcorr_and_plot(dataset_trained, target, metr):
     plt.ylim((-1, 1))
     plt.legend(frameon=True, fancybox=True, facecolor='white', title='ft duration')  # loc="lower left",
     plt.show()
+
+
+
+    # split data and plot for every pre-trained checkpoint
+    fig, ax = plt.subplots(figsize=(6, 7), dpi=150)
+    ax.set_title(f'Spearman Corr. of {metr} metric to ft-Acc. on {target} dataset')
+    ax.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.08)
+
+    # for all different checkpoints
+    for i in range(len(checkpts)):
+        sub_df = dff.iloc[i::12, :]  # ever 12th row
+        # print(sub_df)
+        rank_corr = sub_df.corr(method='spearman')  # just to see check whole corr matrix
+
+        p_vals = sub_df.corr(method=spearmanr_pval).iloc[-1]
+        print(f'-- {metr} on {target} of {checkpts[i]} P-values --\n', p_vals[:-1])
+
+        corr = sub_df.corr(method="spearman").iloc[-1]
+        # print(fisher_95int(corr[:-1].values, num=12))  # check 95 significance interval
+        if i < 7: a = 0.2
+        else: a = 1
+        ax.plot(range(len(xticks)), corr[:-1], '.-', label=checkpts[i], alpha=a)
+
+        conv_intervals = permutation_significance(len(dataset_trained))
+        for lower, upper in conv_intervals:
+            ax.fill_between(range(len(xticks)), -1, lower, color='lightgrey', alpha=0.005)
+            ax.fill_between(range(len(xticks)), upper, 1, color='lightgrey', alpha=0.005)
+
+        ''' significance
+        90% CI: -0.7714285714285715 0.7714285714285715
+        95% CI: -0.8285714285714287 0.8285714285714287
+        98% CI: -0.8857142857142859 0.8857142857142858
+        99% CI: -0.9428571428571431 0.9428571428571431
+        '''
+
+    plt.ylabel("Rank Correlation Coefficient")
+    plt.xlabel("Model Layers")
+    plt.xticks(range(len(xticks)), labels=xticks)
+    plt.ylim((-1, 1))
+    plt.legend(frameon=True, fancybox=True, facecolor='white', title='ft duration')  # loc="lower left",
+    plt.show()
+
+
 
 
 
@@ -152,6 +196,55 @@ def rankcorr_and_plot(dataset_trained, target, metr):
     #     plt.legend(frameon=True, fancybox=True, facecolor='white', title='ft duration')  # loc="lower left",
     #     plt.show()
 
+def rankcorr_and_plot_pool2(dataset_trained, target, metrics):
+    checkpts = ['0', '0_1', '0_3', '0_10', '0_30', '0_100', '0_300', '1', '3', '10', '30', '100']
+
+    fig, ax = plt.subplots(figsize=(7, 6), dpi=150)
+    ax.set_title(f'Spearman Corr. of metrics on pool2 layer to ft-Acc. on {target} dataset')
+    ax.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.08)
+
+    for metr in metrics:
+        # load metrics and accs from dfs
+        metrics, accs = get_values_from_df(dataset_trained, target, metr)
+
+        dff = unnesting(metrics, metrics.columns, axis=0)  # explode list in column into multiple columns
+        dff = dff.drop([f'{metr}_{target}0', f'{metr}_{target}1', f'{metr}_{target}2', f'{metr}_{target}3',
+                        f'{metr}_{target}5', f'{metr}_{target}6'], axis=1)
+        dff['AUC'] = accs['AUC'].values  # append AUC ft-Acc values on df (same sorting for both)
+
+        corr_pool2 = []
+        for i in range(len(checkpts)):
+            sub_df = dff.iloc[i::12, :]  # ever 12th row
+
+            p_vals = sub_df.corr(method=spearmanr_pval).iloc[-1]
+            print(f'-- {metr} on {target} of {checkpts[i]} P-values --\n', p_vals[:-1])
+
+            corr = sub_df.corr(method="spearman").iloc[-1]
+            corr_pool2.append(corr[:-1])
+
+        ax.plot(range(len(checkpts)), corr_pool2, '.-', label=str(metr))
+        # # fisher intervals
+        # lower, upper = fisher_95int(corr_pool2, 6)
+        # ax.fill_between(range(len(checkpts)), lower, upper, alpha=0.05)
+
+    conv_intervals = permutation_significance(len(dataset_trained))
+    for lower, upper in conv_intervals:
+        ax.fill_between(range(len(checkpts)), -1, lower, color='lightgrey', alpha=0.2)
+        ax.fill_between(range(len(checkpts)), upper, 1, color='lightgrey', alpha=0.2)
+
+    ''' significance
+    90% CI: -0.7714285714285715 0.7714285714285715
+    95% CI: -0.8285714285714287 0.8285714285714287
+    98% CI: -0.8857142857142859 0.8857142857142858
+    99% CI: -0.9428571428571431 0.9428571428571431
+    '''
+
+    plt.ylabel("Rank Correlation Coefficient")
+    plt.xlabel("pre-train checkpoints")
+    plt.xticks(range(len(checkpts)), labels=checkpts)
+    plt.ylim((-1, 1))
+    plt.legend(frameon=True, fancybox=True, facecolor='white', title='metric')  # loc="lower left",
+    plt.show()
 
 
 
@@ -229,49 +322,50 @@ def rankcorr_and_plot_vgg(dataset_trained, target, metr):
     plt.show()
 
 
-def significance():
+def permutation_significance(n):
     # permutation
     from sympy.utilities.iterables import multiset_permutations
     from scipy import stats
 
     # x = np.array([1, 2, 3, 4, 5, 6, 7])
-    x = np.array(range(0, 12))
-    print(x)
+    x = np.array(range(0, n))
 
     correlations = []
+    conv_intervals = []
 
     for y in multiset_permutations(x):
         corr, p_value = stats.spearmanr(x, y)
         # print(corr, p_value)
         correlations.append(corr)
 
-    print(correlations)
-    print(np.percentile(correlations, 5), np.percentile(correlations, 95))
+    conv_intervals.append((np.percentile(correlations, 5), np.percentile(correlations, 95)))
     # -0.6785714285714287, 0.6785714285714287
-    print(np.percentile(correlations, 2.5), np.percentile(correlations, 97.5))
+    conv_intervals.append((np.percentile(correlations, 2.5), np.percentile(correlations, 97.5)))
     # -0.7500000000000002, 0.7500000000000002
-    print(np.percentile(correlations, 1), np.percentile(correlations, 99))
+    conv_intervals.append((np.percentile(correlations, 1), np.percentile(correlations, 99)))
     # -0.8571428571428573, 0.8571428571428574
-    print(np.percentile(correlations, 0.5), np.percentile(correlations, 99.5))
+    conv_intervals.append((np.percentile(correlations, 0.5), np.percentile(correlations, 99.5)))
     # -0.8928571428571429, 0.8928571428571429
 
+    return conv_intervals
 
-    # Fisher Wikipedia
-    r = 0.9
-    n = 7
-    F = np.arctanh(r)
-    # z-score
-    z = np.sqrt((n-3)/1.06) * F
-    print(z)
-
-    # t-distribution
-    t = np.sqrt((n-2)/(1-np.square(r)))
-    import scipy
-    print(t, scipy.stats.t(t))
+    # # Fisher Wikipedia
+    # r = 0.9
+    # n = 7
+    # F = np.arctanh(r)
+    # # z-score
+    # z = np.sqrt((n-3)/1.06) * F
+    # print(z)
+    #
+    # # t-distribution
+    # t = np.sqrt((n-2)/(1-np.square(r)))
+    # import scipy
+    # print(t, scipy.stats.t(t))
 
 
 # Fisher intervall
 def fisher_95int(corr, num):
+    # https://stats.stackexchange.com/questions/18887/how-to-calculate-a-confidence-interval-for-spearmans-rank-correlation
     import math
     low = []
     up = []
@@ -297,11 +391,9 @@ if __name__ == '__main__':
         target = 'pets'  # 'custom3D' 'malaria'
     else:
         dataset_trained = ['mnist', 'fashionmnist', 'mnist_split1', 'mnist_split2', 'mnist_noise_struct', 'mnist_noise']
-        target = 'fashionmnist'  # 'fashionmnist'
+        target = 'mnist'  # 'fashionmnist'
 
     metrics = ['ID', 'SS', 'RSA']  # , 'SS', 'RSA']  # set ID, SS, RSA
-
-    # metrics, accs = get_values_from_df(dataset_trained, target, 'ID')
 
     for metr in metrics:
         # gets metrics and accs from dfs, calculates rank-corr to accs and plots correlation for all models
@@ -310,6 +402,4 @@ if __name__ == '__main__':
         else:
             rankcorr_and_plot(dataset_trained, target, metr)
 
-
-    # significance()
-
+    rankcorr_and_plot_pool2(dataset_trained, target, metrics)
