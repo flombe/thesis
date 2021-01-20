@@ -8,12 +8,12 @@ import pandas as pd
 from natsort import natsorted
 
 # plot fine-tune on dataset_name on pre-trained models of 10 seeds
-pre_dataset = 'mnist_split2'
-ft_dataset = 'mnist'
+pre_dataset = 'mnist'
+ft_dataset = 'fashionmnist'
 
-plot_acc = False
+plot_acc = True
 plot_delta = True
-plot_compare_switched = False
+plot_compare_switched = True
 plot_compare_switched_singles = True
 
 
@@ -72,6 +72,7 @@ plt.rcParams['axes.prop_cycle'] = plt.cycler(color=plt.cm.Paired.colors)  # set 
 # Plot post-ft accuracy vs. number of training epochs
 if plot_acc:
     fig1, ax1 = plt.subplots(figsize=(6, 7), dpi=150)
+    ax1.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.08)
     plt.title(f"pre: {pre_dataset}, ft: {ft_dataset} \n Post-ft Accuracies vs. training on target (mean of 10 seeds)")
     plt.xlabel("Fine-Tuning/training Epochs (batch1 to epoch100)")
     plt.ylabel("Post-Ft/training Test Accuracy")
@@ -95,9 +96,8 @@ if plot_acc:
     ax1.minorticks_on()
     plt.xscale("log")
     # plt.xticks(xticks, rotation=80)
-    # f = lambda x,pos: str(x).rstrip('0').rstrip('.')
-    # ax1.get_xaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(f))
-    # ax1.xaxis.set_tick_params(which='minor', bottom=False)
+    ax1.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda y, _: '{:.16g}'.format(y)))
+    ax1.xaxis.set_tick_params(which='minor', bottom=False)
     plt.legend(loc=4)
     plt.tight_layout()
     plt.show()
@@ -106,6 +106,7 @@ if plot_acc:
 # Plot Acc Delta post-ft vs. base-case  +std
 if plot_delta:
     fig2, ax2 = plt.subplots(figsize=(6, 6), dpi=150)
+    ax2.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.08)
     plt.title(f"pre: {pre_dataset}, ft: {ft_dataset} \n Delta Post-ft Acc. - base-case Acc.")
     plt.xlabel("Fine-Tuning/training Epochs (batch1 to epoch100)")
     plt.ylabel("Post-Ft/training Test Accuracy")
@@ -212,6 +213,7 @@ if plot_compare_switched:
             j += 1
 
         fig, ax = plt.subplots(figsize=(6, 6), dpi=150)
+        ax.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.08)
         plt.title(f"Pre on {pre_set} and ft on {ft_dataset}")
         plt.xlabel("Pre-training Epochs (batch1 to epoch100)")
         plt.ylabel("Accuracy")
@@ -241,6 +243,7 @@ if plot_compare_switched:
 if plot_compare_switched_singles:
     plt.style.use('seaborn')
     fig, ax = plt.subplots(figsize=(6, 6), dpi=150)
+    ax.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.08)
     plt.title(f"Delta ft - base Acc. on ft: {ft_dataset}")
     plt.xlabel("Pre-training Epochs (batch1 to epoch100)")
     plt.ylabel("Accuracy")

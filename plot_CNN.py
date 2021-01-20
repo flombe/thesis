@@ -12,6 +12,44 @@ from rsa import get_rdm_metric_vgg
 root_dir = os.getcwd()
 models_dir = join(root_dir, 'models')
 
+def plot_pre_all():
+    pre_datasets = ['mnist', 'fashionmnist', 'mnist_split1', 'mnist_split2', 'mnist_noise_struct', 'mnist_noise']
+
+    fig1, ax1 = plt.subplots(figsize=(6, 7), dpi=200, constrained_layout=True)
+    ax1.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.1)
+    plt.title(f"Pre-train Accuracies of CNN models (mean of 10 seeds)")
+    plt.xlabel("Pre-train Duration (batch1 to epoch100)")
+    plt.ylabel("Test Accuracy")
+
+
+    for dataset in pre_datasets:
+        load_dir = join(models_dir, dataset)
+        label = f'pre_{dataset}'
+        case = 'pre'
+        if dataset in ['mnist_split1', 'mnist_noise']: case = 'ft'  # wrong naming in df..
+
+        # load Acc from df
+        df = pd.read_pickle(join(load_dir, "df_" + label + '+metrics'))
+
+        # get mean and std 'ft_test_acc' over model_names for 10 seeds
+        means = df.groupby('model_name')[f'{case}_test_acc'].apply(lambda g: np.mean(g.values.tolist(), axis=0))
+        stds = df.groupby('model_name')[f'{case}_test_acc'].apply(lambda g: np.std(g.values.tolist(), axis=0))
+        means = means.reindex(index=natsorted(means.index))
+        stds = stds.reindex(index=natsorted(stds.index))
+        # print(means)
+
+        ax1.plot(total, means, label=str(label), linewidth=1.2)
+        ax1.fill_between(total, means + 2 * np.array(stds), means - 2 * np.array(stds), alpha=0.05)
+
+    plt.xscale("log")
+    ax1.axis([0, 100, 0, 100])
+    ax1.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda y, _: '{:.16g}'.format(y)))
+    ax1.xaxis.set_tick_params(which='minor', bottom=False)
+
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
 
 # Plot ft Acc on VGG16 custom3D for different pre_datasets
 def plot_acc_all():
@@ -51,9 +89,9 @@ def plot_acc_all():
             if pre == '100':
                 ax1.plot(total, m, label=str(label), color=color, alpha=alpha, linewidth=1)  # linewidth=0.7
                 ax1.fill_between(total, m + 2 * np.array(s), m - 2 * np.array(s), color=color, alpha=0.07)
-            ax1.plot(total, m, color=color, alpha=alpha, linewidth=0.5)
+            ax1.plot(total, m, color=color, alpha=alpha*0.5, linewidth=0.5)
 
-    #plt.xscale("log")
+    plt.xscale("log")
     ax1.axis([0, 100, 10, 100])
     ax1.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda y, _: '{:.16g}'.format(y)))
     ax1.xaxis.set_tick_params(which='minor', bottom=False)
@@ -134,7 +172,7 @@ def plot_acc_all_delta():
 
     fig, ax = plt.subplots(figsize=(6, 7), dpi=150)
     plt.title(f"Accuracy Delta to Baseline for CNN models on {ft_dataset} dataset")
-    plt.xlabel("Fine-tuning/training Epochs (batch1 to epoch100)")
+    plt.xlabel("Fine-tuning Epochs (batch1 to epoch100)")
     plt.ylabel("Test Accuracy Delta")
     ax.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.1)
 
@@ -149,10 +187,11 @@ def plot_acc_all_delta():
     base_means = base_means.reindex(index=natsorted(base_means.index))
     base_stds = base_stds.reindex(index=natsorted(base_stds.index))
     print(len(base_means), len(base_stds))
-    #if ft_dataset == 'mnist': total = total[1:]
+    total_plot = total
+    if ft_dataset == 'mnist': total_plot = total[1:]
 
     base = ax.axhline(linewidth=1.5, color='grey')
-    ax.fill_between(total, 2 * np.array(base_stds), - 2 * np.array(base_stds), color=base.get_color(), alpha=0.2,
+    ax.fill_between(total_plot, 2 * np.array(base_stds), - 2 * np.array(base_stds), color=base.get_color(), alpha=0.1,
                     label='std_base')
 
     colors = plt.cm.rainbow(np.linspace(0, 1, len(pre_datasets)))
@@ -187,17 +226,32 @@ def plot_acc_all_delta():
                 s = s[1:]
 
             if pre == '100':
-                ax.plot(total, m - base_means.values, label=str(label), color=color, alpha=alpha, linewidth=0.5)  # linewidth=0.7
+                ax.plot(total_plot, m - base_means.values, label=str(label), color=color, alpha=alpha, linewidth=0.7)  # linewidth=0.7
                 # ax.fill_between(total, m - base_means.values + 2 * np.array(s), m - base_means.values - 2 * np.array(s), color=color, alpha=0.1)
-            ax.plot(total, m - base_means.values, color=color, alpha=alpha, linewidth=0.5)
+            ax.plot(total_plot, m - base_means.values, color=color, alpha=alpha*0.5, linewidth=0.5)
             print(m - base_means.values)  # both pd.series elements
 
     # plt.ylim((-20, 80))
     plt.xscale("log")
     plt.xlim((0, 100))
     ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda y, _: '{:.16g}'.format(y)))
+    ax.xaxis.set_tick_params(which='minor', bottom=False)
 
     plt.legend()
+    if ft_dataset == 'fashionmnist': plt.legend(loc='upper right', prop={'size': 9})
+
+    # Fake a ScalarMappable so you can display a colormap, inset axes
+    colors = plt.cm.binary(np.linspace(0, 1, len(checkpts)))
+    cmap, norm = matplotlib.colors.from_levels_and_colors(range(len(checkpts) + 1), colors)
+    sm = matplotlib.cm.ScalarMappable(cmap=cmap, norm=norm)
+    from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+    axins1 = inset_axes(ax, width='40%', height='2%', loc='upper left',
+                        bbox_to_anchor=(0.53, 0, 1, 0.70), bbox_transform=ax.transAxes)
+    cbar = fig.colorbar(sm, cax=axins1, orientation='horizontal', ticks=[0, 12])
+    cbar.ax.set_title('pre-train duration', fontsize=10)
+    cbar.ax.set_xticklabels(['0batch', '100ep'], fontdict={'horizontalalignment': 'center'}, fontsize=10)
+    axins1.xaxis.set_ticks_position('bottom')
+
     plt.tight_layout()
     plt.show()
 
@@ -205,31 +259,35 @@ def plot_acc_all_delta():
 def plot_metric_all(metrics=['SS', 'ID', 'RSA']):
     pre_datasets = ['mnist', 'fashionmnist', 'mnist_split1', 'mnist_split2', 'mnist_noise_struct', 'mnist_noise']
 
-    xticks = ['in', 'pool1', 'pool2', 'pool3', 'pool4', 'pool5', 'fc1', 'fc2', 'out']
+    xticks = ['in', 'conv1', 'pool1', 'conv2', 'pool2', 'fc1', 'out']
 
     for metric in metrics:
         fig, ax = plt.subplots(figsize=(7, 6), dpi=150)
         ax.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.08)
-        ax.set_title(f'{metric} over VGG model layers on {ft_dataset} dataset')
+        ax.set_title(f'{metric} over CNN model layers on {ft_dataset} dataset')
 
         for dataset in pre_datasets:
-            df_path = join(models_dir, dataset, 'df_pre_' + dataset + '+metrics')
-            df = pd.read_pickle(df_path)
+            load_dir = join(models_dir, dataset)
+            label = f'pre_{dataset}'
 
-            # load from df
-            val = df[f'{metric}_{ft_dataset}'][0]
+            # load Acc from df
+            df = pd.read_pickle(join(load_dir, "df_" + label + '+metrics'))
 
-            # since on cifar10 no extract possible on fc layers and for segnet no fc pre layers
-            if dataset == 'random_init':
-                val = df.groupby('model_name')[f'{metric}_{ft_dataset}'].apply(lambda g: np.mean(g.values.tolist(), axis=0))[0]
-                val_std = df.groupby('model_name')[f'{metric}_{ft_dataset}'].apply(lambda g: np.std(g.values.tolist(), axis=0))[0]
-                ax.fill_between(range(len(xticks)), np.array(val + 2 * val_std), np.array(val - 2 * val_std), color='pink', alpha=0.2)
-            if dataset == 'segnet': val = val[:6]
-            if dataset in ['segnet', 'cifar10']: x_range = range(6)
-            else: x_range = range(len(xticks))
+            # get mean and std 'ft_test_acc' over model_names for 10 seeds
+            means = df.groupby('model_name')[f'{metric}_{ft_dataset}'].apply(lambda g: np.mean(g.values.tolist(), axis=0))
+            stds = df.groupby('model_name')[f'{metric}_{ft_dataset}'].apply(lambda g: np.std(g.values.tolist(), axis=0))
+            means = means.reindex(index=natsorted(means.index))
+            stds = stds.reindex(index=natsorted(stds.index))
 
-            print(dataset, x_range, val)
-            ax.plot(x_range, np.array(val), '.-', label=df['model_name'][0])
+            if dataset == 'fashionmnist': label = label[:-5]  # naming in mnist ft is only 'fashion'
+
+            for pre in checkpts:
+                m = means['model_' + label + '_' + pre + '.pt']
+                s = stds['model_' + label + '_' + pre + '.pt']
+                if pre == '100':
+                    ax.plot(xticks, m, '.-', label=str(f'model_{label}_{pre}'), linewidth=1)  # linewidth=0.7
+                    ax.fill_between(xticks, m + 2 * np.array(s), m - 2 * np.array(s), alpha=0.07)
+                # ax.plot(total, m, color=color, linewidth=0.5)
 
         plt.ylabel(f"{metric}")
         plt.xlabel("Model Layers")
@@ -239,56 +297,23 @@ def plot_metric_all(metrics=['SS', 'ID', 'RSA']):
         plt.show()
 
 
-def plot_fc2_acc_id():
-    pre_datasets = ['imagenet', 'places365', 'cars']  # 'vggface' only top1 # 'segnet', 'cifar10' no fc2
-
-    plt.style.use('seaborn')
-    fig, ax = plt.subplots(figsize=(6, 6), dpi=150)
-    ax.set_title(f'Last hidden layer ID pred. Acc - VGG \n [extract: {ft_dataset}]', weight='semibold')
-
-    for dataset in pre_datasets:
-        df_path = join(models_dir, dataset, 'df_pre_' + dataset + '+metrics')
-        df = pd.read_pickle(df_path)
-
-        # load from df
-        id = df[f'ID_{ft_dataset}'][0][7]  # for fc2
-        # if dataset == 'vggface':
-        #     acc = df['pre_top1'][0]
-        acc = df['pre_top5'][0]
-        if acc > 1: acc = acc/100
-
-        print(dataset, id, acc)
-        ax.plot((1-acc), id, 'o', label=df['model_name'][0])
-
-    ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls='--')
-
-    plt.ylabel("ID of fc2", weight='semibold')
-    plt.xlabel("top-1 Error", weight='semibold')
-
-    plt.ylim((4, 10))
-    plt.xlim((0, 0.2))
-    ax.xaxis.set_major_formatter(matplotlib.ticker.FormatStrFormatter('%.2f'))
-    plt.legend(loc="upper left", frameon=True, fancybox=True, facecolor='white', title='diff. pre datasets')
-    plt.show()
-
-
 if __name__ == '__main__':
 
     #######
     pre_dataset = 'mnist'
-    ft_dataset = 'mnist'
+    ft_dataset = 'fashionmnist'  #'fashionmnist'
     #######
 
     checkpts = ['0', '0_1', '0_3', '0_10', '0_30', '0_100', '0_300', '1', '3', '10', '30', '100']
     xticks = [0.0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 100]
     total = np.array(xticks)
 
+    plot_pre_all()
+
     ## general plots over all datasets
     plot_acc_all()
-    # plot_acc_all_detail('100')
-    # plot_acc_all_delta()
+    plot_acc_all_detail('100')
+    plot_acc_all_delta()
 
-    ## plot all metrics
-    # plot_metric_all(['SS', 'ID', 'RSA'])
-
-    # plot_fc2_acc_id()
+    # plot all metrics
+    #plot_metric_all(['SS', 'ID', 'RSA'])

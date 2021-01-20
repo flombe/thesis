@@ -139,9 +139,7 @@ class FashionMNIST(TorchDataset):
 class CIFAR10(TorchDataset):
     def get_train_transform(self):
         transform = transforms.Compose([
-            # transforms.Resize((224, 224), interpolation=2),
             transforms.RandomHorizontalFlip(),
-            transforms.RandomCrop(32, 4),
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
         ])
@@ -149,7 +147,6 @@ class CIFAR10(TorchDataset):
 
     def get_test_transform(self):
         transform = transforms.Compose([
-            # transforms.Resize((224, 224), interpolation=2),
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
         ])

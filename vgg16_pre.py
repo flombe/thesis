@@ -446,8 +446,8 @@ if __name__=='__main__':
         torch.save(model_pre, join(source_dir, 'model_vgg16_pre_imagenet.pt'))
 
         df = create_df_pre(net='vgg16', pre_dataset='imagenet', ep=74,
-                           top1=(100 - 55.19) / 100,
-                           top5=(100 - 85.01) / 100)  # top-err given not acc
+                           top1=(100 - 28.41) / 100,
+                           top5=(100 - 9.62) / 100)  # top-err given not acc
 
     ## VGGFace
     if init_vggface:
@@ -461,7 +461,7 @@ if __name__=='__main__':
         torch.save(model, join(source_dir, 'model_vgg16_pre_vggface.pt'))
 
         # create and save df with online available pre-train data
-        df = create_df_pre(net='vgg16', pre_dataset='vggface', ep='', top1=0.9722, top5='')
+        df = create_df_pre(net='vgg16', pre_dataset='vggface', ep='', top1=0.9722, top5='')  # paper says 10ep
 
         # run finetune_vgg16.sh to ft on custom3D
 

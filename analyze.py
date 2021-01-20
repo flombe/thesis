@@ -72,8 +72,8 @@ if __name__ == '__main__':
         print("Devise used = ", device)
 
     #######
-    pre_dataset = 'mnist_noise_struct'
-    target_dataset = 'fashionmnist'  # extracted on
+    pre_dataset = 'mnist_noise'
+    target_dataset = 'mnist'  # extracted on
     #######
 
     root_dir = os.getcwd()
@@ -88,24 +88,24 @@ if __name__ == '__main__':
     df_path = join(models_dir, 'df_pre_' + pre_dataset + '+metrics')  # + '+metrics')
     df = pd.read_pickle(df_path)
 
-    # calc ID, SS and add to df
-    print(f'>>> Calculate ID, SS for models pre-trained on {pre_dataset}, on target {target_dataset} <<<')
-
-    if f'ID_{target_dataset}' in df.columns:
-        print(df[f'ID_{target_dataset}'])
-    if f'SS_{target_dataset}' in df.columns:
-        print(df[f'SS_{target_dataset}'])
-
-    if target_dataset in ['custom3D', 'malaria', 'pets']:
-        extract = torch.load(join(models_dir, target_dataset + '_extracted.pt'))
-        id, ss = calc_ID_SS(extract)
-    else:
-        id, ss = calc_ID_SS_seeds(target_dataset)
-    print(id, ss)
-    df[f'ID_{target_dataset}'] = pd.Series(id)
-    df[f'SS_{target_dataset}'] = pd.Series(ss)
-
-    df.to_pickle(df_path)  # safty save if prob with RSA calc
+    # # calc ID, SS and add to df
+    # print(f'>>> Calculate ID, SS for models pre-trained on {pre_dataset}, on target {target_dataset} <<<')
+    #
+    # if f'ID_{target_dataset}' in df.columns:
+    #     print(df[f'ID_{target_dataset}'])
+    # if f'SS_{target_dataset}' in df.columns:
+    #     print(df[f'SS_{target_dataset}'])
+    #
+    # if target_dataset in ['custom3D', 'malaria', 'pets']:
+    #     extract = torch.load(join(models_dir, target_dataset + '_extracted.pt'))
+    #     id, ss = calc_ID_SS(extract)
+    # else:
+    #     id, ss = calc_ID_SS_seeds(target_dataset)
+    # print(id, ss)
+    # df[f'ID_{target_dataset}'] = pd.Series(id)
+    # df[f'SS_{target_dataset}'] = pd.Series(ss)
+    #
+    # df.to_pickle(df_path)  # safty save if prob with RSA calc
 
     if f'RSA_{target_dataset}' in df.columns:
         print(df[f'RSA_{target_dataset}'])
@@ -118,6 +118,6 @@ if __name__ == '__main__':
     # df[f'RSA_{target_dataset}'] = [rdm_metric]  # for VGG
     df[f'RSA_{target_dataset}'] = pd.Series(rdm_metric)
 
-    df.to_pickle(df_path)
+    # df.to_pickle(df_path)
 
     print(' ---- \n>>> df saved with metrics at ', df_path)

@@ -62,6 +62,63 @@ def plot_acc():
     plt.tight_layout()
     plt.show()
 
+
+# plot all pre-train accuracies
+def plot_pre_all():
+    pre_datasets = ['imagenet', 'places365', 'cars', 'vggface', 'segnet', 'cifar10', 'random_init', ft_dataset]
+
+    fig1, ax1 = plt.subplots(figsize=(6, 7), dpi=150)
+    ax1.grid(b=True, which='major', color='#666666', linestyle='-', alpha=0.1)
+    plt.title(f"Pre-train Accuracies of VGG models")
+    plt.xlabel("Pre-raining Epochs (batch1 to epoch100)")
+    plt.ylabel("Test Accuracy")
+
+    for dataset in pre_datasets:
+
+        if dataset in ['random_init', ft_dataset]:
+            load_dir = join(models_dir, dataset, 'ft_' + ft_dataset)
+            label = f"ft_{dataset}_{ft_dataset}"
+            case = 'ft'
+            if dataset == ft_dataset:
+                load_dir = join(models_dir, dataset)
+                label = f'pre_{dataset}'
+                case = 'pre'
+
+            # load Acc from df
+            df = pd.read_pickle(join(load_dir, "df_" + label))
+            # get mean and std 'pre_test_acc' over model_names for 10 (3) seeds
+            base_means = df.groupby('model_name')[f'{case}_test_acc'].apply(lambda g: np.mean(g.values.tolist(), axis=0))
+            base_stds = df.groupby('model_name')[f'{case}_test_acc'].apply(lambda g: np.std(g.values.tolist(), axis=0))
+            base_means = base_means.reindex(index=natsorted(base_means.index))
+            base_stds = base_stds.reindex(index=natsorted(base_stds.index))
+
+            print(dataset, base_stds)
+            # print(base_means, base_stds)
+            base = ax1.plot(total, base_means, label=str(label))
+            ax1.fill_between(total, base_means + 2 * np.array(base_stds), base_means - 2 * np.array(base_stds),
+                             color=base[0].get_color(), alpha=0.1)
+        else:
+            load_dir = join(models_dir, dataset, 'ft_' + ft_dataset)
+            label = f"ft_{dataset}_{ft_dataset}"
+            # load Acc from df
+            df = pd.read_pickle(join(load_dir, "df_" + label))
+            test_acc = df['ft_test_acc']
+
+            if label == f"ft_segnet_{ft_dataset}": label = f"ft_camvid_{ft_dataset}"  # change name for plot from segnet to camvid
+            print(label, test_acc)
+            ax1.plot(total, test_acc, label=str(label))
+
+    plt.xscale("log")
+    ax1.axis([0, 100, 0, 100])
+    if ft_dataset == 'malaria': plt.ylim((40, 100))
+    ax1.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda y, _: '{:.16g}'.format(y)))
+    ax1.xaxis.set_tick_params(which='minor', bottom=False)
+
+    plt.legend(loc=2)
+    plt.tight_layout()
+    plt.show()
+
+
 # Plot ft Acc on VGG16 custom3D for different pre_datasets
 def plot_acc_all():
     pre_datasets = ['imagenet', 'places365', 'cars', 'vggface', 'segnet', 'cifar10', 'random_init', ft_dataset]
@@ -103,14 +160,15 @@ def plot_acc_all():
             df = pd.read_pickle(join(load_dir, "df_" + label))
             test_acc = df['ft_test_acc']
 
+            if label == f"ft_segnet_{ft_dataset}": label = f"ft_camvid_{ft_dataset}"  # change name for plot from segnet to camvid
             print(label, test_acc)
             ax1.plot(total, test_acc, label=str(label))
 
-    #plt.ylim((40, 100))
     plt.xscale("log")
-
     ax1.axis([0, 100, 0, 100])
+    if ft_dataset == 'malaria': plt.ylim((40, 100))
     ax1.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda y, _: '{:.16g}'.format(y)))
+    ax1.xaxis.set_tick_params(which='minor', bottom=False)
 
     plt.legend(loc=2)
     plt.tight_layout()
@@ -139,7 +197,7 @@ def plot_acc_all_delta():
     base_stds = base_stds.reindex(index=natsorted(base_stds.index))
 
     base = ax.axhline(linewidth=1.5, color='grey')
-    ax.fill_between(total, 2 * np.array(base_stds), - 2 * np.array(base_stds), color=base.get_color(), alpha=0.2,
+    ax.fill_between(total, 2 * np.array(base_stds), - 2 * np.array(base_stds), color=base.get_color(), alpha=0.1,
                     label='std_base')
 
     for dataset in pre_datasets:
@@ -153,12 +211,15 @@ def plot_acc_all_delta():
             test_acc = rand_means.reindex(index=natsorted(rand_means.index))
         print(test_acc - base_means.values)   # both pd.series elements
         diff = test_acc - base_means.values
+
+        if label == f"ft_segnet_{ft_dataset}": label = f"ft_camvid_{ft_dataset}"  # change name for plot from segnet to camvid
         ax.plot(total, diff, label=str(label))
 
     # plt.ylim((-20, 80))
     plt.xscale("log")
     plt.xlim((0, 100))
     ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda y, _: '{:.16g}'.format(y)))
+    ax.xaxis.set_tick_params(which='minor', bottom=False)
 
     plt.legend(loc=2)
     plt.tight_layout()
@@ -167,6 +228,7 @@ def plot_acc_all_delta():
 # Plot ID and SS from df for all pre-datasets
 def plot_metric_all(metrics=['SS', 'ID', 'RSA']):
     pre_datasets = ['imagenet', 'places365', 'cars', 'vggface', 'segnet', 'cifar10', 'random_init']
+    # pre_datasets = ['imagenet']
 
     xticks = ['in', 'pool1', 'pool2', 'pool3', 'pool4', 'pool5', 'fc1', 'fc2', 'out']
 
@@ -238,8 +300,8 @@ def plot_fc2_acc_id():
 if __name__ == '__main__':
 
     #######
-    pre_dataset = 'segnet'
-    ft_dataset = 'pets'
+    pre_dataset = 'imagenet'
+    ft_dataset = 'custom3D'  # 'malaria' 'custom3D' 'pets'
     #######
 
     if ft_dataset in ['custom3D', 'pets']:
@@ -255,10 +317,11 @@ if __name__ == '__main__':
     # plot_acc()
 
     # general plots over all datasets
-    # plot_acc_all()
-    # plot_acc_all_delta()
+    plot_acc_all()
+    plot_acc_all_delta()
 
     # plot all metrics
     plot_metric_all(['SS', 'ID', 'RSA'])
+    # plot_metric_all(['ID'])
 
     # plot_fc2_acc_id()

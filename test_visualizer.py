@@ -32,10 +32,11 @@ dataset_dir = join(root_dir, 'data', trained_dataset)
 dataset = datasets.MNIST_noise_struct(dataset_dir=dataset_dir, device=device)
 train_loader = dataset.get_train_loader(batch_size=1)
 
-for i in range(5):
+for i in range(10):
     image, label = next(iter(train_loader))
     print(label)
     print(image.mean())
+    plt.figure(figsize=(3, 3))
     plt.imshow(image.squeeze(), cmap="gray")
     plt.title(label)
     plt.show()

@@ -26,11 +26,11 @@ def imshow(img):
 
 # to-do: refactor in get and plot functions()
 ######
-custom3D_compare_plot = False
+custom3D_compare_plot = True
 get_malaria = False
 get_pets = False
 get_pets2 = False
-print_pets = True
+print_pets = False
 ######
 
 
@@ -65,12 +65,15 @@ if custom3D_compare_plot:
     # transform: resize and to tensor
     data_transforms = transforms.Compose([transforms.Resize((224, 224), interpolation=2), transforms.ToTensor()])
     raw_train = datasets.ImageFolder(os.path.join(dataset_dir, 'train'), data_transforms)
-    for i in range(1):
-        image, label = next(iter(raw_train))
+    iter = iter(raw_train)
+    fig = plt.figure(figsize=(9, 7))
+    for i in range(6):
+        image, label = next(iter)
         print(label)
+        ax = fig.add_subplot(2, 3, i + 1, xticks=[], yticks=[], title=class_names[label])
         plt.imshow(image.squeeze().permute(1, 2, 0))
-        plt.title(label)
-        plt.show()
+    plt.tight_layout()
+    plt.show()
 
 
 if get_malaria:

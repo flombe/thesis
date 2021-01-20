@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="4866fa61-c574-472e-bb79-0d1e6626a28d" name="goerttler_local@adhara">
+        <fileTransfer rootFolder="/home/bemmerl" accessType="SFTP" host="adhara.ni.tu-berlin.de" port="22" sshConfigId="2230844b-5a57-4bc0-ad18-cc30beaed76c" sshConfig="goerttler_local@adhara.ni.tu-berlin.de:22 agent" authAgent="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
