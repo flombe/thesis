@@ -4,7 +4,7 @@ import numpy as np
 import json
 import matplotlib.pyplot as plt
 import matplotlib
-import pandas
+
 
 # plot fine-tune on dataset_name on pre-trained models of 10 seeds
 pre_dataset = 'mnist_split2'

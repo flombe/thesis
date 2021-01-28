@@ -11,7 +11,6 @@ from analyze.metrics import rsa, sum_of_squares
 
 
 # compute ID, SS and RSA on extracted activations
-
 def computeID(r, number_resampling=50, fraction=0.9, distance_metric='euclidean'):
     ID = []
     n = int(np.round(r.shape[0] * fraction))
@@ -50,12 +49,11 @@ def calc_ID_SS(extract):
 def calc_ID_SS_seeds(dataset):
     total_ids = []
     total_ss = []
-    for seed in tqdm(range(1, 11)):  # for 10 seed folders
+    for seed in tqdm(range(1, 11)):
         path = join(models_dir, 'models_' + str(seed))
-        extract = torch.load(join(path, dataset + '_extracted.pt'))  # map_location='cpu'
+        extract = torch.load(join(path, dataset + '_extracted.pt'))
 
         seed_ids, seed_ss = calc_ID_SS(extract)
-        # df[df['seed'] == seed]['ID_pre'] = seed_ids  # add values for 11 models at once
         total_ids += seed_ids
         total_ss += seed_ss
 
@@ -73,51 +71,46 @@ if __name__ == '__main__':
 
     #######
     pre_dataset = 'mnist_noise'
-    target_dataset = 'mnist'  # extracted on
+    target_dataset = 'mnist'
     #######
 
     root_dir = os.getcwd()
     if target_dataset in ['custom3D', 'malaria', 'pets']:
         models_dir = join(root_dir, '../models', 'vgg16', pre_dataset)
-        # if pre_dataset == 'random_init':
-        #     models_dir = join(root_dir, 'models', 'vgg16', pre_dataset, 'models_1')
     else:
         models_dir = join(root_dir, '../models', pre_dataset)
 
     # load df
-    df_path = join(models_dir, 'df_pre_' + pre_dataset + '+metrics')  # + '+metrics')
+    df_path = join(models_dir, 'df_pre_' + pre_dataset + '+metrics')
     df = pd.read_pickle(df_path)
 
-    # # calc ID, SS and add to df
-    # print(f'>>> Calculate ID, SS for models pre-trained on {pre_dataset}, on target {target_dataset} <<<')
-    #
-    # if f'ID_{target_dataset}' in df.columns:
-    #     print(df[f'ID_{target_dataset}'])
-    # if f'SS_{target_dataset}' in df.columns:
-    #     print(df[f'SS_{target_dataset}'])
-    #
-    # if target_dataset in ['custom3D', 'malaria', 'pets']:
-    #     extract = torch.load(join(models_dir, target_dataset + '_extracted.pt'))
-    #     id, ss = calc_ID_SS(extract)
-    # else:
-    #     id, ss = calc_ID_SS_seeds(target_dataset)
-    # print(id, ss)
-    # df[f'ID_{target_dataset}'] = pd.Series(id)
-    # df[f'SS_{target_dataset}'] = pd.Series(ss)
-    #
-    # df.to_pickle(df_path)  # safty save if prob with RSA calc
+    # calc ID, SS, RSA and add to df
+    print(f'>>> Calculate ID, SS for models pre-trained on {pre_dataset}, on target {target_dataset} <<<')
+
+    if f'ID_{target_dataset}' in df.columns:
+        print(df[f'ID_{target_dataset}'])
+    if f'SS_{target_dataset}' in df.columns:
+        print(df[f'SS_{target_dataset}'])
+
+    if target_dataset in ['custom3D', 'malaria', 'pets']:
+        extract = torch.load(join(models_dir, target_dataset + '_extracted.pt'))
+        id, ss = calc_ID_SS(extract)
+    else:
+        id, ss = calc_ID_SS_seeds(target_dataset)
+    print(id, ss)
+    df[f'ID_{target_dataset}'] = pd.Series(id)
+    df[f'SS_{target_dataset}'] = pd.Series(ss)
 
     if f'RSA_{target_dataset}' in df.columns:
         print(df[f'RSA_{target_dataset}'])
 
-    # RSA
     if target_dataset in ['custom3D', 'malaria', 'pets']:
         rdm_metric = rsa.get_rdm_metric_vgg(pre_dataset, target_dataset)
     else:
-        rdm_metric = rsa.get_rdm_metric(pre_dataset, target_dataset)  # diag-nondiag corr delta
-    # df[f'RSA_{target_dataset}'] = [rdm_metric]  # for VGG
+        rdm_metric = rsa.get_rdm_metric(pre_dataset, target_dataset)
     df[f'RSA_{target_dataset}'] = pd.Series(rdm_metric)
+    # df[f'RSA_{target_dataset}'] = [rdm_metric]   # for VGG
 
-    # df.to_pickle(df_path)
+    df.to_pickle(df_path)
 
     print(' ---- \n>>> df saved with metrics at ', df_path)

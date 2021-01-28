@@ -10,8 +10,8 @@ from tqdm import tqdm
 # safety fix seed
 train_utils.set_seed(1)
 
-# extract activations on all layers for 500 fixed samples
-samples = 500   # 1200  # 100  #1110
+# extract activations on all layers for 500 (or 1200, 100, 1110) fixed samples
+samples = 500
 batch_size = 1
 unique_labels = 10  # 10 for mnist like datasets, 40 for custom3D, 2 for malaria, 37 for pets
 
@@ -50,24 +50,23 @@ def get_loader(dataset_name):
         dataset = datasets.MNIST_split2(dataset_dir=dataset_dir, device=device)
     elif dataset_name == 'custom3D':
         dataset = datasets.Custom3D(dataset_dir=dataset_dir, device=device)
-        train_loader = dataset.get_train_loader(batch_size, shuffle=False)  # using same samples
+        train_loader = dataset.get_train_loader(batch_size, shuffle=False)
         return train_loader
     elif dataset_name == 'malaria':
         dataset = datasets.Malaria(dataset_dir=dataset_dir, device=device)
     elif dataset_name == 'pets':
         dataset = datasets.Pets(dataset_dir=dataset_dir, device=device)
     elif dataset_name == 'cifar10':
-        # dataset_dir = join(os.getcwd(), 'data', 'cifar-10-batches-py')  ###
         dataset = datasets.CIFAR10(dataset_dir=dataset_dir, device=device)
 
-    test_loader = dataset.get_test_loader(batch_size, shuffle=False)  # using same samples
+    test_loader = dataset.get_test_loader(batch_size, shuffle=False)
     return test_loader
 
 
 def extract(models_dir, test_loader, samples=samples, batch_size=batch_size, balanced=True):
 
     all_models = {}
-    for file in natsorted(os.listdir(models_dir)):  # right order with natsort
+    for file in natsorted(os.listdir(models_dir)):
         if file.endswith(".pt") and file.startswith("model_"):
             print(file)
             # Load model
@@ -83,11 +82,14 @@ def extract(models_dir, test_loader, samples=samples, batch_size=batch_size, bal
 
                 if balanced:
                     class_counts = {}
-                    k = samples / unique_labels  # nr of samples per class
+                    # nr of samples per class
+                    k = samples / unique_labels
 
-                    for batch in test_loader:  ## set batch_size = 1!
-                        c = batch[1].item()  # get label
-                        class_counts[c] = class_counts.get(c, 0) + 1  # class count dict
+                    # set batch_size = 1!
+                    for batch in test_loader:
+                        c = batch[1].item()
+                        # class count dict
+                        class_counts[c] = class_counts.get(c, 0) + 1
 
                         if class_counts[c] <= k:
                             if dataset_name in ['custom3D', 'malaria', 'pets']:
@@ -130,7 +132,6 @@ def extract(models_dir, test_loader, samples=samples, batch_size=batch_size, bal
 
 
 def extract_select(test_loader):
-    # model folder
     model_dir = join(os.getcwd(), '../models', args.trained_on)
     models = args.model_folder
     if models == 'all':
@@ -144,10 +145,10 @@ def extract_select(test_loader):
             extract(models_dir, test_loader=test_loader)
             return print('Extracted all models of folder ', models)
         else:
-            extract(model_dir, test_loader=test_loader)  # case of imagenet only one file no subdir
+            extract(model_dir, test_loader=test_loader)
             return print('Extracted all models in ', model_dir)
 
 
 # dataset and dataloader
 dataset_name = args.dataset
-extract_select(get_loader(dataset_name))  ## Balanced Dataset set TRUE as standard
+extract_select(get_loader(dataset_name))
