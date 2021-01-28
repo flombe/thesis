@@ -13,7 +13,7 @@ import mnist_archs
 
 # parse args from sh script
 parser = train_utils.train_args_parser()
-parser.add_argument('--pre_dataset')  # add parser arg for pre-trained selection
+parser.add_argument('--pre_dataset')
 args = parser.parse_args()
 dataset_name, batch_size, epochs, lr, run_name, seeds = train_utils.parse_train_args(args)
 pretrain_dataset = args.pre_dataset
@@ -42,23 +42,20 @@ for seed in range(1, 11):
     print(model_dir)
 
     for file in natsorted(os.listdir(model_dir)):
-        if file.startswith("model_") and file.endswith("_0.pt"):  #####  only take file 'model_pre_fashion_0.pt'
+        if file.startswith("model_") and file.endswith("_0.pt"):
             print(file)
             # Load model
             model = torch.load(join(model_dir, file))
 
             # add pre-train checkpoint name to run_name for ft
-            # print(file.split(str(pretrain_dataset), 1)[1][:-3])  # add source model name for saving
-            pretrain_checkpt = file.split(str(pretrain_dataset[:-5]), 1)[1][:-3]  # for fashionmnist
-            # pretrain_checkpt = file.split(str(pretrain_dataset), 1)[1][:-3]  # naming is eg. model_pre_mnist_0_1.pt
+            if dataset_name == 'fashionmnist': pretrain_checkpt = file.split(str(pretrain_dataset[:-5]), 1)[1][:-3]
+            else: pretrain_checkpt = file.split(str(pretrain_dataset), 1)[1][:-3]
             run_name_sub = join(run_name + pretrain_checkpt)
 
-            # print(list(model.fc1.parameters()))
             # new fine-tune fc layers
             model_ft = model
             model_ft.fc1 = mnist_archs.mnistConvNet().fc1  # = nn.Linear(1600, 128)
             model_ft.fc2 = mnist_archs.mnistConvNet().fc2  # = nn.Linear(128, 10)
-            # print(model_ft.fc1.parameters())
             print('fc layers newly initialized')
 
             model_ft = model_ft.to(device)
@@ -77,7 +74,6 @@ for seed in range(1, 11):
             elif dataset_name == 'mnist_split2':
                 dataset = datasets.MNIST_split2(dataset_dir=dataset_dir, device=device)
             criterion = F.nll_loss
-            ## for 'cifar10' diff. layers and criterion (F.cross_entropy)
 
             # loaders
             train_loader = dataset.get_train_loader(batch_size=batch_size)
@@ -103,6 +99,6 @@ param = {'train_samples': len(train_loader)*batch_size,
          'batch_size': batch_size,
          'lr': lr}
 dff.insert(4, 'ft_param', [param] * len(dff))
-dff.to_pickle(join(output_dir, 'df_' + run_name))  ###
+dff.to_pickle(join(output_dir, 'df_' + run_name))
 
 print('Done fine-tuning all models for all seeds.')

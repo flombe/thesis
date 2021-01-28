@@ -25,7 +25,7 @@ def train_args_parser():
                         help='number of total epochs to run')
     parser.add_argument('--bs', '--batch-size', default=64, type=int,
                         metavar='BS', help='mini-batch size (default: 64)')
-    parser.add_argument('--lr', '--learning-rate', default=0.0001, type=float,  ## lr hyperparm tune?
+    parser.add_argument('--lr', '--learning-rate', default=0.0001, type=float,
                         metavar='LR', help='initial learning rate')
     parser.add_argument('--run_name', default="pre-train", type=str, metavar='R',
                         help='trainings run name for saving')
@@ -98,7 +98,6 @@ def plot_classes_preds(net, images, labels, classes):
             color=("green" if preds[idx]==labels[idx].item() else "red"))
     return fig
 
-###
 
 
 def evaluate(model, loader, device, criterion=F.nll_loss):
@@ -127,14 +126,15 @@ def evaluate(model, loader, device, criterion=F.nll_loss):
 def train(model, train_loader, test_loader, optimizer, device, epochs, run_name, seed,
           criterion=F.nll_loss, save=True, ft=False, output_dir=None, verbose=True, scheduler=False):
 
-    # for custom3D - bs=12 --> different batch epoch split
+    # different batch sizes and checkpoints for CNN and VGG models
     if model.__class__.__name__ == 'VGG':
         print('Using lr scheduler for training.')
         if run_name[-7:] == 'malaria':
-            first_batches_chkpts = np.array([0, 1, 3, 10, 30, 100, 300])   ####
+            first_batches_chkpts = np.array([0, 1, 3, 10, 30, 100, 300])
             epoch_chkpts = np.array([1, 3, 10, 30, 100])
             bs_factor = 0.001
         else:
+            # for custom3D and Pets different batch epoch split
             first_batches_chkpts = np.array([0, 1, 3, 10, 30])
             epoch_chkpts = np.array([1, 3, 10, 30, 100])
             bs_factor = 0.01
@@ -166,27 +166,25 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
 
 
     ## added untrained model (as benchmark)
-    if save == True:
-        if 0 in first_batches_chkpts:
-            model_names.append(join('model_' + str(run_name) + '_0.pt'))
-            torch.save(model, join(model_dir, model_names[-1]))
+    if save == True and 0 in first_batches_chkpts:
+        model_names.append(join('model_' + str(run_name) + '_0.pt'))
+        torch.save(model, join(model_dir, model_names[-1]))
 
-            # save train stats
-            model.eval()
+        # save train stats
+        model.eval()
 
-            loss0, acc0 = evaluate(model, train_loader, device)
-            train_loss.append(loss0.item())
-            train_acc.append(acc0)
+        loss0, acc0 = evaluate(model, train_loader, device)
+        train_loss.append(loss0.item())
+        train_acc.append(acc0)
 
-            loss0, acc0 = evaluate(model, test_loader, device)
-            test_loss.append(loss0.item())
-            test_acc.append(acc0)
+        loss0, acc0 = evaluate(model, test_loader, device)
+        test_loss.append(loss0.item())
+        test_acc.append(acc0)
 
 
     for epoch in tqdm(range(epochs)):
 
         run_train_loss = 0.0
-        # run_train_acc = 0.0
         run_sample_nr = 0
 
         model.train()
@@ -207,9 +205,7 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
             optimizer.step()
 
 
-            # last batch is only 32 samples!! 60K/64 = 937.5 -> train_loader 0-936 with 64, but 937 only 32
             run_train_loss += loss.item() * inputs.size(0)  # loss mean of batch * batch size (for last one diff)
-            # run_train_acc += (torch.argmax(outputs, 1) == labels).float().sum()  # too rough estimate
             run_sample_nr += inputs.size(0)
 
             if i % 100 == 99:  # every 100 batches
@@ -243,13 +239,8 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
                     if verbose:
                         print('>>> Epoch 0 - Batch %g :   Test loss : %g --- Test acc : %g %%' % (j, test_loss[-1], test_acc[-1]))
 
-        # # running loss/acc on training as estimate
-        # run_train_loss /= run_sample_nr
-        # run_train_acc /= run_sample_nr
-
-
         # evaluate model on training and test data
-        if seed == 1:  ## to speed up training of other rounds, only track first in detail
+        if seed == 1:  # to speed up training of other rounds, only track first in detail
             model.eval()
             tr_loss, tr_acc = evaluate(model, train_loader, device)
             tst_loss, tst_acc = evaluate(model, test_loader, device)
@@ -296,7 +287,7 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
                 'model_name': model_names,
                 'seed': seed,
                 'pre_net': model.__class__.__name__,
-                'pre_epochs': np.append(first_batches_chkpts * bs_factor, epoch_chkpts).tolist(),  ##
+                'pre_epochs': np.append(first_batches_chkpts * bs_factor, epoch_chkpts).tolist(),
                 'pre_train_acc': train_acc,
                 'pre_train_loss': train_loss,
                 'pre_test_acc': test_acc,
@@ -307,7 +298,7 @@ def train(model, train_loader, test_loader, optimizer, device, epochs, run_name,
                 'model_name': model_names,
                 'seed': seed,
                 'ft_net': model.__class__.__name__,
-                'ft_epochs': np.append(first_batches_chkpts * bs_factor, epoch_chkpts).tolist(),  ##
+                'ft_epochs': np.append(first_batches_chkpts * bs_factor, epoch_chkpts).tolist(),
                 'ft_train_acc': train_acc,
                 'ft_train_loss': train_loss,
                 'ft_test_acc': test_acc,

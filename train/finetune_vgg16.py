@@ -8,19 +8,6 @@ from os.path import join
 import train_utils
 import datasets
 
-# like ID paper finetuning
-
-# We removed the last hidden layers (the last convolutional and all the dense layers) of
-# a VGG-16 network pre-trained on ImageNet and substituted it with randomly initialized
-# layers of the same size except for the last hidden layer, in order to match the correct number of
-# categories (40) of the custom dataset.
-# We then fine-tuned it on the ≃ 85% of the data. More specifically we used 30 images for each category
-# as training set and we tested on the remaining 6 images for each category.
-# For the fine-tuning, we used a SGD with momentum 0.9, and a learning rate of 10−4
-# in the last convolutional layer and of 10−3 in the dense layers. The other layers were kept frozen.
-# The generalization performance after 15 epochs was ≈ 88% accuracy on the test set.
-
-
 # set device
 if torch.cuda.is_available():
     device = torch.device("cuda:0")
@@ -43,7 +30,7 @@ root_dir = os.getcwd()
 print(root_dir)
 dataset_dir = join(root_dir, '../data', dataset_name)  # target data for ft
 source_dir = join(root_dir, '../models', 'vgg16', pretrain_dataset)
-output_dir = join(source_dir, 'ft_' + dataset_name)  ## + '_3conv'  # new folder for fine-tuned models
+output_dir = join(source_dir, 'ft_' + dataset_name)
 
 if dataset_name == 'custom3D':
     n_out_classes = 40
@@ -83,18 +70,16 @@ if pretrain_dataset in ['imagenet', 'cifar10', 'segnet', 'random_init']:
     elif pretrain_dataset == 'segnet':  # VGG-16bn
         model_ft.features._modules['40'] = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
     else:
-        ## additional layers newly init
         # model_ft.features._modules['24'] = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
         # model_ft.features._modules['26'] = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
         model_ft.features._modules['28'] = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
-    model_ft.classifier._modules['0'] = nn.Linear(512*7*7, 4096)  # hard-plug nr of feat
+    model_ft.classifier._modules['0'] = nn.Linear(512*7*7, 4096)
     model_ft.classifier._modules['3'] = nn.Linear(4096, 4096)
     model_ft.classifier._modules['6'] = nn.Linear(4096, n_out_classes)
 else:
     # model_ft.features._modules['conv5_1'] = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
     # model_ft.features._modules['conv5_2'] = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-
     model_ft.features._modules['conv5_3'] = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
     num_ftrs = model_ft.classifier._modules['fc6'].in_features
@@ -115,11 +100,7 @@ for param in model_ft.parameters():
 print(f'Layers with param=True: {j} / {len(list(model_ft.parameters()))}')
 
 model_ft = model_ft.to(device)  # on cuda
-
 criterion = nn.CrossEntropyLoss()
-
-# Only trainable parameters will be optimized
-# optimizer_ft = torch.optim.SGD(filter(lambda p: p.requires_grad, model_ft.parameters()), lr=1e-3)
 
 # Syntax to train layers differentially (with different learning rates)
 optimizer_ft = torch.optim.SGD([
@@ -129,8 +110,6 @@ optimizer_ft = torch.optim.SGD([
 
 # Decay LR by a factor of 0.1 every 20 epochs
 exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=20, gamma=0.1)
-
-
 seed = '1'
 
 train_acc, train_loss, test_acc, test_loss, df = train_utils.train(model=model_ft, train_loader=train_loader,
@@ -140,7 +119,6 @@ train_acc, train_loss, test_acc, test_loss, df = train_utils.train(model=model_f
                                                                    run_name=run_name, seed=seed, ft=True,
                                                                    scheduler=exp_lr_scheduler)
 print('Done fine-tuning run ', model_path)
-
 
 # add to dff and save
 df.insert(3, 'ft_dataset', dataset_name)

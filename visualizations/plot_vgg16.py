@@ -299,7 +299,7 @@ if __name__ == '__main__':
 
     #######
     pre_dataset = 'imagenet'
-    ft_dataset = 'malaria'  # 'malaria' 'custom3D' 'pets'
+    ft_dataset = 'malaria'  # 'custom3D' 'pets'
     #######
 
     if ft_dataset in ['custom3D', 'pets']:
@@ -312,7 +312,7 @@ if __name__ == '__main__':
         xticks = [0.0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 100]
     total = np.array(xticks)
 
-    # plot_acc()
+    plot_acc()
 
     # general plots over all datasets
     plot_acc_all()
@@ -320,6 +320,5 @@ if __name__ == '__main__':
 
     # plot all metrics
     plot_metric_all(['SS', 'ID', 'RSA'])
-    # plot_metric_all(['ID'])
 
     # plot_fc2_acc_id()

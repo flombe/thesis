@@ -4,11 +4,12 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.optim import lr_scheduler
+import pandas as pd
+
 import mnist_archs
+import vgg_arch
 import train_utils
 import datasets
-import pandas as pd
-import vgg_arch
 
 
 # parse args from sh script
@@ -27,7 +28,7 @@ else:
     print("Devise used = ", device)
 
 # set directory
-root_dir = os.getcwd()  #'/mnt/antares_raid/home/bemmerl/thesis'
+root_dir = os.getcwd()
 dataset_dir = join(root_dir, '../data', dataset_name)
 model_dir = join(root_dir, '../models', dataset_name)
 os.makedirs(model_dir, exist_ok=True)
@@ -35,7 +36,7 @@ os.makedirs(model_dir, exist_ok=True)
 # save training stats in df
 dff = pd.DataFrame()
 
-# run every training nr.of seeds times to aggregate results for stat testing
+# run every training nr. of seeds times to aggregate results for statistical testing
 for seed_run in range(1, seeds+1):
     # set seed
     train_utils.set_seed(seed_run)
@@ -86,8 +87,7 @@ for seed_run in range(1, seeds+1):
 
     model.to(device)
     criterion = F.nll_loss  # with F.log_softmax on output = CrossEntropyLoss
-    if dataset_name == 'cifar10': criterion = F.cross_entropy
-    if dataset_name in ['custom3D', 'malaria', 'pets']: criterion = F.cross_entropy
+    if dataset_name in ['cifar10', 'custom3D', 'malaria', 'pets']: criterion = F.cross_entropy
     print(model)
 
     # loaders
@@ -95,23 +95,23 @@ for seed_run in range(1, seeds+1):
     test_loader = dataset.get_test_loader(batch_size=batch_size)
 
     # Training
-    optimizer = optim.Adam(model.parameters(), lr=lr)  ## Adam instead of SGD
+    optimizer = optim.Adam(model.parameters(), lr=lr)
+    scheduler = False
     if dataset_name == 'cifar10':
         optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9)
     if dataset_name in ['custom3D', 'malaria', 'pets']:
         optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9)
-        exp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
+        scheduler = lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
 
     train_acc, train_loss, test_acc, test_loss, df = train_utils.train(model=model, train_loader=train_loader,
                                                                        test_loader=test_loader, optimizer=optimizer,
                                                                        device=device, criterion=criterion, epochs=epochs,
                                                                        output_dir=model_dir, run_name=run_name,
-                                                                       seed=seed_run, save=True, scheduler=False)
+                                                                       seed=seed_run, save=True, scheduler=scheduler)
     dff = dff.append(df, ignore_index=True)
-    #print(dff)
     print('Done trainings run ', seed_run)
 
-# add to dff and save
+# add params to dff and save
 dff.insert(3, 'pre_dataset', dataset_name)
 param = {'train_samples': len(train_loader)*batch_size,
          'batch_size': batch_size,

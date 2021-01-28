@@ -20,8 +20,8 @@ plot_compare_switched_singles = True
 root_dir = os.getcwd()
 models_dir = join(root_dir, '../models', pre_dataset, 'ft_' + ft_dataset)
 
-run_name = join(f'ft_{pre_dataset}_{ft_dataset}_')  # 'ft_mnist2_mnist_'
-if ft_dataset == 'fashionmnist': run_name = join(f'ft_{pre_dataset}_fashionmnist_')  # naming only fashion
+run_name = join(f'ft_{pre_dataset}_{ft_dataset}_')
+if ft_dataset == 'fashionmnist': run_name = join(f'ft_{pre_dataset}_fashionmnist_')
 
 
 checkpts = ['0_1', '0_3', '0_10', '0_30', '0_100', '0_300', '1', '3', '10', '30', '100']
@@ -49,11 +49,11 @@ for check in checkpts:
 
         accs[seed-1] = test_acc
     mydict.update({check: accs})
-#print(mydict)
 
 
 
-### load df instead
+
+# load df instead
 target_model_dir = join(root_dir, '../models', ft_dataset)
 if ft_dataset == 'fashionmnist':
     df = pd.read_pickle(join(target_model_dir, "df_pre_fashion"))
@@ -79,13 +79,10 @@ if plot_acc:
 
     for check in mydict.keys():
         accs = mydict[check]
-        # for i in range(accs.shape[0]):
-        #     ax1.plot(total, accs[i], 'x') #, label=(str(check) +' ft_ '+str(i)))
-
         mean = []
         for i in range(accs.shape[1]):
             mean.append(np.mean(accs[:,i]))
-        ax1.plot(total, mean, label=(str(check)))  # +' mean'
+        ax1.plot(total, mean, label=(str(check)))
 
     # plot base case: training target normaly - use mean of 10 seeds and plot std shade
     base = ax1.plot(total[1:], target_means, '-.', label='base_case', c='k')
@@ -95,7 +92,6 @@ if plot_acc:
     plt.ylim((0,100))
     ax1.minorticks_on()
     plt.xscale("log")
-    # plt.xticks(xticks, rotation=80)
     ax1.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda y, _: '{:.16g}'.format(y)))
     ax1.xaxis.set_tick_params(which='minor', bottom=False)
     plt.legend(loc=4)
@@ -124,7 +120,7 @@ if plot_delta:
     ax2.fill_between(total[1:], 2 * target_stds, -2 * target_stds, color=base.get_color(),
                      alpha=0.05, label='std_base')
 
-    plt.ylim(bottom=-5)  ##
+    plt.ylim(bottom=-5)
     ax2.minorticks_on()
     plt.xscale("log")
     plt.xticks(xticks, rotation=80)
@@ -159,17 +155,15 @@ if plot_compare_switched:
         print(pre_set)
 
         models_dir = join(root_dir, '../models', pre_set, 'ft_' + ft_dataset)
-        run_name = join(f'ft_{pre_set}_{ft_dataset}_')  # 'ft_mnist2_mnist_'
-        # if ft_dataset == 'fashionmnist': run_name = join(f'ft_{pre_dataset}_fashionmnist_')  # naming only fashion
+        run_name = join(f'ft_{pre_set}_{ft_dataset}_')
+        # if ft_dataset == 'fashionmnist': run_name = join(f'ft_{pre_dataset}_fashionmnist_')
         if ft_dataset == 'fashionmnist':
             if pre_set == 'mnist_noise_struct': run_name = join(f'ft_{pre_set}_mnist_')
             if pre_set == 'mnist': run_name = join(f'ft_{pre_set}_fashion_')
 
         # load the acc.values for all the presets with the json training files  (just because of legacy code)
         mydict = dict()
-        # check = '1'
         for check in checkpts:
-            # if check == '1':
             if pre_set == 'mnist':
                 if ft_dataset == 'mnist': accs = np.zeros((10, 12))
                 else: accs = np.zeros((10, 11))
@@ -196,7 +190,7 @@ if plot_compare_switched:
             mean = []
             std = []
             print(range(accs.shape[1]))
-            for i in range(accs.shape[1]):  # 0,12
+            for i in range(accs.shape[1]):
                 print(accs[:, i])
                 mean.append(np.mean(accs[:, i]))  # mean over 10 seeds
                 print(mean)
@@ -208,7 +202,7 @@ if plot_compare_switched:
                 std = std[1:]
             print(len(total), len(mean), len(target_means))
             print(len(total), mean, target_means)
-            lines[j] = mean  #-target_means
+            lines[j] = mean
             std_inverted[j] = std
             j += 1
 
@@ -234,7 +228,7 @@ if plot_compare_switched:
         f = lambda x,pos: str(x).rstrip('0').rstrip('.')
         ax.get_xaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(f))
         ax.xaxis.set_tick_params(which='minor', bottom=False)
-        plt.legend(loc=2, title='fine-tuned for')  # prop={'size': 10}
+        plt.legend(loc=2, title='fine-tuned for')
         plt.tight_layout()
         plt.show()
 
@@ -266,10 +260,9 @@ if plot_compare_switched_singles:
 
     for pre_set in datasets:
         print(pre_set)
-
         models_dir = join(root_dir, '../models', pre_set, 'ft_' + ft_dataset)
-        run_name = join(f'ft_{pre_set}_{ft_dataset}_')  # 'ft_mnist2_mnist_'
-        # if ft_dataset == 'fashionmnist': run_name = join(f'ft_{pre_dataset}_fashionmnist_')  # naming only fashion
+        run_name = join(f'ft_{pre_set}_{ft_dataset}_')
+        # if ft_dataset == 'fashionmnist': run_name = join(f'ft_{pre_dataset}_fashionmnist_')
         if ft_dataset == 'fashionmnist':
             if pre_set == 'mnist_noise_struct': run_name = join(f'ft_{pre_set}_mnist_')
             if pre_set == 'mnist': run_name = join(f'ft_{pre_set}_fashion_')
@@ -298,9 +291,7 @@ if plot_compare_switched_singles:
         lines = np.zeros((11, 11))
         std_inverted = np.zeros((11, 11))
         j = 0
-        # check = '1'
         for check in mydict.keys():
-        # if check == '1':
             accs = mydict[check]
             mean = []
             std = []
@@ -312,14 +303,13 @@ if plot_compare_switched_singles:
                 print('len=12 cut first one for model_0')
                 mean = mean[1:]
                 std = std[1:]
-            # print(len(total), len(mean), len(target_means))
             lines[j] = mean-target_means
             std_inverted[j] = std
             j += 1
 
 
         # pick model to plot
-        model_nr = 4  ###
+        model_nr = 4
 
         ax.plot(total[1:], lines[:, model_nr], label=str(checkpts[model_nr] + ' ' + pre_set))
         ax.fill_between(total[1:], lines[:, model_nr] + 2 * np.array(std_inverted[:, model_nr]),
@@ -328,7 +318,6 @@ if plot_compare_switched_singles:
     ax.fill_between(total[1:], 2 * target_stds[model_nr], -2 * target_stds[model_nr], color='k', alpha=0.08,
                     label='std_base')
 
-    # plt.ylim(bottom=-5)
     ax.minorticks_on()
     plt.xscale("log")
     plt.xticks(xticks, rotation=80)

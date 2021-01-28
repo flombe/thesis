@@ -23,7 +23,7 @@ def plot_pre_all():
         load_dir = join(models_dir, dataset)
         label = f'pre_{dataset}'
         case = 'pre'
-        if dataset in ['mnist_split1', 'mnist_noise']: case = 'ft'  # wrong naming in df..
+        if dataset in ['mnist_split1', 'mnist_noise']: case = 'ft'
 
         # load Acc from df
         df = pd.read_pickle(join(load_dir, "df_" + label + '+metrics'))
@@ -71,8 +71,7 @@ def plot_acc_all():
         stds = df.groupby('model_name')[f'{case}_test_acc'].apply(lambda g: np.std(g.values.tolist(), axis=0))
         means = means.reindex(index=natsorted(means.index))
         stds = stds.reindex(index=natsorted(stds.index))
-        # print(dataset)
-        # print(means, stds)
+
         if ft_dataset == 'fashionmnist' and dataset == 'mnist': label = label[:-5]  # naming in mnist ft is only 'fashion'
 
         alphas = np.linspace(0.1, 1, len(checkpts))
@@ -84,7 +83,7 @@ def plot_acc_all():
                 m.append(means['model_' + label + '_' + pre + '_' + ft + '.pt'])
                 s.append(stds['model_' + label + '_' + pre + '_' + ft + '.pt'])
             if pre == '100':
-                ax1.plot(total, m, label=str(label), color=color, alpha=alpha, linewidth=1)  # linewidth=0.7
+                ax1.plot(total, m, label=str(label), color=color, alpha=alpha, linewidth=1)
                 ax1.fill_between(total, m + 2 * np.array(s), m - 2 * np.array(s), color=color, alpha=0.07)
             ax1.plot(total, m, color=color, alpha=alpha*0.5, linewidth=0.5)
 
@@ -104,7 +103,6 @@ def plot_acc_all():
     axins1 = inset_axes(ax1, width='40%', height='4%', loc='upper left',
                         bbox_to_anchor=(0.53, 0, 1, 0.30), bbox_transform=ax1.transAxes)
     cbar = fig1.colorbar(sm, cax=axins1, orientation='horizontal', ticks=[0, 12])
-    #cbar.set_label('pre-train duration', labelpad=-2)
     cbar.ax.set_title('pre-train duration', fontsize=10)
     cbar.ax.set_xticklabels(['0batch', '100ep'], fontdict={'horizontalalignment': 'center'})
     axins1.xaxis.set_ticks_position('bottom')
@@ -134,9 +132,8 @@ def plot_acc_all_detail(checkpt='100'):
         stds = df.groupby('model_name')[f'{case}_test_acc'].apply(lambda g: np.std(g.values.tolist(), axis=0))
         means = means.reindex(index=natsorted(means.index))
         stds = stds.reindex(index=natsorted(stds.index))
-        # print(dataset)
-        # print(means, stds)
-        if ft_dataset == 'fashionmnist' and dataset == 'mnist': label = label[:-5]  # naming in mnist ft is only 'fashion'
+
+        if ft_dataset == 'fashionmnist' and dataset == 'mnist': label = label[:-5]
 
         alphas = np.linspace(0.1, 1, len(checkpts))
         for pre, alpha in zip(checkpts, alphas):
@@ -147,17 +144,16 @@ def plot_acc_all_detail(checkpt='100'):
                 m.append(means['model_' + label + '_' + pre + '_' + ft + '.pt'])
                 s.append(stds['model_' + label + '_' + pre + '_' + ft + '.pt'])
             if pre == checkpt:
-                ax1.plot(total[5:], m[5:], label=str(label), color=color, alpha=alpha, linewidth=1)  # linewidth=0.7
+                ax1.plot(total[5:], m[5:], label=str(label), color=color, alpha=alpha, linewidth=1)
                 ax1.fill_between(total[5:], (m + 2 * np.array(s))[5:], (m - 2 * np.array(s))[5:], color=color, alpha=0.07)
             # ax1.plot(total, m, color=color, alpha=alpha, linewidth=0.5)
 
     plt.xscale("log")
-    # ax1.axis([0.1, 100, 85, 100])
     plt.xlim([0.1, 100])
     ax1.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda y, _: '{:.16g}'.format(y)))
     ax1.xaxis.set_tick_params(which='minor', bottom=False)
 
-    plt.legend() # loc='lower right')
+    plt.legend()
     plt.tight_layout()
     plt.show()
 
@@ -204,9 +200,8 @@ def plot_acc_all_delta():
         stds = df.groupby('model_name')[f'{case}_test_acc'].apply(lambda g: np.std(g.values.tolist(), axis=0))
         means = means.reindex(index=natsorted(means.index))
         stds = stds.reindex(index=natsorted(stds.index))
-        # print(dataset)
-        # print(means, stds)
-        if ft_dataset == 'fashionmnist' and dataset == 'mnist': label = label[:-5]  # naming in mnist ft is only 'fashion'
+
+        if ft_dataset == 'fashionmnist' and dataset == 'mnist': label = label[:-5]
 
         alphas = np.linspace(0.1, 1, len(checkpts))
         for pre, alpha in zip(checkpts, alphas):
@@ -217,7 +212,6 @@ def plot_acc_all_delta():
                 m.append(means['model_' + label + '_' + pre + '_' + ft + '.pt'])
                 s.append(stds['model_' + label + '_' + pre + '_' + ft + '.pt'])
 
-            # in pre_mnist _0 model missing
             if ft_dataset == 'mnist':
                 m = m[1:]
                 s = s[1:]
@@ -276,13 +270,13 @@ def plot_metric_all(metrics=['SS', 'ID', 'RSA']):
             means = means.reindex(index=natsorted(means.index))
             stds = stds.reindex(index=natsorted(stds.index))
 
-            if dataset == 'fashionmnist': label = label[:-5]  # naming in mnist ft is only 'fashion'
+            if dataset == 'fashionmnist': label = label[:-5]
 
             for pre in checkpts:
                 m = means['model_' + label + '_' + pre + '.pt']
                 s = stds['model_' + label + '_' + pre + '.pt']
                 if pre == '100':
-                    ax.plot(xticks, m, '.-', label=str(f'model_{label}_{pre}'), linewidth=1)  # linewidth=0.7
+                    ax.plot(xticks, m, '.-', label=str(f'model_{label}_{pre}'), linewidth=1)
                     ax.fill_between(xticks, m + 2 * np.array(s), m - 2 * np.array(s), alpha=0.07)
                 # ax.plot(total, m, color=color, linewidth=0.5)
 
@@ -290,7 +284,7 @@ def plot_metric_all(metrics=['SS', 'ID', 'RSA']):
         plt.xlabel("Model Layers")
         plt.xticks(range(len(xticks)), labels=xticks)
 
-        plt.legend(frameon=True, fancybox=True, facecolor='white', title='pretrained models')  # loc="lower left",
+        plt.legend(frameon=True, fancybox=True, facecolor='white', title='pretrained models')
         plt.show()
 
 
@@ -298,7 +292,7 @@ if __name__ == '__main__':
 
     #######
     pre_dataset = 'mnist'
-    ft_dataset = 'fashionmnist'  #'fashionmnist'
+    ft_dataset = 'fashionmnist'
     #######
 
     checkpts = ['0', '0_1', '0_3', '0_10', '0_30', '0_100', '0_300', '1', '3', '10', '30', '100']
@@ -313,4 +307,4 @@ if __name__ == '__main__':
     plot_acc_all_delta()
 
     # plot all metrics
-    #plot_metric_all(['SS', 'ID', 'RSA'])
+    plot_metric_all(['SS', 'ID', 'RSA'])

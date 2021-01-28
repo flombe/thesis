@@ -104,7 +104,7 @@ def ss_id_plot_adj(df, dataset='pre'):
 if __name__ == '__main__':
     ###
     dataset_trained = 'imagenet'
-    model_folder = 'all'  # 'all' or 'nr'
+    model_folder = 'all'
     ###
 
     root_dir = os.getcwd()
@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
     if model_folder == 'all':
         # load df
-        df_path = join(models_dir, 'df_pre_' + dataset_trained + '+metrics')  # + 'added'
+        df_path = join(models_dir, 'df_pre_' + dataset_trained + '+metrics')
         df = pd.read_pickle(df_path)
 
         # specify id and ss on 'pre' or 'target' data

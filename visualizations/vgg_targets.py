@@ -22,7 +22,7 @@ def imshow(img):
     npimg = img.numpy()
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
 
-# to-do: refactor in get and plot functions()
+
 ######
 custom3D_compare_plot = True
 get_malaria = False
@@ -87,24 +87,24 @@ if get_malaria:
     source_dir = join(root_dir, '../models', pretrain_dataset, 'vgg16')
     output_dir = join(source_dir, 'ft_' + dataset_name)  # new folder for fine-tuned models
 
-    ## download from 'ftp://lhcftp.nlm.nih.gov/Open-Access-Datasets/Malaria/malaria_cell_classification_code.zip'
-    # import requests
-    #
-    # print('Download Starting...')
-    # url = 'ftp://lhcftp.nlm.nih.gov/Open-Access-Datasets/Malaria/malaria_cell_classification_code.zip'
-    # r = requests.get(url)
-    # with open(join(dataset_dir, 'second_try', 'malaria_data.zip'), 'wb') as output_file:
-    #     output_file.write(r.content)
-    # print('Download Completed!!!')
+    # download from 'ftp://lhcftp.nlm.nih.gov/Open-Access-Datasets/Malaria/malaria_cell_classification_code.zip'
+    import requests
 
-    # import zipfile
-    # with zipfile.ZipFile(join(dataset_dir, 'archive.zip'), "r") as zip_ref:
-    #     zip_ref.extractall("target")
+    print('Download Starting...')
+    url = 'ftp://lhcftp.nlm.nih.gov/Open-Access-Datasets/Malaria/malaria_cell_classification_code.zip'
+    r = requests.get(url)
+    with open(join(dataset_dir, 'second_try', 'malaria_data.zip'), 'wb') as output_file:
+        output_file.write(r.content)
+    print('Download Completed!!!')
 
-    ## split into 80% train and 20% test folders
-    # import splitfolders  # or import split_folders
-    # # To only split into training and validation set, set a tuple to `ratio`, i.e, `(.8, .2)`.
-    # splitfolders.ratio(join(dataset_dir, 'cell_images'), output=dataset_dir, seed=1, ratio=(.8, .2), group_prefix=None)
+    import zipfile
+    with zipfile.ZipFile(join(dataset_dir, 'archive.zip'), "r") as zip_ref:
+        zip_ref.extractall("target")
+
+    # split into 80% train and 20% test folders
+    import splitfolders  # or import split_folders
+    # To only split into training and validation set, set a tuple to `ratio`, i.e, `(.8, .2)`.
+    splitfolders.ratio(join(dataset_dir, 'cell_images'), output=dataset_dir, seed=1, ratio=(.8, .2), group_prefix=None)
 
     dataset = Malaria(dataset_dir=dataset_dir, device=device)
     class_names = dataset.class_names
@@ -136,35 +136,8 @@ if get_pets:
     source_dir = join(root_dir, '../models', pretrain_dataset, 'vgg16')
     output_dir = join(source_dir, 'ft_' + dataset_name)  # new folder for fine-tuned models
 
-    # import requests
-    #
-    # print('Download Starting...')
-    # url = 'https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz'
-    # r = requests.get(url)
-    # with open(join(dataset_dir, 'pets.zip'), 'wb') as output_file:
-    #     output_file.write(r.content)
-    # print('Download Completed!!!')
-
-
-    # # split into 80% train and 20% test folders
-    # import splitfolders  # or import split_folders
-    # # To only split into training and validation set, set a tuple to `ratio`, i.e, `(.8, .2)`.
-    # splitfolders.ratio(join(dataset_dir, 'cell_images'), output=dataset_dir, seed=1, ratio=(.8, .2), group_prefix=None)
-
-
-
-    ## class labels for pets dataset
-    # {'Sphynx': 0, 'Russian_Blue': 1, 'keeshond': 2, 'Maine_Coon': 3, 'Bombay': 4, 'wheaten_terrier': 5,
-    #  'Egyptian_Mau': 6, 'havanese': 7, 'yorkshire_terrier': 8, 'pomeranian': 9, 'shiba_inu': 10, 'Persian': 11,
-    #  'japanese_chin': 12, 'beagle': 13, 'Abyssinian': 14, 'Siamese': 15, 'chihuahua': 16, 'basset_hound': 17,
-    #  'american_pit_bull_terrier': 18, 'staffordshire_bull_terrier': 19, 'english_setter': 20, 'samoyed': 21,
-    #  'american_bulldog': 22, 'Bengal': 23, 'Ragdoll': 24, 'British_Shorthair': 25, 'newfoundland': 26, 'boxer': 27,
-    #  'Birman': 28, 'german_shorthaired': 29, 'scottish_terrier': 30, 'english_cocker_spaniel': 31, 'leonberger': 32,
-    #  'miniature_pinscher': 33, 'pug': 34, 'saint_bernard': 35, 'great_pyrenees': 36}
-
 
 if print_pets:
-
     dataset_name = 'pets'
     dataset_dir = join(os.getcwd(), '../data', dataset_name)
     bs = 6

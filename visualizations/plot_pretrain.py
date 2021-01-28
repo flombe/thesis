@@ -36,7 +36,7 @@ plt.xlabel("Training Epochs (batch1 to epoch100)")
 plt.ylabel("Pre-train Accuracy")
 
 for i in range(accs.shape[0]):
-    ax1.plot(total, accs[i], 'x', label=('seed '+str(i)))  #label=checkpts[i]
+    ax1.plot(total, accs[i], 'x', label=('seed '+str(i)))
 
 mean = []
 std = []

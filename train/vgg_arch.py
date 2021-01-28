@@ -27,7 +27,7 @@ class VGG(nn.Module):
         super(VGG, self).__init__()
         self.features = features
         self.classifier = nn.Sequential(
-            nn.Linear(512*7*7, 4096),     ### just 512 for cifar
+            nn.Linear(512*7*7, 4096),     # just 512 for cifar10
             nn.ReLU(True),
             nn.Dropout(),
             nn.Linear(4096, 4096),
@@ -44,8 +44,7 @@ class VGG(nn.Module):
         x = self.classifier(x)
         return x
 
-        # Sequential(
-
+    # Sequential(
     # (0): Linear(in_features=25088, out_features=4096)
     # (1): ReLU(inplace)
     # (2): Dropout(p=0.5)
@@ -67,7 +66,7 @@ class VGG(nn.Module):
             print(out4.size())
         return out1, out2, out3, out4
 
-    #     Sequential(
+    #   Sequential(
     #   (0): Conv2d (3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
     #   (1): ReLU(inplace)
     #   (2): Conv2d (64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
@@ -129,7 +128,7 @@ class VGG(nn.Module):
 
     def extract_all_vgg19(self, x):
         # Sequential(
-        # (0): Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))                                                           [345/980]
+        # (0): Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
         # (1): ReLU(inplace=True)
         # (2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
         # (3): ReLU(inplace=True)
@@ -179,12 +178,8 @@ class VGG(nn.Module):
         out5 = self.features[36](F.relu(self.features[34](
             F.relu(self.features[32](F.relu(self.features[30](F.relu(self.features[28](out4)))))))))
 
-        # from the classifier part
         # --> mismatch of 7x7x512 output for custom3D and init for cifar10 with only 1x1x512 dim going into classifer
-        # --> can't extract activations on fc layers.
-        # out6 = F.relu(self.classifier[0](out5.view(out5.size(0), -1)))
-        # out7 = F.relu(self.classifier[3](out6))
-        # out8 = F.relu(self.classifier[6](out7))
+        # --> can't extract activations on fc layers
 
         return [out0, out1, out2, out3, out4, out5]
 
