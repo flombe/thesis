@@ -6,11 +6,9 @@ import matplotlib.pyplot as plt
 import matplotlib
 import pandas as pd
 from natsort import natsorted
-from rsa import get_rdm_metric_vgg
-
 
 root_dir = os.getcwd()
-models_dir = join(root_dir, 'models', 'vgg16')
+models_dir = join(root_dir, '../models', 'vgg16')
 
 # Plot Acc on VGG16 custom3D for different ft or pre cases
 def plot_acc():
@@ -248,13 +246,13 @@ def plot_metric_all(metrics=['SS', 'ID', 'RSA']):
             if dataset == 'random_init':
                 val = df.groupby('model_name')[f'{metric}_{ft_dataset}'].apply(lambda g: np.mean(g.values.tolist(), axis=0))[0]
                 val_std = df.groupby('model_name')[f'{metric}_{ft_dataset}'].apply(lambda g: np.std(g.values.tolist(), axis=0))[0]
-                ax.fill_between(range(len(xticks)), np.array(val + 2 * val_std), np.array(val - 2 * val_std), color='pink', alpha=0.2)
+                ax.fill_between(range(len(xticks)), np.abs(np.array(val + 2 * val_std)), np.abs(np.array(val - 2 * val_std)), color='pink', alpha=0.2)
             if dataset == 'segnet': val = val[:6]
             if dataset in ['segnet', 'cifar10']: x_range = range(6)
             else: x_range = range(len(xticks))
 
             print(dataset, x_range, val)
-            ax.plot(x_range, np.array(val), '.-', label=df['model_name'][0])
+            ax.plot(x_range, np.abs(np.array(val)), '.-', label=df['model_name'][0])
 
         plt.ylabel(f"{metric}")
         plt.xlabel("Model Layers")
@@ -301,7 +299,7 @@ if __name__ == '__main__':
 
     #######
     pre_dataset = 'imagenet'
-    ft_dataset = 'custom3D'  # 'malaria' 'custom3D' 'pets'
+    ft_dataset = 'malaria'  # 'malaria' 'custom3D' 'pets'
     #######
 
     if ft_dataset in ['custom3D', 'pets']:

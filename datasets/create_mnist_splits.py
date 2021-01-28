@@ -2,7 +2,7 @@ import torch
 import os
 from os.path import join
 import numpy as np
-import train_utils
+from train import train_utils
 import shutil
 
 ###
@@ -15,7 +15,7 @@ train_utils.set_seed(1)
 # Split MNIST dataset into mnist_split1 and mnist_split2
 dataset_name = 'mnist'
 root_dir = os.getcwd()
-dataset_dir = join(root_dir, 'data', dataset_name)
+dataset_dir = join(root_dir, '../data', dataset_name)
 
 # augment values of MNIST dataset pictures - random noise
 train_data, train_labels = torch.load(join(dataset_dir, 'processed/training.pt'))
@@ -25,7 +25,7 @@ print(np.shape(test_data), np.shape(test_labels))
 
 
 # new dir for new mnist_noise dataset
-new_dir = join(root_dir, 'data', create_dataset)
+new_dir = join(root_dir, '../data', create_dataset)
 if not os.path.exists(new_dir):
     os.makedirs(new_dir)
 

@@ -2,20 +2,16 @@ import torch
 import os
 from os.path import join
 import train_utils
-from natsort import natsorted
-from tqdm import tqdm
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import torch.nn as nn
 from torch.autograd import Variable as V
 from torchvision import transforms as trn
 from torch.nn import functional as F
 from PIL import Image
 import collections
 import vgg_arch
-import caffemodel2pytorch
-
+from datasets import caffemodel2pytorch
 
 # safety fix seed
 seed = 1
@@ -75,7 +71,7 @@ def places365_test(model):
 def run_places365_caffe_model():
     pretrain_dataset = 'vgg16/places365'
     root_dir = os.getcwd()
-    source_dir = join(root_dir, 'models', pretrain_dataset)
+    source_dir = join(root_dir, '../models', pretrain_dataset)
 
     model = caffemodel2pytorch.Net(
         prototxt=join(source_dir, 'deploy_vgg16_places365.prototxt'),
@@ -104,7 +100,7 @@ def get_vgg16_places365():
 
     pretrain_dataset = 'vgg16/places365'
     root_dir = os.getcwd()
-    source_dir = join(root_dir, 'models', pretrain_dataset)
+    source_dir = join(root_dir, '../models', pretrain_dataset)
 
     model = vgg_arch.vgg16(pretrained=False, num_classes=365)
     print(model)
@@ -292,7 +288,7 @@ def cifar10_test(model):
     model.eval()
 
     import datasets
-    dataset_dir = join(os.getcwd(), 'data', 'cifar10')
+    dataset_dir = join(os.getcwd(), '../data', 'cifar10')
     dataset = datasets.CIFAR10(dataset_dir=dataset_dir, device=device)
     test_loader = dataset.get_test_loader(batch_size=1)
     image, label = next(iter(test_loader))
@@ -426,7 +422,7 @@ if __name__=='__main__':
     ## places365
     if init_places365:
         pretrain_dataset = 'vgg16/places365'
-        source_dir = join(os.getcwd(), 'models', pretrain_dataset)
+        source_dir = join(os.getcwd(), '../models', pretrain_dataset)
 
         # get weights from caffe model, init pytorch model arch, load weights and test on places365 sample
         model = get_vgg16_places365()
@@ -440,7 +436,7 @@ if __name__=='__main__':
     # imagenet
     if init_imagenet:
         pretrain_dataset = 'vgg16/imagenet'
-        source_dir = join(os.getcwd(), 'models', pretrain_dataset)
+        source_dir = join(os.getcwd(), '../models', pretrain_dataset)
 
         model_pre = vgg_arch.vgg16(pretrained=True)  # pre-trained on imageNet
         torch.save(model_pre, join(source_dir, 'model_vgg16_pre_imagenet.pt'))
@@ -455,7 +451,7 @@ if __name__=='__main__':
         # http://www.robots.ox.ac.uk/~vgg/software/vgg_face
 
         pretrain_dataset = 'vgg16/vggface'
-        source_dir = join(os.getcwd(), 'models', pretrain_dataset)
+        source_dir = join(os.getcwd(), '../models', pretrain_dataset)
 
         model = get_vgg16_vggface()
         torch.save(model, join(source_dir, 'model_vgg16_pre_vggface.pt'))
@@ -471,7 +467,7 @@ if __name__=='__main__':
         # https://github.com/afifai/car_recognizer_aiforsea
 
         pretrain_dataset = 'vgg16/cars'
-        source_dir = join(os.getcwd(), 'models', pretrain_dataset)
+        source_dir = join(os.getcwd(), '../models', pretrain_dataset)
 
         model = get_vgg16_cars()
         torch.save(model, join(source_dir, 'model_vgg16_pre_cars.pt'))
@@ -486,7 +482,7 @@ if __name__=='__main__':
         # https://github.com/geifmany/cifar-vgg
 
         pretrain_dataset = 'vgg16/cifar10'
-        source_dir = join(os.getcwd(), 'models', pretrain_dataset)
+        source_dir = join(os.getcwd(), '../models', pretrain_dataset)
 
         # model = get_vgg19_cifar10()
         # torch.save(model, join(source_dir, 'model_vgg19_pre_cifar10.pt'))
@@ -506,7 +502,7 @@ if __name__=='__main__':
         # Bachelor Thesis at NI
 
         pretrain_dataset = 'vgg16/segnet'
-        source_dir = join(os.getcwd(), 'models', pretrain_dataset)
+        source_dir = join(os.getcwd(), '../models', pretrain_dataset)
 
         model = get_vgg16bn_segnet()
         torch.save(model, join(source_dir, 'model_vgg16bn_pre_segnet.pt'))
@@ -519,7 +515,7 @@ if __name__=='__main__':
     ## random initialized
     if init_random:
         pretrain_dataset = 'vgg16/random_init'
-        source_dir = join(os.getcwd(), 'models', pretrain_dataset, 'models_' + str(seed))
+        source_dir = join(os.getcwd(), '../models', pretrain_dataset, 'models_' + str(seed))
 
         model = vgg_arch.vgg16(pretrained=False, num_classes=40)
         torch.save(model, join(source_dir, 'model_vgg16_random_init.pt'))

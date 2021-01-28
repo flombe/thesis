@@ -20,7 +20,7 @@ trained_dataset = 'mnist_noise_struct'
 target_dataset = 'mnist'
 
 root_dir = os.getcwd()
-models_dir = join(root_dir, 'models', trained_dataset)
+models_dir = join(root_dir, '../models', trained_dataset)
 
 # load df
 df_path = join(models_dir, 'df_pre_mnist_noise_struct')
@@ -28,7 +28,7 @@ df = pd.read_pickle(df_path)
 
 
 # load dataset
-dataset_dir = join(root_dir, 'data', trained_dataset)
+dataset_dir = join(root_dir, '../data', trained_dataset)
 dataset = datasets.MNIST_noise_struct(dataset_dir=dataset_dir, device=device)
 train_loader = dataset.get_train_loader(batch_size=1)
 

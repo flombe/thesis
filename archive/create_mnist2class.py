@@ -7,7 +7,7 @@ import numpy as np
 # Augment MNIST dataset to only two classes (labels: "even"/0, "uneven"/1)
 dataset_name = 'mnist'
 root_dir = os.getcwd()
-dataset_dir = join(root_dir, 'data', dataset_name)
+dataset_dir = join(root_dir, '../data', dataset_name)
 print('MNIST directory: ' + dataset_dir)
 
 
@@ -49,7 +49,7 @@ torch.save([test_data, test_labels_2class], 'test.pt')
 
 
 # new dir for new MNIST2class dataset
-new_dir = join(root_dir, 'data', 'mnist2class')
+new_dir = join(root_dir, '../data', 'mnist2class')
 # check if directory exists or not yet
 if not os.path.exists(new_dir):
     os.makedirs(new_dir)

@@ -1,16 +1,13 @@
 import os
 from os.path import join
 import numpy as np
-import json
 import matplotlib.pyplot as plt
 import matplotlib
 import pandas as pd
 from natsort import natsorted
-from rsa import get_rdm_metric_vgg
-
 
 root_dir = os.getcwd()
-models_dir = join(root_dir, 'models')
+models_dir = join(root_dir, '../models')
 
 def plot_pre_all():
     pre_datasets = ['mnist', 'fashionmnist', 'mnist_split1', 'mnist_split2', 'mnist_noise_struct', 'mnist_noise']

@@ -11,7 +11,7 @@ pre_dataset = 'mnist_split2'
 ft_dataset = 'mnist'
 
 root_dir = os.getcwd()
-models_dir = join(root_dir, 'models', pre_dataset, 'ft_' + ft_dataset)
+models_dir = join(root_dir, '../models', pre_dataset, 'ft_' + ft_dataset)
 
 run_name = join(f'ft_{pre_dataset}_{ft_dataset}_')  # 'ft_mnist2_mnist_'
 # run_name = join(f'ft_{pre_dataset}_fashion_')

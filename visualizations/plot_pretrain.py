@@ -8,7 +8,7 @@ import matplotlib
 # plot pretraining on dataset_name with stat test of 10 seeds
 dataset_name = 'mnist'
 root_dir = os.getcwd()
-dataset_dir = join(root_dir, 'models', dataset_name)
+dataset_dir = join(root_dir, '../models', dataset_name)
 run_name = 'pre_mnist'
 
 xticks = [0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 100]

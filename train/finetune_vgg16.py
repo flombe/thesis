@@ -1,15 +1,11 @@
 from __future__ import print_function, division
 import torch
 import torch.nn as nn
-import torch.optim as optim
 from torch.optim import lr_scheduler
 import os
 from os.path import join
-import json
-import pandas as pd
 
 import train_utils
-from vgg_arch import vgg16
 import datasets
 
 # like ID paper finetuning
@@ -45,8 +41,8 @@ print(' >> Run {run_name} on dataset {dataset} on pre-trained {pre} models. <<'.
 # set dir
 root_dir = os.getcwd()
 print(root_dir)
-dataset_dir = join(root_dir, 'data', dataset_name)  # target data for ft
-source_dir = join(root_dir, 'models', 'vgg16', pretrain_dataset)
+dataset_dir = join(root_dir, '../data', dataset_name)  # target data for ft
+source_dir = join(root_dir, '../models', 'vgg16', pretrain_dataset)
 output_dir = join(source_dir, 'ft_' + dataset_name)  ## + '_3conv'  # new folder for fine-tuned models
 
 if dataset_name == 'custom3D':

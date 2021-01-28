@@ -3,12 +3,10 @@ import torch
 import matplotlib.pyplot as plt
 import os
 from os.path import join
-from torchvision import datasets, models, transforms
+from torchvision import datasets, transforms
 from datasets import Custom3D, Malaria, Pets
 import numpy as np
-from glob import glob
-import pickle
-from train_utils import set_seed
+from train.train_utils import set_seed
 
 # set device
 if torch.cuda.is_available():
@@ -43,8 +41,8 @@ if custom3D_compare_plot:
 
     # set dir
     root_dir = os.getcwd()
-    dataset_dir = join(root_dir, 'data', dataset_name)  # target data for ft
-    source_dir = join(root_dir, 'models', pretrain_dataset, 'vgg16')
+    dataset_dir = join(root_dir, '../data', dataset_name)  # target data for ft
+    source_dir = join(root_dir, '../models', pretrain_dataset, 'vgg16')
     output_dir = join(source_dir, 'ft_' + dataset_name)  # new folder for fine-tuned models
 
     n_out_classes = 40
@@ -64,7 +62,7 @@ if custom3D_compare_plot:
 
     # transform: resize and to tensor
     data_transforms = transforms.Compose([transforms.Resize((224, 224), interpolation=2), transforms.ToTensor()])
-    raw_train = datasets.ImageFolder(os.path.join(dataset_dir, 'train'), data_transforms)
+    raw_train = datasets.ImageFolder(os.path.join(dataset_dir, '../train'), data_transforms)
     iter = iter(raw_train)
     fig = plt.figure(figsize=(9, 7))
     for i in range(6):
@@ -85,8 +83,8 @@ if get_malaria:
 
     # set dirs
     root_dir = os.getcwd()
-    dataset_dir = join(root_dir, 'data', dataset_name)  # target data for ft
-    source_dir = join(root_dir, 'models', pretrain_dataset, 'vgg16')
+    dataset_dir = join(root_dir, '../data', dataset_name)  # target data for ft
+    source_dir = join(root_dir, '../models', pretrain_dataset, 'vgg16')
     output_dir = join(source_dir, 'ft_' + dataset_name)  # new folder for fine-tuned models
 
     ## download from 'ftp://lhcftp.nlm.nih.gov/Open-Access-Datasets/Malaria/malaria_cell_classification_code.zip'
@@ -134,8 +132,8 @@ if get_pets:
 
     # set dirs
     root_dir = os.getcwd()
-    dataset_dir = join(root_dir, 'data', dataset_name)  # target data for ft
-    source_dir = join(root_dir, 'models', pretrain_dataset, 'vgg16')
+    dataset_dir = join(root_dir, '../data', dataset_name)  # target data for ft
+    source_dir = join(root_dir, '../models', pretrain_dataset, 'vgg16')
     output_dir = join(source_dir, 'ft_' + dataset_name)  # new folder for fine-tuned models
 
     # import requests
@@ -168,7 +166,7 @@ if get_pets:
 if print_pets:
 
     dataset_name = 'pets'
-    dataset_dir = join(os.getcwd(), 'data', dataset_name)
+    dataset_dir = join(os.getcwd(), '../data', dataset_name)
     bs = 6
 
     dataset = Pets(dataset_dir=dataset_dir, device=device)

@@ -1,15 +1,6 @@
 import torch
-import datasets
 import os
 from os.path import join
-import numpy as np
-import json
-from pathlib import Path
-import train_utils
-import mnist_archs
-import pandas as pd
-from natsort import natsorted
-
 
 # set device
 if torch.cuda.is_available():
@@ -23,8 +14,8 @@ else:
 dataset_name = 'fashionmnist'
 
 root_dir = os.getcwd()
-dataset_dir = join(root_dir, 'data', dataset_name)
-model_dir = join(root_dir, 'models', dataset_name)
+dataset_dir = join(root_dir, '../data', dataset_name)
+model_dir = join(root_dir, '../models', dataset_name)
 
 # # to add multiple seed runs (e.g. on random_init) into one df
 # df = pd.DataFrame()

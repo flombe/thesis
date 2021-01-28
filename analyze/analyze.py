@@ -6,9 +6,9 @@ import os
 from os.path import join
 import pandas as pd
 
-from IDNN.intrinsic_dimension import estimate
-import sum_of_squares
-import rsa
+from analyze.metrics.IDNN import estimate
+from analyze.metrics import rsa, sum_of_squares
+
 
 # compute ID, SS and RSA on extracted activations
 
@@ -78,11 +78,11 @@ if __name__ == '__main__':
 
     root_dir = os.getcwd()
     if target_dataset in ['custom3D', 'malaria', 'pets']:
-        models_dir = join(root_dir, 'models', 'vgg16', pre_dataset)
+        models_dir = join(root_dir, '../models', 'vgg16', pre_dataset)
         # if pre_dataset == 'random_init':
         #     models_dir = join(root_dir, 'models', 'vgg16', pre_dataset, 'models_1')
     else:
-        models_dir = join(root_dir, 'models', pre_dataset)
+        models_dir = join(root_dir, '../models', pre_dataset)
 
     # load df
     df_path = join(models_dir, 'df_pre_' + pre_dataset + '+metrics')  # + '+metrics')

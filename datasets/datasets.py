@@ -164,7 +164,7 @@ class Custom3D(Dataset):
         self.dataset_dir = dataset_dir
         self.loader_args = {'num_workers': 10, 'pin_memory': True} if device.type == 'cuda' else {}
 
-        self.train_data = datasets.ImageFolder(os.path.join(dataset_dir, 'train'), self.get_train_transform())
+        self.train_data = datasets.ImageFolder(os.path.join(dataset_dir, '../train'), self.get_train_transform())
         self.test_data = datasets.ImageFolder(os.path.join(dataset_dir, 'test'), self.get_test_transform())
         self.class_names = self.train_data.classes
 
@@ -214,7 +214,7 @@ class Malaria(Dataset):
         self.dataset_dir = dataset_dir
         self.loader_args = {'num_workers': 10, 'pin_memory': True} if device.type == 'cuda' else {}
 
-        self.train_data = datasets.ImageFolder(os.path.join(dataset_dir, 'train'), self.get_train_transform())
+        self.train_data = datasets.ImageFolder(os.path.join(dataset_dir, '../train'), self.get_train_transform())
         self.test_data = datasets.ImageFolder(os.path.join(dataset_dir, 'test'), self.get_test_transform())
         self.class_names = self.train_data.classes
 

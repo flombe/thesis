@@ -20,7 +20,7 @@ def add_gaussian(ins, mean, stddev, factor=1):
 
 def test_gaussian():
     root_dir = os.getcwd()
-    dataset_dir = join(root_dir, 'data', 'fashionmnist')
+    dataset_dir = join(root_dir, '../data', 'fashionmnist')
 
     dataset = datasets.FashionMNIST(dataset_dir=dataset_dir, device=device)
     test_loader = dataset.get_test_loader(batch_size=16)
@@ -130,14 +130,14 @@ if __name__ is '__main__':
 
     # run extract on augmented inputs
     root_dir = os.getcwd()
-    dataset_dir = join(root_dir, 'data', 'fashionmnist')
+    dataset_dir = join(root_dir, '../data', 'fashionmnist')
 
     dataset = datasets.FashionMNIST(dataset_dir=dataset_dir, device=device)
     test_loader = dataset.get_test_loader(batch_size=1, shuffle=False)
     dataset_name = 'fashionmnist'
 
     for seed in range(1, 11):
-        models_dir = join(root_dir, 'models', 'mnist', 'models_' + str(seed))
+        models_dir = join(root_dir, '../models', 'mnist', 'models_' + str(seed))
 
         #extract_aug(models_dir, test_loader, samples=500, batch_size=1, arg='shuffle')
         #extract_aug(models_dir, test_loader, samples=500, batch_size=1, arg='noisy')

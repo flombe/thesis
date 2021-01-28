@@ -1,11 +1,8 @@
-import numpy as np
 import torch
 import os
 from os.path import join
 import pandas as pd
-import json
-from rsa import get_rdm_metric
-from rsa import get_rdm_metric_vgg
+from analyze.metrics.rsa import get_rdm_metric_vgg
 
 # set device
 if torch.cuda.is_available():
@@ -18,7 +15,7 @@ else:
 
 dataset = 'vggface'
 root_dir = os.getcwd()
-model_dir = join(root_dir, 'models', 'vgg16', dataset)
+model_dir = join(root_dir, '../models', 'vgg16', dataset)
 
 path = join(model_dir, f'df_pre_{dataset}+metrics')
 if os.path.exists(path):

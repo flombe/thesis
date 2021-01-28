@@ -29,7 +29,7 @@ def get_values_from_df(dataset_trained, target, metr):
 
     for dataset in dataset_trained:
         root_dir = os.getcwd()
-        models_dir = join(root_dir, 'models', dataset)
+        models_dir = join(root_dir, '../models', dataset)
 
         # load df
         df_pre = pd.read_pickle(join(models_dir, 'df_pre_' + dataset + '+metrics'))  # df 120 rows
@@ -260,14 +260,13 @@ def rankcorr_and_plot_pool2(dataset_trained, target, metrics):
     plt.show()
 
 
-
 def get_values_from_df_vgg(dataset_trained, target, metr):
     metrics = pd.DataFrame()
     accs = pd.DataFrame()
 
     for dataset in dataset_trained:
         root_dir = os.getcwd()
-        models_dir = join(root_dir, 'models', 'vgg16', dataset)
+        models_dir = join(root_dir, '../models', 'vgg16', dataset)
 
         # load df
         df_pre = join(models_dir, 'df_pre_' + dataset + '+metrics')
@@ -384,7 +383,6 @@ def rankcorr_and_plot_vgg(dataset_trained, target, metr):
     plt.show()
 
 
-
 def permutation_significance(n):
     # permutation
     from sympy.utilities.iterables import multiset_permutations
@@ -425,7 +423,6 @@ def permutation_significance(n):
     # import scipy
     # print(t, scipy.stats.t(t))
 
-
 # Fisher intervall
 def fisher_95int(corr, num):
     # https://stats.stackexchange.com/questions/18887/how-to-calculate-a-confidence-interval-for-spearmans-rank-correlation
@@ -443,7 +440,6 @@ def fisher_95int(corr, num):
         low.append(lower)
         up.append(upper)
     return low, up
-
 
 
 if __name__ == '__main__':

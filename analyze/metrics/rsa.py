@@ -276,13 +276,13 @@ def load_calc_corr(dataset_trained, dataset_extracted, sorted, seed, layer=4):
     # load
     root_path = os.getcwd()
     if dataset_extracted in ['custom3D', 'malaria', 'pets']:
-        models_dir = join(root_path, 'models', 'vgg16', dataset_trained)
+        models_dir = join(root_path, '../../models', 'vgg16', dataset_trained)
         # if dataset_trained == 'random_init':
         #     models_dir = join(root_path, 'models', 'vgg16', dataset_trained, 'models_1')
     else:
-        models_dir = join(root_path, 'models', dataset_trained, 'models_' + str(seed))
+        models_dir = join(root_path, '../../models', dataset_trained, 'models_' + str(seed))
         if not os.path.exists(models_dir):
-            models_dir = join(root_path, 'models', dataset_trained)  # case of no seeds
+            models_dir = join(root_path, '../../models', dataset_trained)  # case of no seeds
 
     load_extracted = join(models_dir, dataset_extracted + '_extracted.pt')
     models = torch.load(load_extracted)

@@ -3,10 +3,9 @@ import os
 from os.path import join
 import argparse
 import datasets
-import train_utils
+from train import train_utils
 from natsort import natsorted
 from tqdm import tqdm
-import numpy as np
 
 # safety fix seed
 train_utils.set_seed(1)
@@ -33,7 +32,7 @@ args = parser.parse_args()
 print(f' > > > Extract pre_{args.trained_on} on {args.dataset} < < <')
 
 def get_loader(dataset_name):
-    dataset_dir = join(os.getcwd(), 'data', dataset_name)
+    dataset_dir = join(os.getcwd(), '../data', dataset_name)
 
     if dataset_name == 'mnist':
         dataset = datasets.MNIST(dataset_dir=dataset_dir, device=device)
@@ -132,7 +131,7 @@ def extract(models_dir, test_loader, samples=samples, batch_size=batch_size, bal
 
 def extract_select(test_loader):
     # model folder
-    model_dir = join(os.getcwd(), 'models', args.trained_on)
+    model_dir = join(os.getcwd(), '../models', args.trained_on)
     models = args.model_folder
     if models == 'all':
         for i in tqdm(range(1, 11)):

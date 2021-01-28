@@ -18,7 +18,7 @@ plot_compare_switched_singles = True
 
 
 root_dir = os.getcwd()
-models_dir = join(root_dir, 'models', pre_dataset, 'ft_' + ft_dataset)
+models_dir = join(root_dir, '../models', pre_dataset, 'ft_' + ft_dataset)
 
 run_name = join(f'ft_{pre_dataset}_{ft_dataset}_')  # 'ft_mnist2_mnist_'
 if ft_dataset == 'fashionmnist': run_name = join(f'ft_{pre_dataset}_fashionmnist_')  # naming only fashion
@@ -54,7 +54,7 @@ for check in checkpts:
 
 
 ### load df instead
-target_model_dir = join(root_dir, 'models', ft_dataset)
+target_model_dir = join(root_dir, '../models', ft_dataset)
 if ft_dataset == 'fashionmnist':
     df = pd.read_pickle(join(target_model_dir, "df_pre_fashion"))
 else:
@@ -140,7 +140,7 @@ if plot_delta:
 # plot single plots for all pre with ft and pre-train switched
 if plot_compare_switched:
     # load base case - mnist/fashionmnist with df
-    base_dir = join(root_dir, 'models', ft_dataset)
+    base_dir = join(root_dir, '../models', ft_dataset)
     if ft_dataset == 'fashionmnist':
         df = pd.read_pickle(join(base_dir, "df_pre_fashion"))
     else:
@@ -158,7 +158,7 @@ if plot_compare_switched:
     for pre_set in datasets:
         print(pre_set)
 
-        models_dir = join(root_dir, 'models', pre_set, 'ft_' + ft_dataset)
+        models_dir = join(root_dir, '../models', pre_set, 'ft_' + ft_dataset)
         run_name = join(f'ft_{pre_set}_{ft_dataset}_')  # 'ft_mnist2_mnist_'
         # if ft_dataset == 'fashionmnist': run_name = join(f'ft_{pre_dataset}_fashionmnist_')  # naming only fashion
         if ft_dataset == 'fashionmnist':
@@ -249,7 +249,7 @@ if plot_compare_switched_singles:
     plt.ylabel("Accuracy")
 
     # load base case - mnist/fashionmnist with df
-    base_dir = join(root_dir, 'models', ft_dataset)
+    base_dir = join(root_dir, '../models', ft_dataset)
     if ft_dataset == 'fashionmnist':
         df = pd.read_pickle(join(base_dir, "df_pre_fashion"))
     else:
@@ -267,7 +267,7 @@ if plot_compare_switched_singles:
     for pre_set in datasets:
         print(pre_set)
 
-        models_dir = join(root_dir, 'models', pre_set, 'ft_' + ft_dataset)
+        models_dir = join(root_dir, '../models', pre_set, 'ft_' + ft_dataset)
         run_name = join(f'ft_{pre_set}_{ft_dataset}_')  # 'ft_mnist2_mnist_'
         # if ft_dataset == 'fashionmnist': run_name = join(f'ft_{pre_dataset}_fashionmnist_')  # naming only fashion
         if ft_dataset == 'fashionmnist':

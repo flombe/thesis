@@ -28,8 +28,8 @@ else:
 
 # set directory
 root_dir = os.getcwd()  #'/mnt/antares_raid/home/bemmerl/thesis'
-dataset_dir = join(root_dir, 'data', dataset_name)
-model_dir = join(root_dir, 'models', dataset_name)
+dataset_dir = join(root_dir, '../data', dataset_name)
+model_dir = join(root_dir, '../models', dataset_name)
 os.makedirs(model_dir, exist_ok=True)
 
 # save training stats in df
@@ -103,10 +103,10 @@ for seed_run in range(1, seeds+1):
         exp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
 
     train_acc, train_loss, test_acc, test_loss, df = train_utils.train(model=model, train_loader=train_loader,
-                                                                   test_loader=test_loader, optimizer=optimizer,
-                                                                   device=device, criterion=criterion, epochs=epochs,
-                                                                   output_dir=model_dir, run_name=run_name,
-                                                                   seed=seed_run, save=True, scheduler=False)
+                                                                       test_loader=test_loader, optimizer=optimizer,
+                                                                       device=device, criterion=criterion, epochs=epochs,
+                                                                       output_dir=model_dir, run_name=run_name,
+                                                                       seed=seed_run, save=True, scheduler=False)
     dff = dff.append(df, ignore_index=True)
     #print(dff)
     print('Done trainings run ', seed_run)

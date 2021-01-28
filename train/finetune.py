@@ -6,7 +6,7 @@ from os.path import join
 import pandas as pd
 from natsort import natsorted
 
-import datasets
+from datasets import datasets
 import train_utils
 import mnist_archs
 
@@ -30,8 +30,8 @@ else:
 
 # set dir
 root_dir = os.getcwd()
-dataset_dir = join(root_dir, 'data', dataset_name)  # target data for ft
-source_dir = join(root_dir, 'models', pretrain_dataset)
+dataset_dir = join(root_dir, '../data', dataset_name)  # target data for ft
+source_dir = join(root_dir, '../models', pretrain_dataset)
 output_dir = join(source_dir, 'ft_' + dataset_name)  # new folder for fine-tuned models
 
 # save training stats in df
@@ -86,10 +86,10 @@ for seed in range(1, 11):
             # Training
             optimizer = optim.Adam(model_ft.parameters(), lr=lr)
             train_acc, train_loss, test_acc, test_loss, df = train_utils.train(model=model_ft, train_loader=train_loader,
-                                                                           test_loader=test_loader, optimizer=optimizer,
-                                                                           device=device, criterion=criterion,
-                                                                           epochs=epochs, output_dir=output_dir,
-                                                                           run_name=run_name_sub, seed=seed, ft=True,
+                                                                               test_loader=test_loader, optimizer=optimizer,
+                                                                               device=device, criterion=criterion,
+                                                                               epochs=epochs, output_dir=output_dir,
+                                                                               run_name=run_name_sub, seed=seed, ft=True,
                                                                                scheduler=False)
             dff = dff.append(df, ignore_index=True)
             print(dff)

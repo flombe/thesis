@@ -1,15 +1,10 @@
 from __future__ import print_function, division
 import torch
 import torch.nn as nn
-import torch.optim as optim
 from torch.optim import lr_scheduler
 from torch.autograd import Variable
-import numpy as np
-import torchvision
-from torchvision import datasets, models, transforms
-import matplotlib.pyplot as plt
+from torchvision import datasets, transforms
 import time
-import os
 import copy
 import pickle
 
@@ -18,8 +13,8 @@ from os.path import join
 
 ROOT = os.getcwd()
 
-data_folder = join(ROOT, 'data', 'custom3D')
-results_folder = join(ROOT, 'models', 'custom3D', 'results')
+data_folder = join(ROOT, '../data', 'custom3D')
+results_folder = join(ROOT, '../models', 'custom3D', 'results')
 
 if not os.path.isdir(results_folder):
     print('Creating directory ' + results_folder)
@@ -29,7 +24,7 @@ else:
 
 n_out_classes = 40
 
-from vgg_arch import vgg16
+from train.vgg_arch import vgg16
 
 # Data transformations
 data_transforms = {
